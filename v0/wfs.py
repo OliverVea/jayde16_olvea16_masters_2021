@@ -71,7 +71,7 @@ class WFS:
         return features
 
     def _query_url(self, url):
-        response = post(url)
+        response = get(url)
         content = response.content
         content = objectify.fromstring(content)
 
@@ -88,13 +88,17 @@ wfs = WFS('https://services.datafordeler.dk/GeoDanmarkVektor/GeoDanmark60_NOHIST
     password='hrN9aTirUg5c!np',
     version='1.1.0')
 
-url = wfs._make_url(request='GetFeature', typename='Mast', maxFeatures=5)
+wfs_filter = open('filter.xml', 'r').read()
+
+for ch in ['\t', '\n']:
+    wfs_filter = wfs_filter.replace(ch, '')
+
+#wfs_filter = None
 
 # EPSG:3857 - WGS 84 / Pseudo-Mercator
 # EPSG:4326 - WGS 84
 
-masts = wfs.get_features(typename='Mast', srs_name='EPSG:3857', as_list=True)
-
+masts = wfs.get_features(typename='Mast', srs_name='EPSG:3857', as_list=True, max_features=20, filter=wfs_filter)
 
 with open('data.json', 'w') as f:
     json.dump(masts, f, indent=4)

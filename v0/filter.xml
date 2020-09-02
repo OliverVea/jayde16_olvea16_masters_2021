@@ -1,0 +1,9 @@
+<ogc:Filter xmlns:ogc="http://www.opengis.net/ogc" xmlns:gml="http://www.opengis.net/gml">
+	<DWithin>
+		<PropertyName>geometri</PropertyName>
+		<gml:Point>
+			<gml:coordinates srsName='EPSG:3978'>135.2239,34.4879</gml:coordinates>
+		</gml:Point>
+		<Distance units='m'>150000000000</Distance>
+	</DWithin>
+</ogc:Filter>
