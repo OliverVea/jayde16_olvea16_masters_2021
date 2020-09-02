@@ -3,6 +3,7 @@ from utility import printe, prints, set_verbose, shortstring
 from requests import get, post
 from lxml import objectify
 import json
+from pyproj import Proj, transform
 
 class WFS:
     def __init__(self, url, username, password, version):
@@ -83,6 +84,13 @@ class WFS:
 
         return content
 
+    #Returns the position of a point from one srs in another srs
+    def transform_point(self, x, y, input_srs='epsg:3857', output_srs='epsg:4326'):
+        input_proj = Proj(init=input_srs)
+        output_proj = Proj(init=output_srs)
+        return transform(input_proj, output_proj, x, y)
+
+
 wfs = WFS('https://services.datafordeler.dk/GeoDanmarkVektor/GeoDanmark60_NOHIST_GML3/1.0.0/WFS?', 
     username='VCSWRCSUKZ',
     password='hrN9aTirUg5c!np',
@@ -98,7 +106,11 @@ for ch in ['\t', '\n']:
 # EPSG:3857 - WGS 84 / Pseudo-Mercator
 # EPSG:4326 - WGS 84
 
-masts = wfs.get_features(typename='Mast', srs_name='EPSG:3857', as_list=True, max_features=20, filter=wfs_filter)
+masts = wfs.get_features(typename='Mast', srs_name='EPSG:3857', as_list=True, max_features=None, filter=wfs_filter)
+
+point = masts[0]['geometri']['Point']['pos']
+
+point_4326 = wfs.transform_point(point[0], point[1])
 
 with open('data.json', 'w') as f:
     json.dump(masts, f, indent=4)
