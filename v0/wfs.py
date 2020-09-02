@@ -36,7 +36,7 @@ class WFS:
         
         return {self._simplify_tag(c.tag): self._get_geometry(c) for c in element.iterchildren()}
 
-    def get_features(self, typename=None, bbox=None, filter=None, max_features=None, srs_name=None):
+    def get_features(self, typename=None, bbox=None, filter=None, max_features=None, srs_name=None, as_list=False):
         url = self._make_url(request='GetFeature', typename=typename, bbox=bbox, filter=filter, maxFeatures=max_features, srsName=srs_name)
         featureCollection = self._query_url(url)
 
@@ -45,25 +45,30 @@ class WFS:
             return {}
 
         mastlist = [member.getchildren()[0] for member in featureCollection.iterchildren()]
-        mastdict = {}
+        masts = {}
+        if as_list:
+            masts = []
 
         for mast in mastlist:
-            mastdictentry = {}
+            mastentry = {}
             for attribute in mast.iterchildren():
                 tag = self._simplify_tag(attribute.tag)
 
                 if tag == 'geometri':
-                    mastdictentry[tag] = self._get_geometry(attribute)
+                    mastentry[tag] = self._get_geometry(attribute)
 
                 else:
-                    mastdictentry[tag] = attribute.text
+                    mastentry[tag] = attribute.text
 
-            assert(not mastdictentry['id.lokalId'] in mastdict)
-            mastdict[mastdictentry['id.lokalId']] = mastdictentry
+            if as_list:
+                masts.append(mastentry)
+            else:
+                assert(not mastentry['id.lokalId'] in masts)
+                masts[mastentry['id.lokalId']] = mastentry
 
         prints(f'Received {len(mastlist)} features from \'{shortstring(url, maxlen=100)}\'.', tag='wfs')
 
-        return mastdict
+        return masts
 
     def _query_url(self, url):
         response = post(url)
@@ -88,7 +93,7 @@ url = wfs._make_url(request='GetFeature', typename='Mast', maxFeatures=5)
 # EPSG:3857 - WGS 84 / Pseudo-Mercator
 # EPSG:4326 - WGS 84
 
-masts = wfs.get_features(typename='Mast', max_features=5, srs_name='EPSG:a')
+masts = wfs.get_features(typename='Mast', max_features=5, srs_name='EPSG:3857', as_list=True)
 
 
 with open('data.json', 'w') as f:
