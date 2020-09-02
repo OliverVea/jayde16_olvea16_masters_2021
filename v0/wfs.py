@@ -44,31 +44,31 @@ class WFS:
             printe('Error in retrieving features. Returning empty dictionary.', 'wfs')
             return {}
 
-        mastlist = [member.getchildren()[0] for member in featureCollection.iterchildren()]
-        masts = {}
+        featurelist = [member.getchildren()[0] for member in featureCollection.iterchildren()]
+        features = {}
         if as_list:
-            masts = []
+            features = []
 
-        for mast in mastlist:
-            mastentry = {}
-            for attribute in mast.iterchildren():
+        for feature in featurelist:
+            featureentry = {}
+            for attribute in feature.iterchildren():
                 tag = self._simplify_tag(attribute.tag)
 
                 if tag == 'geometri':
-                    mastentry[tag] = self._get_geometry(attribute)
+                    featureentry[tag] = self._get_geometry(attribute)
 
                 else:
-                    mastentry[tag] = attribute.text
+                    featureentry[tag] = attribute.text
 
             if as_list:
-                masts.append(mastentry)
+                features.append(featureentry)
             else:
-                assert(not mastentry['id.lokalId'] in masts)
-                masts[mastentry['id.lokalId']] = mastentry
+                assert(not featureentry['id.lokalId'] in features)
+                features[featureentry['id.lokalId']] = featureentry
 
-        prints(f'Received {len(mastlist)} features from \'{shortstring(url, maxlen=100)}\'.', tag='wfs')
+        prints(f'Received {len(featurelist)} features from \'{shortstring(url, maxlen=100)}\'.', tag='wfs')
 
-        return masts
+        return features
 
     def _query_url(self, url):
         response = post(url)
@@ -93,7 +93,7 @@ url = wfs._make_url(request='GetFeature', typename='Mast', maxFeatures=5)
 # EPSG:3857 - WGS 84 / Pseudo-Mercator
 # EPSG:4326 - WGS 84
 
-masts = wfs.get_features(typename='Mast', max_features=5, srs_name='EPSG:3857', as_list=True)
+masts = wfs.get_features(typename='Mast', srs_name='EPSG:3857', as_list=True)
 
 
 with open('data.json', 'w') as f:
