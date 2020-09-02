@@ -1,4 +1,4 @@
-from utility import printe, prints
+from utility import printe, prints, set_verbose, shortstring
 
 from requests import get, post
 from lxml import objectify
@@ -40,10 +40,9 @@ class WFS:
         url = self._make_url(request='GetFeature', typename=typename, bbox=bbox, filter=filter, maxFeatures=max_features, srsName=srs_name)
         featureCollection = self._query_url(url)
 
-        if featureCollection == None:
+        if featureCollection == None or self._simplify_tag(featureCollection.tag) != 'FeatureCollection':
+            printe('Error in retrieving features. Returning empty dictionary.', 'wfs')
             return {}
-
-        assert(self._simplify_tag(featureCollection.tag) == 'FeatureCollection')
 
         mastlist = [member.getchildren()[0] for member in featureCollection.iterchildren()]
         mastdict = {}
@@ -62,6 +61,8 @@ class WFS:
             assert(not mastdictentry['id.lokalId'] in mastdict)
             mastdict[mastdictentry['id.lokalId']] = mastdictentry
 
+        prints(f'Received {len(mastlist)} features from \'{shortstring(url, maxlen=100)}\'.', tag='wfs')
+
         return mastdict
 
     def _query_url(self, url):
@@ -72,7 +73,7 @@ class WFS:
         children = {self._simplify_tag(c.tag): c for c in content.iterchildren()}
 
         if 'Exception' in children:
-            printe(children['Exception'].ExceptionText)
+            printe(str(children['Exception'].ExceptionText), 'wfs')
             return None
 
         return content
@@ -87,9 +88,8 @@ url = wfs._make_url(request='GetFeature', typename='Mast', maxFeatures=5)
 # EPSG:3857 - WGS 84 / Pseudo-Mercator
 # EPSG:4326 - WGS 84
 
-masts = wfs.get_features(typename='Mast', max_features=5, srs_name='EPSG:3857')
+masts = wfs.get_features(typename='Mast', max_features=5, srs_name='EPSG:a')
 
-prints(f'Exported {len(masts)} features.')
 
 with open('data.json', 'w') as f:
     json.dump(masts, f, indent=4)
