@@ -1,7 +1,7 @@
 from utility import printe, prints, set_verbose, shortstring
 
 from requests import get, post
-from lxml import objectify
+from lxml import objectify, etree
 import json
 from pyproj import Transformer
 
@@ -39,15 +39,15 @@ class WFS_Feature:
     def y(self, srs=None):
         return self.pos(srs)[1]
 
-class WFS:
+class WebService(object):
     def __init__(self, url, username, password, version):
         self.url = url
         self.username = username
         self.password = password
         self.version = version
 
-    def _make_url(self, use_login=True, **args):
-        arguments = {'service': 'wfs', 'version': self.version}
+    def _make_url(self, service, use_login=True, **args):
+        arguments = {'service': service, 'version': self.version}
         arguments.update(args)
 
         if use_login:
@@ -62,6 +62,26 @@ class WFS:
     def _simplify_tag(self, tag):
         return tag.split('}')[-1]
 
+    def _query_url(self, url, response_type='xml'):
+        response = get(url)
+        content = response.content
+
+        if response_type == 'xml':
+            content = objectify.fromstring(content)
+
+            children = {self._simplify_tag(c.tag): c for c in content.iterchildren()}
+
+            if 'Exception' in children:
+                printe(str(children['Exception'].ExceptionText), 'wfs')
+                return None
+
+            return content
+        
+        if response_type == 'jpeg':
+            with open('image.jpeg', 'wb') as f:
+                f.write(content)
+
+class WFS(WebService):
     def _get_geometry(self, element):
         tag = self._simplify_tag(element.tag)
 
@@ -77,7 +97,7 @@ class WFS:
         return geometry
 
     def get_features(self, typename=None, bbox=None, filter=None, max_features=None, srs_name=None, as_list=False):
-        url = self._make_url(request='GetFeature', typename=typename, bbox=bbox, filter=filter, maxFeatures=max_features, srsName=srs_name)
+        url = self._make_url('wfs', request='GetFeature', typename=typename, bbox=bbox, filter=filter, maxFeatures=max_features, srsName=srs_name)
         featureCollection = self._query_url(url)
 
         if featureCollection == None or self._simplify_tag(featureCollection.tag) != 'FeatureCollection':
@@ -112,51 +132,24 @@ class WFS:
 
         return features
 
-    def _query_url(self, url):
-        response = get(url)
-        content = response.content
-        content = objectify.fromstring(content)
+class WMTS(WebService):
+    def __init__(self, url, username, password, version, layer, format, tile_matrix_set):
+        super(WMTS, self).__init__(url, username, password, version)
+        self.layer = layer
+        self.format = format
+        self.tile_matrix_set = tile_matrix_set
 
-        children = {self._simplify_tag(c.tag): c for c in content.iterchildren()}
-
-        if 'Exception' in children:
-            printe(str(children['Exception'].ExceptionText), 'wfs')
-            return None
-
-        return content
+    def get_map(self, style, tile_matrix, row, col):
+        url = self._make_url(service='wmts', request='GetTile', layer=self.layer, style=style, format=self.format, tilematrixset=self.tile_matrix_set, tilematrix=tile_matrix, tileRow=row, tileCol=col)
+        response = self._query_url(url, response_type='jpeg')
 
 
-wfs = WFS('https://services.datafordeler.dk/GeoDanmarkVektor/GeoDanmark60_NOHIST_GML3/1.0.0/WFS?', 
+wmts = WMTS('https://services.datafordeler.dk/GeoDanmarkOrto/orto_foraar_wmts/1.0.0/WMTS?',
     username='VCSWRCSUKZ',
     password='hrN9aTirUg5c!np',
-    version='1.1.0')
+    version='1.0.0',
+    layer='orto_foraar_wmts',
+    format='image/jpeg',
+    tile_matrix_set='KortforsyningTilingDK')
 
-wfs_filter = open('filter.xml', 'r').read()
-
-for ch in ['\t', '\n']:
-    wfs_filter = wfs_filter.replace(ch, '')
-
-#wfs_filter = None
-
-# EPSG:3857 - WGS 84 / Pseudo-Mercator
-# EPSG:4326 - WGS 84
-
-typenames = ['Mast', 'Nedloebsrist', 'Skorsten', 'Telemast', 'Trae', 'Broenddaeksel']
-colors = ['#FF0000', '#0000FF', '#FFFF00', '#FF00FF', '#00FF00', 'grey']
-
-gmap3 = gmplot.GoogleMapPlotter(55.3685394, 10.4288793, 16, apikey='AIzaSyA0y2iofkkWlv8v5KnAYpkW8KBRopsN8Ag')
-
-for typename, color in zip(typenames, colors):
-    prints(f'Requesting features of type {typename}.')
-    features = wfs.get_features(typename=typename, srs_name='EPSG:3857', max_features=None, filter=wfs_filter)
-
-    prints('Transforming points...')
-    pts = [feature.pos('EPSG:4326') for feature in features.values()]
-    pts_lat, pts_lon = [pt[0] for pt in pts], [pt[1] for pt in pts]
-
-    prints('Plotting points.')
-    gmap3.scatter(pts_lat, pts_lon,size=30, color=color)
-
-gmap3.draw('map.html')
-
-prints('Map has been drawn.')
+map = wmts.get_map(style='default', tile_matrix=0, row=0, col=0)
