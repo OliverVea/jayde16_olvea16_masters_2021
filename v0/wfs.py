@@ -3,7 +3,41 @@ from utility import printe, prints, set_verbose, shortstring
 from requests import get, post
 from lxml import objectify
 import json
-from pyproj import Proj, transform
+from pyproj import Transformer
+
+import gmplot
+
+class WFS_Feature:
+    def __init__(self, tag, attributes, geometry, default_srs):
+        self.tag = tag
+        self.attributes = attributes
+        self.geometry = geometry
+        self.default_srs = default_srs
+
+        self.transformed_points = {}
+
+    def __getitem__(self, key):
+        return self.attributes[key]
+
+    def __setitem__(self, key, value):
+        self.attributes[key] = value
+
+    def __iter__(self):
+        return self.geometry.__iter__()
+
+    def pos(self, srs=None):
+        if srs != None:
+            if not srs in self.transformed_points:
+                transformer = Transformer.from_crs(self.default_srs, srs)
+                self.transformed_points[srs] = transformer.transform(self.geometry[0], self.geometry[1])
+            return self.transformed_points[srs]
+        return self.geometry
+
+    def x(self, srs=None):
+        return self.pos(srs)[0]
+
+    def y(self, srs=None):
+        return self.pos(srs)[1]
 
 class WFS:
     def __init__(self, url, username, password, version):
@@ -29,13 +63,18 @@ class WFS:
         return tag.split('}')[-1]
 
     def _get_geometry(self, element):
-        if self._simplify_tag(element.tag) == 'pos':
-            return list(float(val) for val in element.text.split(' '))
+        tag = self._simplify_tag(element.tag)
 
-        if element.text != None:
-            return element.text
+        if tag == 'Point':
+            element = element.getchildren()[0]
+            assert(self._simplify_tag(element.tag) == 'pos')
+            return tuple(float(val) for val in element.text.split(' '))
         
-        return {self._simplify_tag(c.tag): self._get_geometry(c) for c in element.iterchildren()}
+        geometry = [self._get_geometry(c) for c in element.iterchildren()]
+        if len(geometry) == 1:
+            geometry = geometry[0]
+
+        return geometry
 
     def get_features(self, typename=None, bbox=None, filter=None, max_features=None, srs_name=None, as_list=False):
         url = self._make_url(request='GetFeature', typename=typename, bbox=bbox, filter=filter, maxFeatures=max_features, srsName=srs_name)
@@ -51,21 +90,23 @@ class WFS:
             features = []
 
         for feature in featurelist:
-            featureentry = {}
+            attributes = {}
             for attribute in feature.iterchildren():
                 tag = self._simplify_tag(attribute.tag)
 
                 if tag == 'geometri':
-                    featureentry[tag] = self._get_geometry(attribute)
+                    geometry = self._get_geometry(attribute)
 
                 else:
-                    featureentry[tag] = attribute.text
+                    attributes[tag] = attribute.text
+
+            feature = WFS_Feature(self._simplify_tag(feature.tag), attributes, geometry, srs_name)
 
             if as_list:
-                features.append(featureentry)
+                features.append(feature)
             else:
-                assert(not featureentry['id.lokalId'] in features)
-                features[featureentry['id.lokalId']] = featureentry
+                assert(not feature['id.lokalId'] in features)
+                features[feature['id.lokalId']] = feature
 
         prints(f'Received {len(featurelist)} features from \'{shortstring(url, maxlen=100)}\'.', tag='wfs')
 
@@ -84,12 +125,6 @@ class WFS:
 
         return content
 
-    #Returns the position of a point from one srs in another srs
-    def transform_point(self, x, y, input_srs='epsg:3857', output_srs='epsg:4326'):
-        input_proj = Proj(init=input_srs)
-        output_proj = Proj(init=output_srs)
-        return transform(input_proj, output_proj, x, y)
-
 
 wfs = WFS('https://services.datafordeler.dk/GeoDanmarkVektor/GeoDanmark60_NOHIST_GML3/1.0.0/WFS?', 
     username='VCSWRCSUKZ',
@@ -106,11 +141,22 @@ for ch in ['\t', '\n']:
 # EPSG:3857 - WGS 84 / Pseudo-Mercator
 # EPSG:4326 - WGS 84
 
-masts = wfs.get_features(typename='Mast', srs_name='EPSG:3857', as_list=True, max_features=None, filter=wfs_filter)
+typenames = ['Mast', 'Nedloebsrist', 'Skorsten', 'Telemast', 'Trae', 'Broenddaeksel']
+colors = ['#FF0000', '#0000FF', '#FFFF00', '#FF00FF', '#00FF00', 'grey']
 
-point = masts[0]['geometri']['Point']['pos']
+gmap3 = gmplot.GoogleMapPlotter(55.3685394, 10.4288793, 16, apikey='AIzaSyA0y2iofkkWlv8v5KnAYpkW8KBRopsN8Ag')
 
-point_4326 = wfs.transform_point(point[0], point[1])
+for typename, color in zip(typenames, colors):
+    prints(f'Requesting features of type {typename}.')
+    features = wfs.get_features(typename=typename, srs_name='EPSG:3857', max_features=None, filter=wfs_filter)
 
-with open('data.json', 'w') as f:
-    json.dump(masts, f, indent=4)
+    prints('Transforming points...')
+    pts = [feature.pos('EPSG:4326') for feature in features.values()]
+    pts_lat, pts_lon = [pt[0] for pt in pts], [pt[1] for pt in pts]
+
+    prints('Plotting points.')
+    gmap3.scatter(pts_lat, pts_lon,size=30, color=color)
+
+gmap3.draw('map.html')
+
+prints('Map has been drawn.')
