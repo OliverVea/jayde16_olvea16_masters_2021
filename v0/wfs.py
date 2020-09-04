@@ -2,8 +2,13 @@ from utility import printe, prints, set_verbose, shortstring
 
 from requests import get, post
 from lxml import objectify, etree
+
 import json
 from pyproj import Transformer
+
+from PIL import Image
+
+import binascii
 
 import gmplot
 
@@ -66,7 +71,7 @@ class WebService(object):
         response = get(url)
         content = response.content
 
-        if response_type == 'xml':
+        try:
             content = objectify.fromstring(content)
 
             children = {self._simplify_tag(c.tag): c for c in content.iterchildren()}
@@ -75,11 +80,16 @@ class WebService(object):
                 printe(str(children['Exception'].ExceptionText), 'wfs')
                 return None
 
-            return content
+            if response_type == 'xml':
+                return content
+        except:
+            pass
         
         if response_type == 'jpeg':
-            with open('image.jpeg', 'wb') as f:
+            with open('template_image.jpeg', 'wb') as f:
                 f.write(content)
+            return Image.open('template_image.jpeg')
+
 
 class WFS(WebService):
     def _get_geometry(self, element):
@@ -133,23 +143,62 @@ class WFS(WebService):
         return features
 
 class WMTS(WebService):
-    def __init__(self, url, username, password, version, layer, format, tile_matrix_set):
+    def __init__(self, url: str, username: str, password: str, layer: str, tile_matrix_set: str, format: str='image/jpeg', version: str='1.0.0'):
         super(WMTS, self).__init__(url, username, password, version)
         self.layer = layer
         self.format = format
         self.tile_matrix_set = tile_matrix_set
 
-    def get_map(self, style, tile_matrix, row, col):
+        self.cache = {}
+
+        self._get_capabilities()
+
+    def _get_capabilities(self):
+        url = self._make_url(service='wmts', request='GetCapabilities')
+        response = self._query_url(url)
+
+        tms = response.Contents.TileMatrixSet
+
+        t = './/{http://www.opengis.net/ows/1.1}SupportedCRS'
+        self.crs = str(tms.find(t).text)
+
+        def to_obj(tile_matrix):
+            tlc = tile_matrix.TopLeftCorner.text.split(' ')
+
+            tm = {
+                'matrix_height':        int(tile_matrix.MatrixHeight),
+                'matrix_width':         int(tile_matrix.MatrixWidth),
+                'scale_denominator':    float(tile_matrix.ScaleDenominator),
+                'tile_height':          int(tile_matrix.TileHeight),
+                'tile_width':           int(tile_matrix.TileWidth),
+                'top_left_x':           float(tlc[0]),
+                'top_left_y':           float(tlc[1])
+            }
+
+            return tm
+
+        self.tile_matrices = [to_obj(c) for c in tms.iterchildren() if self._simplify_tag(c.tag) == 'TileMatrix']
+
+    def _get_tile(self, style, tile_matrix, row, col):
+        key = (style, tile_matrix, row, col)
+
+        if key in self.cache:
+            return self.cache[key]
+
         url = self._make_url(service='wmts', request='GetTile', layer=self.layer, style=style, format=self.format, tilematrixset=self.tile_matrix_set, tilematrix=tile_matrix, tileRow=row, tileCol=col)
         response = self._query_url(url, response_type='jpeg')
 
+        self.cache[key] = response
+
+        return response
+
+    def get_map(self, style: str, tile_matrix: int, center: WFS_Feature, screen_width: int = 1920, screen_height: int = 1080):
+        tile_matrix = self.tile_matrices[tile_matrix]
+        x = (center.x() - tile_matrix['top_left_x']) / ()
+        pass
 
 wmts = WMTS('https://services.datafordeler.dk/GeoDanmarkOrto/orto_foraar_wmts/1.0.0/WMTS?',
     username='VCSWRCSUKZ',
     password='hrN9aTirUg5c!np',
-    version='1.0.0',
     layer='orto_foraar_wmts',
-    format='image/jpeg',
     tile_matrix_set='KortforsyningTilingDK')
-
-map = wmts.get_map(style='default', tile_matrix=0, row=0, col=0)
