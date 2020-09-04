@@ -153,6 +153,22 @@ class WMTS(WebService):
 
         self._get_capabilities()
 
+
+    def _to_px(self, scale_denominator, rw=None, m=None):
+        if rw != None:
+            return rw / (0.00028 * scale_denominator)
+        return m / 0.00028
+
+    def _to_rw(self, scale_denominator, px=None, m=None):
+        if px != None:
+            return px * 0.00028 * scale_denominator
+        return m * scale_denominator
+
+    def _to_map(self, scale_denominator, px=None, rw=None):
+        if px != None:
+            return px * 0.00028
+        return rw / scale_denominator
+
     def _get_capabilities(self):
         url = self._make_url(service='wmts', request='GetCapabilities')
         response = self._query_url(url)
@@ -172,8 +188,12 @@ class WMTS(WebService):
                 'tile_height':          int(tile_matrix.TileHeight),
                 'tile_width':           int(tile_matrix.TileWidth),
                 'top_left_x':           float(tlc[0]),
-                'top_left_y':           float(tlc[1])
+                'top_left_y':           float(tlc[1]),
             }
+
+            
+            tm['map_width'] = self._to_rw(tm['scale_denominator'], px=tm['tile_width'] * tm['matrix_width'])
+            tm['map_height'] = self._to_rw(tm['scale_denominator'], px=tm['tile_height'] * tm['matrix_height'])
 
             return tm
 
@@ -193,12 +213,19 @@ class WMTS(WebService):
         return response
 
     def get_map(self, style: str, tile_matrix: int, center: WFS_Feature, screen_width: int = 1920, screen_height: int = 1080):
-        tile_matrix = self.tile_matrices[tile_matrix]
-        x = (center.x() - tile_matrix['top_left_x']) / ()
-        pass
+        tm = self.tile_matrices[tile_matrix]
 
-wmts = WMTS('https://services.datafordeler.dk/GeoDanmarkOrto/orto_foraar_wmts/1.0.0/WMTS?',
-    username='VCSWRCSUKZ',
-    password='hrN9aTirUg5c!np',
-    layer='orto_foraar_wmts',
-    tile_matrix_set='KortforsyningTilingDK')
+        x = center.x(srs=self.crs)
+        dx = x - tm['top_left_x']
+        tx = dx / tm['map_width']
+        tile_x = tx * tm['matrix_width']
+        col = int(tile_x)
+
+        y = center.y(srs=self.crs)
+        dy = tm['top_left_y'] - y
+        ty = dy / tm['map_height']
+        tile_y = ty * tm['matrix_height']
+        row = int(tile_y)
+
+        tile = self._get_tile(style, tile_matrix, row=row, col=col)
+        tile.show()

@@ -51,8 +51,3 @@ class GPSConnection:
             printe('Response JSON not understood.')
 
         return None 
-
-conn = GPSConnection('10.147.18.175', 7789)
-coords = conn.get_coords()
-pos = coords.pos('urn:ogc:def:crs:EPSG:6.3:25832')
-print(json.dumps(coords, indent=4))

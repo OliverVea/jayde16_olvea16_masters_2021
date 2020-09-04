@@ -129,3 +129,4 @@ dmypy.json
 .pyre/
 v0/data.json
 v0/map.html
+*.jpeg
