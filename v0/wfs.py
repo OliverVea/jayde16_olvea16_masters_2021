@@ -6,11 +6,13 @@ from lxml import objectify, etree
 import json
 from pyproj import Transformer
 
-from PIL import Image
+from PIL import Image, ImageDraw
 
 import binascii
 
 import gmplot
+from math import ceil
+import time
 
 class WFS_Feature:
     def __init__(self, tag, attributes, geometry, default_srs):
@@ -43,6 +45,32 @@ class WFS_Feature:
 
     def y(self, srs=None):
         return self.pos(srs)[1]
+
+    def to_srs(self, srs):
+        return WFS_Feature(self.tag, self.attributes, self.pos(srs), srs)
+
+class WFS_Filter:
+    def radius(self, center: WFS_Feature, radius: float, property: str = 'geometri', crs: str = None):
+        with open('filter_templates/radius.xml', 'r') as f:
+            filt = f.read()
+
+        for ch in ['\t', '\n']:
+            filt = filt.replace(ch, '')
+
+        filt = filt.replace('rrr', str(radius))
+        filt = filt.replace('ppp', property)
+
+        if crs != None:
+            filt = filt.replace('xxx', str(center.x(srs=crs)))
+            filt = filt.replace('yyy', str(center.y(srs=crs)))
+            filt = filt.replace('ccc', crs)
+
+        else:
+            filt = filt.replace('xxx', str(center.x()))
+            filt = filt.replace('yyy', str(center.y()))
+            filt = filt.replace('ccc', center.default_srs)
+
+        return filt
 
 class WebService(object):
     def __init__(self, url, username, password, version):
@@ -88,7 +116,9 @@ class WebService(object):
         if response_type == 'jpeg':
             with open('template_image.jpeg', 'wb') as f:
                 f.write(content)
-            return Image.open('template_image.jpeg')
+            im = Image.open('template_image.jpeg')
+            im.load()
+            return im
 
 
 class WFS(WebService):
@@ -212,20 +242,82 @@ class WMTS(WebService):
 
         return response
 
+    def _stitch_images(self, images, rows, cols, image_width, image_height):
+        width = len(images) * image_width
+        height = len(images[0]) * image_height
+        parent_img = Image.new('RGB', (width, height))
+
+        for col, imgs in enumerate(images):
+            for row, im in enumerate(imgs):
+                parent_img.paste(im, (col * image_width, row * image_height))
+
+        return parent_img
+
+    class WMTS_Map:
+        def __init__(self, center: WFS_Feature, image: Image.Image, ppm: float):
+            self.center = center
+            self.image = image
+            self.ppm = ppm
+
+            self.image_width = image.width
+            self.image_height = image.height
+
+        def coord_to_pixels(self, point: WFS_Feature, srs: str = None):
+            if srs == None:
+                srs = self.center.default_srs
+
+            if point.default_srs != srs:
+                point = point.to_srs(srs)
+        
+            center = self.center
+            if center.default_srs != srs:
+                center = center.to_srs(srs)
+
+            print(point.pos('EPSG:4326'))
+            print(center.pos('EPSG:4326'))
+
+            x = (point.x() - center.x()) / self.ppm + self.image_width / 2
+            y = (center.y() - point.y()) / self.ppm + self.image_height / 2
+            
+            return (x, y)
+
+
     def get_map(self, style: str, tile_matrix: int, center: WFS_Feature, screen_width: int = 1920, screen_height: int = 1080):
         tm = self.tile_matrices[tile_matrix]
 
+        cols = ceil((screen_width/2) / tm['tile_width'])
+        rows = ceil((screen_height/2) / tm['tile_height'])
+
         x = center.x(srs=self.crs)
-        dx = x - tm['top_left_x']
-        tx = dx / tm['map_width']
-        tile_x = tx * tm['matrix_width']
-        col = int(tile_x)
+        center_x = tm['matrix_width'] * (x - tm['top_left_x']) / tm['map_width']
+        center_col = int(center_x)
 
         y = center.y(srs=self.crs)
-        dy = tm['top_left_y'] - y
-        ty = dy / tm['map_height']
-        tile_y = ty * tm['matrix_height']
-        row = int(tile_y)
+        center_y = tm['matrix_height'] * (tm['top_left_y'] - y) / tm['map_height']
+        center_row = int(center_y)
 
-        tile = self._get_tile(style, tile_matrix, row=row, col=col)
-        tile.show()
+        tiles = []
+        for col in range(center_col - cols, cols + center_col + 1):
+            if col >= 0:
+                tile_col = []        
+                for row in range(center_row - rows, rows + center_row + 1):
+                    if row >= 0:
+                        tile = self._get_tile(style, tile_matrix, row=row, col=col)
+                        tile_col.append(tile)
+                tiles.append(tile_col)
+
+        m = self._stitch_images(tiles, rows*2+1, cols*2+1, tm['tile_width'], tm['tile_height'])
+
+        tx = (cols + center_x - center_col) * tm['tile_width']
+        ty = (rows + center_y - center_row) * tm['tile_height']
+
+
+        crop = (
+            int(tx-screen_width/2), 
+            int(ty-screen_height/2), 
+            int(tx+screen_width/2), 
+            int(ty+screen_height/2))
+
+        m = m.crop(crop)
+
+        return self.WMTS_Map(center, m, 0.00028 * tm['scale_denominator'])
