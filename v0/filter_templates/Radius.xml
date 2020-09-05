@@ -1,0 +1,9 @@
+<ogc:Filter xmlns:ogc="http://www.opengis.net/ogc" xmlns:gml="http://www.opengis.net/gml">
+	<DWithin>
+		<PropertyName>ppp</PropertyName>
+		<gml:Point srsName='ccc'>
+			<gml:pos>xxx yyy</gml:pos>
+		</gml:Point>
+		<Distance units='m'>rrr</Distance>
+	</DWithin>
+</ogc:Filter>

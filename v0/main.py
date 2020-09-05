@@ -39,27 +39,7 @@ for typename, color in zip(typenames[1:2], colors):
         xy = (x - r, y - r, x + r, y + r)
         draw.ellipse(xy, fill=color)
 
-m.image.save('map.png')
-m.image.show()
-
 prints('Map has been drawn.')
 
-
-
-## MAKE THIS INTO FUNCTION
-
-'''
-for tile_matrix in range(2)[:1]:
-    tile_matrix = 2
-    n, m = [(2, 3), (3, 5), (6, 9), (12, 17), (23, 34), (46, 68), (92, 135)][tile_matrix]
-
-    img = Image.new('RGB', (n * 256, m * 256))
-    prints('start')
-    for i in range(n):
-        for j in range(m):
-            img.paste(im, (256 * j, 256 * i))
-    prints('stop')
-
-    img.save(f'map_{tile_matrix}.png')
-    img.show()
-'''
+m.image.save('map.png')
+m.image.show()
