@@ -29,6 +29,7 @@ cached_points = {}
 
 scroll_events = 0
 
+points_dict = {}
 def scroll(event):
 
     global tile_matrix, scroll_events
@@ -53,6 +54,7 @@ def scroll(event):
         password='hrN9aTirUg5c!np',
         version='1.1.0')
 
+    typepoints = []
     for typename, color in zip(typenames, colors):
         if (tile_matrix, typename) not in cached_points:
             prints(f'Requesting features of type {typename}.')
@@ -70,24 +72,43 @@ def scroll(event):
         points = cached_points[(tile_matrix, typename)]
 
         if len(points[0]) > 0:
-            plt.plot(points[0], points[1], 'o', color=color, label=typename)
+            typepoints.append(plt.plot(points[0], points[1], '*', color=color, label=typename))
 
     img = m.image
     imgplot = plt.imshow(img, extent=[-1920 / m.dpm * 0.5, 1920 / m.dpm * 0.5, 1080 / m.dpm * 0.5, -1080 / m.dpm * 0.5])
+
     plt.margins(0,0)
-    plt.legend()
+    leg = plt.legend()
+
+    for legpoint, origpoints in zip(leg.get_lines(), typepoints):
+        legpoint.set_picker(5)  # 5 pts tolerance
+        points_dict[legpoint] = origpoints[0]
 
     plt.draw()
     prints('Map has been drawn.')
 
     scroll_events = scroll_events + 1
 
-
+def onpick(event):
+    legpoint = event.artist
+    origpoints = points_dict[legpoint]
+    vis = not origpoints.get_visible()
+    origpoints.set_visible(vis)
+    # Change the alpha on the line in the legend so we can see what lines
+    # have been toggled
+    if vis:
+        legpoint.set_alpha(1.0)
+    else:
+        legpoint.set_alpha(0.2)
+    fig.canvas.draw()
 
 fig = plt.figure()
+
 
 scroll(MouseEvent('',fig.canvas,0,0))
 
 fig.canvas.mpl_connect('scroll_event', scroll)
+fig.canvas.mpl_connect('pick_event', onpick)
+
 
 plt.show()

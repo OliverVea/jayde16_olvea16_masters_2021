@@ -13,6 +13,7 @@ import binascii
 import gmplot
 from math import ceil
 import time
+import io
 
 class WFS_Feature:
     def __init__(self, tag, geometry, default_srs, attributes = {}):
@@ -114,11 +115,7 @@ class WebService(object):
             pass
         
         if response_type == 'jpeg':
-            with open('template_image.jpeg', 'wb') as f:
-                f.write(content)
-            im = Image.open('template_image.jpeg')
-            im.load()
-            return im
+            return Image.open(io.BytesIO(content))
 
 
 class WFS(WebService):
