@@ -15,7 +15,7 @@ from math import ceil
 import time
 
 class WFS_Feature:
-    def __init__(self, tag, attributes, geometry, default_srs):
+    def __init__(self, tag, geometry, default_srs, attributes = {}):
         self.tag = tag
         self.attributes = attributes
         self.geometry = geometry
@@ -47,7 +47,7 @@ class WFS_Feature:
         return self.pos(srs)[1]
 
     def to_srs(self, srs):
-        return WFS_Feature(self.tag, self.attributes, self.pos(srs), srs)
+        return WFS_Feature(tag=self.tag, geometry=self.pos(srs), default_srs=srs, attributes=self.attributes)
 
 class WFS_Filter:
     def radius(self, center: WFS_Feature, radius: float, property: str = 'geometri', crs: str = None):
@@ -160,7 +160,7 @@ class WFS(WebService):
                 else:
                     attributes[tag] = attribute.text
 
-            feature = WFS_Feature(self._simplify_tag(feature.tag), attributes, geometry, srs_name)
+            feature = WFS_Feature(tag=self._simplify_tag(feature.tag), geometry=geometry, default_srs=srs_name, attributes=attributes)
 
             if as_list:
                 features.append(feature)
@@ -168,13 +168,14 @@ class WFS(WebService):
                 assert(not feature['id.lokalId'] in features)
                 features[feature['id.lokalId']] = feature
 
-        prints(f'Received {len(featurelist)} features from \'{shortstring(url, maxlen=100)}\'.', tag='wfs')
+        prints(f'Received {len(featurelist)} features from \'{shortstring(url, maxlen=90)}\'.', tag='wfs')
 
         return features
 
 class WMTS(WebService):
     def __init__(self, url: str, username: str, password: str, layer: str, tile_matrix_set: str, format: str='image/jpeg', version: str='1.0.0'):
         super(WMTS, self).__init__(url, username, password, version)
+        self.pixel_size = 0.00028
         self.layer = layer
         self.format = format
         self.tile_matrix_set = tile_matrix_set
@@ -186,17 +187,17 @@ class WMTS(WebService):
 
     def _to_px(self, scale_denominator, rw=None, m=None):
         if rw != None:
-            return rw / (0.00028 * scale_denominator)
-        return m / 0.00028
+            return rw / (self.pixel_size * scale_denominator)
+        return m / self.pixel_size
 
     def _to_rw(self, scale_denominator, px=None, m=None):
         if px != None:
-            return px * 0.00028 * scale_denominator
+            return px * self.pixel_size * scale_denominator
         return m * scale_denominator
 
     def _to_map(self, scale_denominator, px=None, rw=None):
         if px != None:
-            return px * 0.00028
+            return px * self.pixel_size
         return rw / scale_denominator
 
     def _get_capabilities(self):
@@ -253,35 +254,6 @@ class WMTS(WebService):
 
         return parent_img
 
-    class WMTS_Map:
-        def __init__(self, center: WFS_Feature, image: Image.Image, ppm: float):
-            self.center = center
-            self.image = image
-            self.ppm = ppm
-
-            self.image_width = image.width
-            self.image_height = image.height
-
-        def coord_to_pixels(self, point: WFS_Feature, srs: str = None):
-            if srs == None:
-                srs = self.center.default_srs
-
-            if point.default_srs != srs:
-                point = point.to_srs(srs)
-        
-            center = self.center
-            if center.default_srs != srs:
-                center = center.to_srs(srs)
-
-            print(point.pos('EPSG:4326'))
-            print(center.pos('EPSG:4326'))
-
-            x = (point.x() - center.x()) / self.ppm + self.image_width / 2
-            y = (center.y() - point.y()) / self.ppm + self.image_height / 2
-            
-            return (x, y)
-
-
     def get_map(self, style: str, tile_matrix: int, center: WFS_Feature, screen_width: int = 1920, screen_height: int = 1080):
         tm = self.tile_matrices[tile_matrix]
 
@@ -320,4 +292,29 @@ class WMTS(WebService):
 
         m = m.crop(crop)
 
-        return self.WMTS_Map(center, m, 0.00028 * tm['scale_denominator'])
+        return self.WMTS_Map(center, m, 1 / (self.pixel_size * tm['scale_denominator']))
+
+    class WMTS_Map:
+        def __init__(self, center: WFS_Feature, image: Image.Image, dpm: float):
+            self.center = center
+            self.image = image
+            self.dpm = dpm
+
+            self.image_width = image.width
+            self.image_height = image.height
+
+        def coord_to_pixels(self, point: WFS_Feature, srs: str = None):
+            if srs == None:
+                srs = self.center.default_srs
+
+            if point.default_srs != srs:
+                point = point.to_srs(srs)
+        
+            center = self.center
+            if center.default_srs != srs:
+                center = center.to_srs(srs)
+
+            x = (point.x() - center.x()) #* self.dpm + self.image_width / 2
+            y = (center.y() - point.y()) #* self.dpm + self.image_height / 2
+            
+            return (x, y)

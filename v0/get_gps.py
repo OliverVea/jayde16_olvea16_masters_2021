@@ -45,7 +45,7 @@ class GPSConnection:
             del obj['lat']
             del obj['lon']
 
-            return WFS_Feature('GPS', obj, (lat, lon), 'EPSG:4326')
+            return WFS_Feature(tag='GPS', geometry=(lat, lon), default_srs='EPSG:4326', attributes=obj)
             
         except:
             printe('Response JSON not understood.')
