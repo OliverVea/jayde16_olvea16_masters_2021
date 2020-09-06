@@ -107,7 +107,7 @@ class WebService(object):
             children = {self._simplify_tag(c.tag): c for c in content.iterchildren()}
 
             if 'Exception' in children:
-                printe(str(children['Exception'].ExceptionText), 'wfs')
+                printe(str(children['Exception'].ExceptionText), tag='WebService')
                 return None
 
             if response_type == 'xml':
@@ -139,7 +139,7 @@ class WFS(WebService):
         featureCollection = self._query_url(url)
 
         if featureCollection == None or self._simplify_tag(featureCollection.tag) != 'FeatureCollection':
-            printe('Error in retrieving features. Returning empty dictionary.', 'wfs')
+            printe('Error in retrieving features. Returning empty dictionary.', tag='WFS')
             return {}
 
         featurelist = [member.getchildren()[0] for member in featureCollection.iterchildren()]
@@ -166,7 +166,7 @@ class WFS(WebService):
                 assert(not feature['id.lokalId'] in features)
                 features[feature['id.lokalId']] = feature
 
-        prints(f'Received {len(featurelist)} features from \'{shortstring(url, maxlen=90)}\'.', tag='wfs')
+        prints(f'Received {len(featurelist)} features from \'{shortstring(url, maxlen=90)}\'.', tag='WFS')
 
         return features
 

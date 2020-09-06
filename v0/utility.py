@@ -22,37 +22,33 @@ def _get_timestamp(b):
         return datetime.datetime.now().strftime('%H:%M:%S')
     return ''
 
+def _print(message_type, message_content, message_tag):
+    if (len(_utility_verbose_options_tag_whitelist) > 0 and not message_tag in _utility_verbose_options_tag_whitelist) or message_tag in _utility_verbose_options_tag_blacklist:
+        return
+
+    message_tag = str(message_tag)
+
+    timestamp = datetime.datetime.now().strftime('%H:%M:%S')
+
+    to_print = f'[{message_type.upper()}] ({message_tag}): {message_content}'
+    if _utility_verbose_options_timestamp:
+        to_print = f'{timestamp} [{message_type.upper()}] ({message_tag}): {message_content}'
+    print(to_print)
+
+    with open('log.txt', 'a+') as f:
+        f.write(';'.join([timestamp, message_type, message_tag, message_content]) + '\n')
+
 def prints(s, tag=None):
     if not _utility_verbose_options_status:
         return
 
-    if (len(_utility_verbose_options_tag_whitelist) > 0 and not tag in _utility_verbose_options_tag_whitelist) or tag in _utility_verbose_options_tag_blacklist:
-        return
-
-    message = ['[STATUS]']
-
-    if _utility_verbose_options_timestamp:
-        message.append(datetime.datetime.now().strftime('%H:%M:%S'))
-    
-    message.append(s)
-
-    print(' '.join(message))
+    _print('status', s, tag)
 
 def printe(s, tag=None):
     if not _utility_verbose_options_error:
         return
 
-    if (len(_utility_verbose_options_tag_whitelist) > 0 and not tag in _utility_verbose_options_tag_whitelist) or tag in _utility_verbose_options_tag_blacklist:
-        return
-
-    message = ['[ERROR]']
-
-    if _utility_verbose_options_timestamp:
-        message.append(datetime.datetime.now().strftime('%H:%M:%S'))
-    
-    message.append(s)
-
-    print(' '.join(message))
+    _print('error', s, tag)
 
 def shortstring(s, maxlen):
     if len(s) > maxlen:
@@ -61,3 +57,6 @@ def shortstring(s, maxlen):
 
 def uniform_colors(n):
     return ['#' + "".join("%02X" % round(i*255) for i in hsv_to_rgb(j/n, 1, 1)) for j in range(n)]
+
+with open('log.txt', 'a+') as f:
+    f.write('\n---\n\n')

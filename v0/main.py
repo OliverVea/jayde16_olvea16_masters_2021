@@ -1,7 +1,7 @@
 from wfs import WMTS, WFS, WFS_Feature
 from get_gps import GPSConnection
 from maps import MPL_Map
-from utility import printe, prints
+from utility import printe, prints, set_verbose
 
 use_real_coords = False
 
