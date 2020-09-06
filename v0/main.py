@@ -3,8 +3,6 @@ from get_gps import GPSConnection
 from maps import MPL_Map
 from utility import printe, prints, set_verbose
 
-use_real_coords = False
-
 typenames = ['Mast', 'Nedloebsrist', 'Skorsten', 'Telemast', 'Trae', 'Broenddaeksel']
 colors = ['#FF0000', '#0000FF', '#FFFF00', '#FF00FF', '#00FF00', 'grey']
 
@@ -28,7 +26,7 @@ try:
     coords = conn.get_coords(timeout=timeout).to_srs('EPSG:3857')
     prints(f'Got authentic coordinates from gps.')
 except:
-    printe(f'Could not get coordinates. Using default instead.')
+    prints(f'Could not get coordinates. Using default instead.')
     coords = WFS_Feature(tag='GPS', geometry=(55.369837, 10.431700), default_srs='EPSG:4326').to_srs('EPSG:3857')
 
 m = MPL_Map(coordinates = coords, wmts=wmts, wfs=wfs, wfs_typenames=typenames, wfs_colors=colors)
