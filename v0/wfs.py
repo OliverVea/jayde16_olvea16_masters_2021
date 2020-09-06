@@ -34,7 +34,7 @@ class WFS_Feature:
         return self.geometry.__iter__()
 
     def pos(self, srs=None):
-        if srs != None:
+        if srs != None and srs != self.default_srs:
             if not srs in self.transformed_points:
                 transformer = Transformer.from_crs(self.default_srs, srs)
                 self.transformed_points[srs] = transformer.transform(self.geometry[0], self.geometry[1])
@@ -51,7 +51,8 @@ class WFS_Feature:
         return WFS_Feature(tag=self.tag, geometry=self.pos(srs), default_srs=srs, attributes=self.attributes)
 
 class WFS_Filter:
-    def radius(self, center: WFS_Feature, radius: float, property: str = 'geometri', crs: str = None):
+    @staticmethod
+    def radius(center: WFS_Feature, radius: float, property: str = 'geometri', crs: str = None):
         with open('filter_templates/radius.xml', 'r') as f:
             filt = f.read()
 

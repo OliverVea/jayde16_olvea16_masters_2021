@@ -5,6 +5,7 @@ _utility_verbose_options_tag_whitelist=[]
 _utility_verbose_options_tag_blacklist=[]
 
 import datetime
+from colorsys import hsv_to_rgb
 
 # status, error, tag_whitelist, tag_blacklist, timestamp
 def set_verbose(**args):
@@ -57,3 +58,6 @@ def shortstring(s, maxlen):
     if len(s) > maxlen:
         return s[:maxlen] + '...'
     return s
+
+def uniform_colors(n):
+    return ['#' + "".join("%02X" % round(i*255) for i in hsv_to_rgb(j/n, 1, 1)) for j in range(n)]

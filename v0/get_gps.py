@@ -6,14 +6,17 @@ import json
 import time
 
 class GPSConnection:
-    def __init__(self, address, port, encoding='utf-8'):
+    def __init__(self, address: str, port: int, encoding: str='utf-8'):
         self.address = address
         self.port = port
         self.encoding = encoding
 
         self.socket = socket.socket()
 
-    def get_coords(self, n_tries=10, n_bytes=4096):
+    def get_coords(self, n_tries: int = 10, n_bytes: int = 4096, timeout: float = None) -> WFS_Feature:
+        if timeout != None:
+            self.socket.settimeout(timeout)
+        
         try:
             self.socket.connect((self.address, self.port))
         except:
