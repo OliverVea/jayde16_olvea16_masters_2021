@@ -47,10 +47,8 @@ class Point(object):
 # i stedet for:     
 # Point ─> Feature (ifht. inheritance)
 # 
-# x()/y() giver ikke super meget mening og geometry skal ændres for posList alligevel.
-# Collection kunne have geometry eller contents som kan være en af polymorpherne af Feature.
-# Det giver også meget god mening at Point er et WFS point og ikke bare en primitive som man
-# måske kunne tro nu.
+# x()/y() giver ikke super meget mening og geometry skal ændres for posList alligevel. Collection har features som kan være en af polymorpherne af Feature.
+# Det giver også meget god mening at Point er et WFS point og ikke bare en primitive som man måske kunne tro nu.
 
 class Feature(Point):
     def __init__(self, tag, geometry, default_srs, attributes = {}):
