@@ -1,22 +1,3 @@
-<<<<<<< Updated upstream
-from wfs import WFS, Feature, Point
-from wmts import WMTS
-=======
-<<<<<<< Updated upstream
-from wfs import WMTS, WFS, WFS_Feature
->>>>>>> Stashed changes
-from get_gps import GPSConnection
-from maps import MPL_Map
-from utility import printe, prints, set_verbose
-
-<<<<<<< Updated upstream
-if __name__ == '__main__':
-    typenames = ['Mast', 'Nedloebsrist', 'Skorsten', 'Telemast', 'Trae', 'Broenddaeksel']
-    colors = ['#FF0000', '#0000FF', '#FFFF00', '#FF00FF', '#00FF00', 'grey']
-=======
-typenames = ['Mast', 'Nedloebsrist', 'Skorsten', 'Telemast', 'Trae', 'Broenddaeksel']
-colors = ['#FF0000', '#0000FF', '#FFFF00', '#FF00FF', '#00FF00', 'grey']
-=======
 if __name__ == '__main__':
     from wfs import WFS, Feature, Point
     from wmts import WMTS
@@ -26,8 +7,6 @@ if __name__ == '__main__':
 
     typenames = ['Mast', 'Nedloebsrist', 'Skorsten', 'Telemast', 'Trae', 'Broenddaeksel']
     colors = ['#FF0000', '#0000FF', '#FFFF00', '#FF00FF', '#00FF00', 'grey']
->>>>>>> Stashed changes
->>>>>>> Stashed changes
 
     gps_ip = '10.147.18.175'
 
@@ -47,29 +26,16 @@ if __name__ == '__main__':
     try:
         conn = GPSConnection(address=gps_ip, port=7789)
         coords = conn.get_coords(timeout=timeout)
-        prints(f'Got authentic coordinates from gps.')
     except:
         pass
 
-<<<<<<< Updated upstream
-    if coords == None:
+    if coords != None:
+        prints(f'Got authentic coordinates from gps.')
+    else:
         coords = Feature(tag='GPS', geometry=(55.369837, 10.431700), default_srs='EPSG:4326')
         prints(f'Could not get coordinates. Using default instead.')
     
     coords.to_srs('EPSG:3857')
 
     m = MPL_Map(coordinates = coords, wmts=wmts, wfs=wfs, wfs_typenames=typenames, wfs_colors=colors)
-=======
-<<<<<<< Updated upstream
-m = MPL_Map(coordinates = coords, wmts=wmts, wfs=wfs, wfs_typenames=typenames, wfs_colors=colors)
->>>>>>> Stashed changes
 
-=======
-    if coords == None:
-        coords = Feature(tag='GPS', geometry=(55.369837, 10.431700), default_srs='EPSG:4326')
-        prints(f'Could not get coordinates. Using default instead.')
-    
-    coords.to_srs('EPSG:3857')
-
-    m = MPL_Map(coordinates = coords, wmts=wmts, wfs=wfs, wfs_typenames=typenames, wfs_colors=colors)
->>>>>>> Stashed changes

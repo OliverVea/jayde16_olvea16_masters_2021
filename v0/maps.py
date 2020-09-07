@@ -1,16 +1,6 @@
-<<<<<<< Updated upstream
-from wfs import WFS, Feature, Filter, Point
-from wmts import WMTS
-=======
-<<<<<<< Updated upstream
-from wfs import WMTS, WFS, WFS_Feature, WFS_Filter
->>>>>>> Stashed changes
-from utility import uniform_colors, prints, printe
-=======
 from wfs import WFS, Feature, Filter
 from wmts import WMTS
 from utility import uniform_colors, prints
->>>>>>> Stashed changes
 
 import matplotlib.pyplot as plt
 from matplotlib.patches import Circle
