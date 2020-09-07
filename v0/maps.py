@@ -1,6 +1,16 @@
+<<<<<<< Updated upstream
 from wfs import WFS, Feature, Filter, Point
 from wmts import WMTS
+=======
+<<<<<<< Updated upstream
+from wfs import WMTS, WFS, WFS_Feature, WFS_Filter
+>>>>>>> Stashed changes
 from utility import uniform_colors, prints, printe
+=======
+from wfs import WFS, Feature, Filter
+from wmts import WMTS
+from utility import uniform_colors, prints
+>>>>>>> Stashed changes
 
 import matplotlib.pyplot as plt
 from matplotlib.patches import Circle
@@ -104,6 +114,9 @@ class MPL_Map:
         self.fig.canvas.draw()
 
 if __name__ == '__main__':
+
+    from wfs import Point
+
     wmts = WMTS('https://services.datafordeler.dk/GeoDanmarkOrto/orto_foraar_wmts/1.0.0/WMTS?',
         username='VCSWRCSUKZ',
         password='hrN9aTirUg5c!np',
