@@ -32,10 +32,9 @@ if __name__ == '__main__':
     if coords != None:
         prints(f'Got authentic coordinates from gps.')
     else:
-        coords = Feature(tag='GPS', geometry=(55.369837, 10.431700), default_srs='EPSG:4326')
+        coords = Point(geometry=(55.369837, 10.431700), srs='EPSG:4326')
         prints(f'Could not get coordinates. Using default instead.')
     
     coords.to_srs('EPSG:3857')
 
     m = MPL_Map(coordinates = coords, wmts=wmts, wfs=wfs, wfs_typenames=typenames)
-    

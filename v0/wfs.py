@@ -7,11 +7,25 @@ from lxml import objectify, etree
 from pyproj import Transformer
 from PIL import Image
     
-class Point(object):
-    def __init__(self, geometry: tuple, default_srs: str):
-        self.default_srs = default_srs
+class Feature(object):
+    def __init__(self, tag, attributes = {}):
+    
+        self.tag = tag
+        self.attributes = attributes
+
+    def __getitem__(self, key):
+        return self.attributes[key]
+
+    def __setitem__(self, key, value):
+        self.attributes[key] = value
+
+class Point(Feature):
+    def __init__(self, geometry: tuple, srs: str, attributes = {}):
+        super().__init__('Point', attributes)
+
+        self.default_srs = srs
         
-        self.points = {default_srs: geometry}
+        self.points = {srs: geometry}
 
     def __iter__(self):
         return self.points[self.default_srs].__iter__()
@@ -40,28 +54,51 @@ class Point(object):
         self.points[srs] = self.pos(srs, transform)
         self.default_srs = srs
 
+class Polygon(Feature):
+    def __init__(self, geometry: list, srs: str, attributes = {}):
+        super().__init__('Polygon', attributes)
+
+        self.default_srs = srs
+        
+        self.points = {srs: geometry}
+    
+    def __iter__(self):
+        return self.points[self.default_srs].__iter__()
+
+    def pos(self, srs=None, transform: callable = None):
+        if srs == None:
+            return self.points[self.default_srs]
+
+        if not srs in self.points:
+            if transform == None:
+                transformer = Transformer.from_crs(self.default_srs, srs)
+                self.points[srs] = transformer.transform(self.xs(), self.ys())
+
+            else:
+                self.points[srs] = transform(self.xs(), self.ys())
+
+        return self.points[srs]
+
+    
+    def xs(self, srs=None):
+        return self.pos(srs)[0]
+
+    def ys(self, srs=None):
+        return self.pos(srs)[1]
+
+    def to_srs(self, srs, transform: callable = None):
+        self.points[srs] = self.pos(srs, transform)
+        self.default_srs = srs
 
 # Måske: 
 # Feature ┬─> Point
-#         └─> posList
+#         └─> Polygon
 # i stedet for:     
 # Point ─> Feature (ifht. inheritance)
 # 
-# x()/y() giver ikke super meget mening og geometry skal ændres for posList alligevel. Collection har features som kan være en af polymorpherne af Feature.
+# x()/y() giver ikke super meget mening og geometry skal ændres for Polygon alligevel. Collection har features som kan være en af polymorpherne af Feature.
 # Det giver også meget god mening at Point er et WFS point og ikke bare en primitive som man måske kunne tro nu.
 
-class Feature(Point):
-    def __init__(self, tag, geometry, default_srs, attributes = {}):
-        super(Feature, self).__init__(geometry, default_srs)
-    
-        self.tag = tag
-        self.attributes = attributes
-
-    def __getitem__(self, key):
-        return self.attributes[key]
-
-    def __setitem__(self, key, value):
-        self.attributes[key] = value
 
 class Filter:
     @staticmethod
@@ -88,21 +125,27 @@ class Filter:
         return filt
 
 class Collection:
-    def __init__(self, tag: str, type: str, features: list):
+    def __init__(self, tag: str, type: str, features: list, srs: str):
         self.tag = tag
         self.type = type
         self.features = features
+        self.cached_srs = [srs]
 
     def __iter__(self):
         return self.features.__iter__()
 
     def to_srs(self, srs):
-        transformer = None
-        if len(self.features) > 0 and not srs in self.features[0].points:
-            transformer = Transformer.from_crs(self.features[0].default_srs, srs)
+        if len(self.features) > 0 and srs not in self.cached_srs:
+            transformer = Transformer.from_crs(self.cached_srs[0], srs)
 
-        for ft in self.features:
-            ft.to_srs(srs, transformer.transform)
+            for ft in self.features:
+                ft.to_srs(srs, transformer.transform)
+
+            self.cached_srs.append(srs)
+
+        else:
+            for ft in self.features:
+                ft.to_srs(srs)
 
 
 class WebService(object):
@@ -142,10 +185,12 @@ class WebService(object):
                 return None
 
             if response_type == 'xml':
+                with open('last_response.xml', 'wb') as f:
+                    f.write(etree.tostring(content, pretty_print=True))
                 return content
         except:
             pass
-        
+
         if response_type == 'jpeg':
             return Image.open(io.BytesIO(content))
 
@@ -161,14 +206,15 @@ class WFS(WebService):
             assert(self._simplify_tag(element.tag) == 'pos')
             geometry = tuple(float(val) for val in element.text.split(' '))
 
-        if tag == 'posList':
-            pass
-            # TODO
-
+        if tag == 'Polygon':
+            t = './/{http://www.opengis.net/gml/3.2}posList'
+            temp_geometry = [float(val) for val in element.find(t).text.split(' ')]
+            geometry = [tuple(temp_geometry[i*3+j] for i in range(len(temp_geometry)//3)) for j in range(3)]
+            
         return geometry, tag
 
 
-    def get_features(self, typename=None, bbox=None, filter=None, max_features=None, srs=None, as_list=False):
+    def get_features(self, srs, typename=None, bbox=None, filter=None, max_features=None, as_list=False):
         url = self._make_url('wfs', request='GetFeature', typename=typename, bbox=bbox, filter=filter, maxFeatures=max_features, srsName=srs)
         featureCollection = self._query_url(url)
 
@@ -192,10 +238,13 @@ class WFS(WebService):
                 else:
                     attributes[tag] = attribute.text
 
-            feature = Feature(tag=self._simplify_tag(feature.tag), geometry=geometry, default_srs=srs, attributes=attributes)
+            if type == 'Point':
+                feature = Point(geometry=geometry, srs=srs, attributes=attributes)
+            elif type == 'Polygon':
+                feature = Polygon(geometry=geometry, srs=srs, attributes=attributes)
             features.append(feature)
 
-        features = Collection(type=type, tag=str(typename), features=features)
+        features = Collection(type=type, tag=str(typename), features=features, srs=srs)
 
         prints(f'Received {len(featurelist)} features from \'{shortstring(url, maxlen=90)}\'.', tag='WFS')
 
@@ -207,7 +256,8 @@ if __name__ == '__main__':
         password='hrN9aTirUg5c!np',
         version='1.1.0')
 
-    for typename in ['Bygning']:
-        collection = wfs.get_features(typename, srs='EPSG:3857', max_features=10)
+    for typename in ['Mast', 'Bygning']:
+        collection = wfs.get_features(typename=typename, srs='EPSG:3857', max_features=3)
 
-        pass
+    collection.to_srs('EPSG:4326')
+    dummy = 0
