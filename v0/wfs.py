@@ -152,22 +152,21 @@ class WebService(object):
 
 class WFS(WebService):
     def _get_geometry(self, element):
+
+        element = element.getchildren()[0]
         tag = self._simplify_tag(element.tag)
 
         if tag == 'Point':
             element = element.getchildren()[0]
             assert(self._simplify_tag(element.tag) == 'pos')
-            return tuple(float(val) for val in element.text.split(' '))
+            geometry = tuple(float(val) for val in element.text.split(' '))
 
         if tag == 'posList':
             pass
             # TODO
-        
-        geometry = [self._get_geometry(c) for c in element.iterchildren()]
-        if len(geometry) == 1:
-            geometry = geometry[0]
 
         return geometry, tag
+
 
     def get_features(self, typename=None, bbox=None, filter=None, max_features=None, srs=None, as_list=False):
         url = self._make_url('wfs', request='GetFeature', typename=typename, bbox=bbox, filter=filter, maxFeatures=max_features, srsName=srs)
@@ -179,6 +178,8 @@ class WFS(WebService):
 
         featurelist = [member.getchildren()[0] for member in featureCollection.iterchildren()]
         features = []
+
+        type = "None"
 
         for feature in featurelist:
             attributes = {}

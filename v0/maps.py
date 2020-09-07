@@ -80,9 +80,9 @@ class MPL_Map:
         legend = plt.legend()
         
         self.figpoints = {}
-        for legend_entry, pts in zip(legend.get_lines(), figpoints):
-            legend_entry.set_picker(True)
-            legend_entry.set_pickradius(8)
+        for legend_entry, pts in zip(legend.get_lines() + legend.get_patches(), figpoints):
+            legend_entry.set_picker(8)
+            #legend_entry.set_pickradius(8)
             self.figpoints[legend_entry] = pts
 
         plt.draw()
