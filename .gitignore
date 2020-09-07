@@ -133,3 +133,4 @@ dmypy.json
 *.xml
 !v0/filter_templates/*.xml
 *.txt
+*.json
