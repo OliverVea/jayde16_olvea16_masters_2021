@@ -1,11 +1,14 @@
-from wfs import WMTS, WFS, WFS_Feature, WFS_Filter
+from wfs import WFS, Feature, Filter, Point
+from wmts import WMTS
 from utility import uniform_colors, prints, printe
 
 import matplotlib.pyplot as plt
 from matplotlib.patches import Circle
 
+from time import time
+
 class MPL_Map:
-    def __init__(self, coordinates: WFS_Feature, wmts: WMTS, wfs: WFS, wfs_typenames: list, wfs_colors: list = None, init_tile_matrix: int = 15, max_tile_matrix: int = 15, min_tile_matrix: int = 10):
+    def __init__(self, coordinates: Feature, wmts: WMTS, wfs: WFS, wfs_typenames: list, wfs_colors: list = None, init_tile_matrix: int = 15, max_tile_matrix: int = 15, min_tile_matrix: int = 10):
         self.coordinates = coordinates
         self.wmts = wmts
         self.wfs = wfs
@@ -32,8 +35,11 @@ class MPL_Map:
     def _get_points(self, typename: str, filter: str) -> tuple:
         if not (typename, filter) in self.cached_pts:
             prints(f'Requesting features of type {typename}.', tag='MPL_Map')
-            features = self.wfs.get_features(typename, filter=filter, srs_name=self.coordinates.default_srs, as_list=True)
-            features = [ft.pos('urn:ogc:def:crs:EPSG:6.3:25832') for ft in features]
+            features = self.wfs.get_features(typename, filter=filter, srs=self.coordinates.default_srs, as_list=True)
+            features.to_srs('urn:ogc:def:crs:EPSG:6.3:25832')
+            
+            features = [ft.pos() for ft in features]
+
             cx, cy = self.coordinates.pos('urn:ogc:def:crs:EPSG:6.3:25832')
 
             x, y = [x - cx for x, _ in features], [y - cy for _, y in features]
@@ -53,7 +59,7 @@ class MPL_Map:
 
         r = 0.5 * min(background.image_height, background.image_width) / background.dpm
 
-        wfs_filter = WFS_Filter.radius(center=self.coordinates, radius=r, property='geometri')
+        wfs_filter = Filter.radius(center=self.coordinates, radius=r, property='geometri')
 
         figpoints = []
         for typename, color in zip(self.wfs_typenames, self.wfs_colors):
@@ -111,5 +117,6 @@ if __name__ == '__main__':
 
     typenames = ['Mast', 'Nedloebsrist', 'Skorsten', 'Telemast', 'Trae', 'Broenddaeksel']
 
-    coords = WFS_Feature(tag='GPS', geometry=(55.369837, 10.431700), default_srs='EPSG:4326').to_srs('EPSG:3857')
-    map = MPL_Map(coordinates=coords, wmts=wmts, wfs=wfs, wfs_typenames=typenames)
+    coords = Point(geometry=(55.369837, 10.431700), default_srs='EPSG:4326')
+    coords.to_srs('EPSG:3857')
+    map = MPL_Map(coordinates=coords, wmts=wmts, wfs=wfs, wfs_typenames=typenames, init_tile_matrix=10)
