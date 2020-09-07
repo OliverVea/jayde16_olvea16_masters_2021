@@ -40,6 +40,18 @@ class Point(object):
         self.points[srs] = self.pos(srs, transform)
         self.default_srs = srs
 
+
+# Måske: 
+# Feature ┬─> Point
+#         └─> posList
+# i stedet for:     
+# Point ─> Feature (ifht. inheritance)
+# 
+# x()/y() giver ikke super meget mening og geometry skal ændres for posList alligevel.
+# Collection kunne have geometry eller contents som kan være en af polymorpherne af Feature.
+# Det giver også meget god mening at Point er et WFS point og ikke bare en primitive som man
+# måske kunne tro nu.
+
 class Feature(Point):
     def __init__(self, tag, geometry, default_srs, attributes = {}):
         super(Feature, self).__init__(geometry, default_srs)
@@ -78,8 +90,9 @@ class Filter:
         return filt
 
 class Collection:
-    def __init__(self, tag: str, features: list):
+    def __init__(self, tag: str, type: str, features: list):
         self.tag = tag
+        self.type = type
         self.features = features
 
     def __iter__(self):
@@ -92,6 +105,7 @@ class Collection:
 
         for ft in self.features:
             ft.to_srs(srs, transformer.transform)
+
 
 class WebService(object):
     def __init__(self, url, username, password, version):
@@ -146,12 +160,16 @@ class WFS(WebService):
             element = element.getchildren()[0]
             assert(self._simplify_tag(element.tag) == 'pos')
             return tuple(float(val) for val in element.text.split(' '))
+
+        if tag == 'posList':
+            pass
+            # TODO
         
         geometry = [self._get_geometry(c) for c in element.iterchildren()]
         if len(geometry) == 1:
             geometry = geometry[0]
 
-        return geometry
+        return geometry, tag
 
     def get_features(self, typename=None, bbox=None, filter=None, max_features=None, srs=None, as_list=False):
         url = self._make_url('wfs', request='GetFeature', typename=typename, bbox=bbox, filter=filter, maxFeatures=max_features, srsName=srs)
@@ -170,7 +188,7 @@ class WFS(WebService):
                 tag = self._simplify_tag(attribute.tag)
 
                 if tag == 'geometri':
-                    geometry = self._get_geometry(attribute)
+                    geometry, type = self._get_geometry(attribute)
 
                 else:
                     attributes[tag] = attribute.text
@@ -178,7 +196,7 @@ class WFS(WebService):
             feature = Feature(tag=self._simplify_tag(feature.tag), geometry=geometry, default_srs=srs, attributes=attributes)
             features.append(feature)
 
-        features = Collection(tag=str(typename), features=features)
+        features = Collection(type=type, tag=str(typename), features=features)
 
         prints(f'Received {len(featurelist)} features from \'{shortstring(url, maxlen=90)}\'.', tag='WFS')
 
@@ -190,5 +208,7 @@ if __name__ == '__main__':
         password='hrN9aTirUg5c!np',
         version='1.1.0')
 
-    for typename in ['Mast', 'Nedloebsrist', 'Skorsten', 'Telemast', 'Trae', 'Broenddaeksel']:
+    for typename in ['Bygning']:
         collection = wfs.get_features(typename, srs='EPSG:3857', max_features=10)
+
+        pass
