@@ -5,8 +5,10 @@ if __name__ == '__main__':
     from maps import MPL_Map
     from utility import printe, prints, set_verbose
 
-    typenames = ['Mast', 'Nedloebsrist', 'Trae', 'Skorsten', 'Telemast','Broenddaeksel']
-    colors = ['#FF0000', '#0000FF', '#FFFF00', '#FF00FF', '#00FF00', 'black']
+    set_verbose(tag_blacklist=['MPL_Map'])
+
+    typenames = ['Mast', 'Nedloebsrist', 'Skorsten', 'Telemast', 'Trae', 'Broenddaeksel', 'Bygning']
+    colors = ['#FFFFFF', '#0000FF', '#FFFF00', '#FF00FF', '#10AA09', '#000000', '#FF0000']
 
     gps_ip = '10.147.18.175'
 
@@ -37,4 +39,4 @@ if __name__ == '__main__':
     
     coords.to_srs('EPSG:3857')
 
-    m = MPL_Map(coordinates = coords, wmts=wmts, wfs=wfs, wfs_typenames=typenames)
+    m = MPL_Map(coordinates = coords, wmts=wmts, wfs=wfs, wfs_typenames=typenames, wfs_colors=colors)

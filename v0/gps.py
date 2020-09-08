@@ -1,5 +1,5 @@
 from utility import prints, printe
-from wfs import Feature
+from wfs import Point
 
 import socket
 import json
@@ -13,7 +13,7 @@ class GPSConnection:
 
         self.socket = socket.socket()
 
-    def get_coords(self, n_tries: int = 10, n_bytes: int = 4096, timeout: float = None) -> Feature:
+    def get_coords(self, n_tries: int = 10, n_bytes: int = 4096, timeout: float = None) -> Point:
         if timeout != None:
             self.socket.settimeout(timeout)
         
@@ -48,7 +48,7 @@ class GPSConnection:
             del obj['lat']
             del obj['lon']
 
-            return Point(geometry=(lat, lon), default_srs='EPSG:4326', attributes=obj)
+            return Point(geometry=(lat, lon), srs='EPSG:4326', attributes=obj)
             
         except:
             printe('Response JSON not understood.')
