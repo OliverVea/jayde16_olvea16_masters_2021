@@ -1,4 +1,4 @@
-from wfs import WebService, WFS, Point
+from wfs import WebService, WFS, Feature
 
 from PIL import Image
 from math import ceil
@@ -85,7 +85,10 @@ class WMTS(WebService):
 
         return parent_img
 
-    def get_map(self, style: str, tile_matrix: int, center: Point, screen_width: int = 1920, screen_height: int = 1080):
+    def dpm(self, tile_matrix):
+        return 1 / (0.00028 * self.tile_matrices[tile_matrix]['scale_denominator'])
+
+    def get_map(self, style: str, tile_matrix: int, center: Feature, screen_width: int = 1920, screen_height: int = 1080):
         tm = self.tile_matrices[tile_matrix]
 
         cols = ceil((screen_width/2) / tm['tile_width'])
@@ -114,7 +117,6 @@ class WMTS(WebService):
         tx = (cols + center_x - center_col) * tm['tile_width']
         ty = (rows + center_y - center_row) * tm['tile_height']
 
-
         crop = (
             int(tx-screen_width/2), 
             int(ty-screen_height/2), 
@@ -123,29 +125,17 @@ class WMTS(WebService):
 
         m = m.crop(crop)
 
-        return self.WMTS_Map(center, m, 1 / (self.pixel_size * tm['scale_denominator']))
+        return m
 
-    class WMTS_Map:
-        def __init__(self, center: Point, image: Image.Image, dpm: float):
-            self.center = center
-            self.image = image
-            self.dpm = dpm
+if __name__ == '__main__':
+    center = Feature('Center', geometry=(55.3761308, 10.3860752), srs='EPSG:4326')
+    center.to_srs('EPSG:3857')
 
-            self.image_width = image.width
-            self.image_height = image.height
-
-        def coord_to_pixels(self, point: Point, srs: str = None):
-            if srs == None:
-                srs = self.center.default_srs
-
-            if point.default_srs != srs:
-                point = point.to_srs(srs)
-        
-            center = self.center
-            if center.default_srs != srs:
-                center = center.to_srs(srs)
-
-            x = (point.x() - center.x()) * self.dpm + self.image_width / 2
-            y = (center.y() - point.y()) * self.dpm + self.image_height / 2
-            
-            return (x, y)
+    wmts = WMTS('https://services.datafordeler.dk/GeoDanmarkOrto/orto_foraar_wmts/1.0.0/WMTS?',
+            username='VCSWRCSUKZ',
+            password='hrN9aTirUg5c!np',
+            layer='orto_foraar_wmts',
+            tile_matrix_set='KortforsyningTilingDK')
+    
+    image = wmts.get_map(style='default', tile_matrix=12, center=center)
+    image.show()

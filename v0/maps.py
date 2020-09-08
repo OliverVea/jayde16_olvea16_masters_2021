@@ -8,6 +8,69 @@ from matplotlib.collections import PatchCollection
 
 from time import time
 
+class Map:
+    def __init__(self, center: Feature, wmts: WMTS, figname: str = None, tile_matrix: int = 15, draw_center: bool = True):
+        self.center = center
+        self.srs = center.default_srs
+        self.wmts = wmts
+        self.figname = figname
+        self.draw_center = draw_center
+
+        self.fig = plt.figure(self.figname)
+
+        self.set_tile_matrix(tile_matrix)
+        
+        plt.margins(0, 0)
+
+        if draw_center:
+            self._draw_point((0, 0), label='Center', marker='x', color=None)
+
+    def show(self):
+        plt.figure(self.figname)
+        plt.show()
+
+    def clear_points(self):
+        plt.figure(self.figname)
+        plt.clf()
+
+    def set_tile_matrix(self, tile_matrix):
+        self.clear_points()
+        self.tile_matrix = tile_matrix
+        self.background = self.wmts.get_map('default', tile_matrix=tile_matrix, center=center)
+        self.dpm = self.wmts.dpm(tile_matrix)
+        
+        w, h = 0.5 * self.background.width / self.dpm, 0.5 * self.background.height / self.dpm
+        extent = [-w, w, -h, h]
+
+        plt.gca().set_xlim(extent[0], extent[1])
+        plt.gca().set_ylim(extent[2], extent[3])
+
+        plt.imshow(self.background, extent=extent)
+
+    def _draw_point(self, point, label, color, marker):
+        plt.plot(point[0], point[1], marker, label=label, color=color)
+
+    def add_points(self, points: list, label: str = None, color: str = None, marker: str = '*'):
+        plt.figure(self.figname)
+
+        if not isinstance(points, list):
+            points = [points]
+
+        for point in points:
+            point.to_srs(self.srs)
+            self._draw_point((point - self.center).pos(), label=label, color=color, marker=marker)
+
+    
+    def add_linestrings(self, linestrings: list, label: str = None, color: str = None):
+        plt.figure(self.figname)
+
+    def add_polygons(self, polygons: list, label: str = None, color: str = None):
+        plt.figure(self.figname)
+        pass
+
+    def add_circle(self, origin: Feature, radius: float):
+        pass    
+
 class MPL_Map:
     def __init__(self, coordinates: Feature, wmts: WMTS, wfs: WFS, wfs_typenames: list, wfs_colors: list = None, init_tile_matrix: int = 15, max_tile_matrix: int = 15, min_tile_matrix: int = 10, radius: float = None):
         self.coordinates = coordinates
@@ -24,7 +87,9 @@ class MPL_Map:
         self.max_tile_matrix = max_tile_matrix
         self.min_tile_matrix = min_tile_matrix
 
-        self.fig = plt.figure()
+        self.figname = f'{self.coordinates.x("EPSG:4326")}_{self.coordinates.y("EPSG:4326")}'
+
+        self.fig = plt.figure(self.figname)
         self.fig.canvas.mpl_connect('scroll_event', self._on_scroll)
         self.fig.canvas.mpl_connect('pick_event', self._on_pick)
 
@@ -34,7 +99,9 @@ class MPL_Map:
         self.figpoints = {}
 
         self._update_figure()
+
         plt.show()
+
 
     def _get_points(self, typename: str, filter: str) -> tuple:
         if not (typename, filter) in self.cached_pts:
@@ -70,11 +137,15 @@ class MPL_Map:
     def _update_figure(self):
         plt.clf()
 
+        plt.title(f'Coords (lat, lon): ({self.coordinates.x("EPSG:4326")}, {self.coordinates.y("EPSG:4326")}), Tile Matrix: {self.tile_matrix}')
+
+        dpm = self.wmts.dpm(self.tile_matrix)
+
         background = self.wmts.get_map(style='default', tile_matrix=self.tile_matrix, center=self.coordinates)
 
         r = self.radius
         if r == None:
-            r = 0.5 * min(background.image_height, background.image_width) / background.dpm
+            r = 0.5 * min(background.height, background.width) / dpm
 
         wfs_filter = Filter.radius(center=self.coordinates, radius=r, property='geometri')
 
@@ -90,7 +161,7 @@ class MPL_Map:
                 patches = []
                 for building in pts['geometry']:    
                     patches.append(Polygon(building))
-                p = PatchCollection(patches, label=typename, facecolor='none', edgecolor=color, linewidth=2 - (0.7 / background.dpm))
+                p = PatchCollection(patches, label=typename, facecolor='none', edgecolor=color, linewidth=2 - (0.7 / dpm))
                 figpoints.append(plt.gca().add_collection(p))      
                 plt.gca().add_patch(Polygon([[0,0], [0,0]], label=typename, facecolor='none', edgecolor=color))  
             
@@ -100,20 +171,18 @@ class MPL_Map:
 
                     for i, (x, y) in enumerate(zip(xs, ys)):
                         if i == 0:
-                            figpoints.append(plt.plot(x, y, '-', color=color, label=typename)[0])
+                            figpoints.append([plt.plot(x, y, '-', color=color, label=typename)[0]])
                         else:
-                            figpoints.append(plt.plot(x, y, '-', color=color)[0])
+                            figpoints[-1].append(plt.plot(x, y, '-', color=color)[0])
 
-        plt.gca().set_xlim(- 0.5 * background.image_width / background.dpm, 0.5 * background.image_width / background.dpm)
-        plt.gca().set_ylim(- 0.5 * background.image_height / background.dpm, 0.5 * background.image_height / background.dpm)
+        extent = [a * b / dpm for a in [background.width, background.height] for b in [-0.5, 0.5]]
+        
+        plt.gca().set_xlim(extent[0], extent[1])
+        plt.gca().set_ylim(extent[2], extent[3])
 
         figpoints.append(plt.gca().add_patch(Circle((0,0), r, color=(0, 0, 0, 0.2), label='Area')))
 
-        im = background.image
-        extent = [-0.5 * im.width, 0.5 * im.width, -0.5 * im.height, 0.5 * im.height]
-        extent = [e / background.dpm for e in extent]
-
-        plt.imshow(im, extent=extent)
+        plt.imshow(background, extent=extent)
         plt.margins(0, 0)
 
         legend = plt.legend()
@@ -146,12 +215,18 @@ class MPL_Map:
 
     def _on_pick(self, event):
         pts = self.figpoints[event.artist.get_label()]
-        pts.set_visible(not pts.get_visible())
+
+        if isinstance(pts, list):
+            for pt in pts:
+                pt.set_visible(not pt.get_visible())
+
+        else:
+            pts.set_visible(not pts.get_visible())
         self.fig.canvas.draw()
 
 if __name__ == '__main__':
 
-    from wfs import Point
+    from wfs import Feature
 
     wmts = WMTS('https://services.datafordeler.dk/GeoDanmarkOrto/orto_foraar_wmts/1.0.0/WMTS?',
         username='VCSWRCSUKZ',
@@ -166,6 +241,27 @@ if __name__ == '__main__':
 
     typenames = ['Mast', 'Nedloebsrist', 'Skorsten', 'Telemast', 'Trae', 'Broenddaeksel', 'Bygning']
 
-    coords = Point(geometry=(55.369837, 10.431700), srs='EPSG:4326')
+    coords = Feature('Center', geometry=(55.369837, 10.431700), srs='EPSG:4326')
     coords.to_srs('EPSG:3857')
     map = MPL_Map(coordinates=coords, wmts=wmts, wfs=wfs, wfs_typenames=typenames, init_tile_matrix=12)
+
+if __name__ == '__main__':
+
+    center = Feature('Center', (55.3761308,10.3860752), srs='EPSG:4326')
+    center.to_srs('EPSG:3857')
+
+    wmts = WMTS('https://services.datafordeler.dk/GeoDanmarkOrto/orto_foraar_wmts/1.0.0/WMTS?',
+            username='VCSWRCSUKZ',
+            password='hrN9aTirUg5c!np',
+            layer='orto_foraar_wmts',
+            tile_matrix_set='KortforsyningTilingDK')
+
+    map = Map(center=center, wmts=wmts, figname='Figure', tile_matrix=13)
+
+    d = Feature('distance', (0, 0.0001), srs='EPSG:4326')
+
+    pts = [center + d, center - d]
+
+    map.add_points(pts)
+
+    map.show()

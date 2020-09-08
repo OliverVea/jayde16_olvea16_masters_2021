@@ -8,10 +8,13 @@ from pyproj import Transformer
 from PIL import Image
     
 class Feature(object):
-    def __init__(self, tag, attributes = {}):
-    
+    def __init__(self, tag, geometry, srs, attributes = {}):
         self.tag = tag
         self.attributes = attributes
+        self.default_srs = srs
+        self.points = {srs: geometry}
+
+        self.is_list = isinstance(geometry[0], list)
 
     def __getitem__(self, key):
         return self.attributes[key]
@@ -19,16 +22,28 @@ class Feature(object):
     def __setitem__(self, key, value):
         self.attributes[key] = value
 
-class Point(Feature):
-    def __init__(self, geometry: tuple, srs: str, attributes = {}):
-        super().__init__('Point', attributes)
-
-        self.default_srs = srs
-        
-        self.points = {srs: geometry}
-
     def __iter__(self):
         return self.points[self.default_srs].__iter__()
+
+    def __add__(self, pt):
+        x, y = pt.pos(self.default_srs)
+
+        if self.is_list:
+            geometry =  [(sx + x, sy + y) for sx in self.x() for sy in self.y()]
+        else:
+            geometry = (self.x() + x, self.y() + y)
+
+        return Feature(tag=self.tag, geometry=geometry, srs=self.default_srs, attributes={})
+
+    def __sub__(self, pt):
+        x, y = pt.pos(self.default_srs)
+
+        if self.is_list:
+            geometry =  [(sx - x, sy - y) for sx in self.x() for sy in self.y()]
+        else:
+            geometry = (self.x() - x, self.y() - y)
+
+        return Feature(tag=self.tag, geometry=geometry, srs=self.default_srs, attributes={})
 
     def pos(self, srs=None, transform: callable = None):
         if srs == None:
@@ -54,59 +69,9 @@ class Point(Feature):
         self.points[srs] = self.pos(srs, transform)
         self.default_srs = srs
 
-class Polygon(Feature):
-    def __init__(self, geometry: list, srs: str, attributes = {}):
-        super().__init__('Polygon', attributes)
-
-        self.default_srs = srs
-        
-        self.points = {srs: geometry}
-    
-    def __iter__(self):
-        return self.points[self.default_srs].__iter__()
-
-    def pos(self, srs=None, transform: callable = None):
-        if srs == None:
-            return self.points[self.default_srs]
-
-        if not srs in self.points:
-            if transform == None:
-                transformer = Transformer.from_crs(self.default_srs, srs)
-                self.points[srs] = transformer.transform(self.xs(), self.ys())
-
-            else:
-                self.points[srs] = transform(self.xs(), self.ys())
-
-        return self.points[srs]
-
-    
-    def xs(self, srs=None):
-        return self.pos(srs)[0]
-
-    def ys(self, srs=None):
-        return self.pos(srs)[1]
-
-    def to_srs(self, srs, transform: callable = None):
+    def as_srs(self, srs, transform: callable = None):
         self.points[srs] = self.pos(srs, transform)
-        self.default_srs = srs
-
-class LineString(Polygon):
-    def __init__(self, geometry: list, srs: str, attributes = {}):
-        Feature.__init__(self, 'LineString', attributes)
-
-        self.default_srs = srs
-        
-        self.points = {srs: geometry}
-
-# Måske: 
-# Feature ┬─> Point
-#         └─> Polygon
-# i stedet for:     
-# Point ─> Feature (ifht. inheritance)
-# 
-# x()/y() giver ikke super meget mening og geometry skal ændres for Polygon alligevel. Collection har features som kan være en af polymorpherne af Feature.
-# Det giver også meget god mening at Point er et WFS point og ikke bare en primitive som man måske kunne tro nu.
-
+        return type(self)(self.tag, self.points[srs], srs, self.attributes)
 
 class Filter:
     @staticmethod
@@ -214,12 +179,7 @@ class WFS(WebService):
             assert(self._simplify_tag(element.tag) == 'pos')
             geometry = tuple(float(val) for val in element.text.split(' '))
 
-        elif tag == 'Polygon':
-            t = './/{http://www.opengis.net/gml/3.2}posList'
-            temp_geometry = [float(val) for val in element.find(t).text.split(' ')]
-            geometry = [tuple(temp_geometry[i*3+j] for i in range(len(temp_geometry)//3)) for j in range(3)]
-
-        elif tag == 'LineString':
+        elif tag == 'Polygon' or tag == 'LineString':
             t = './/{http://www.opengis.net/gml/3.2}posList'
             temp_geometry = [float(val) for val in element.find(t).text.split(' ')]
             geometry = [tuple(temp_geometry[i*3+j] for i in range(len(temp_geometry)//3)) for j in range(3)]
@@ -255,18 +215,7 @@ class WFS(WebService):
                 else:
                     attributes[tag] = attribute.text
 
-            if type == 'Point':
-                featureType = Point
-            elif type == 'Polygon':
-                featureType = Polygon
-            elif type == 'LineString':
-                featureType = LineString
-            else:
-                printe(f'Geometry type {type} not supported.', tag='WFS.get_features')
-                featureType = Point
-                geometry = (0, 0)
-
-            feature = featureType(geometry=geometry, srs=srs, attributes=attributes)
+            feature = Feature(tag=type, geometry=geometry, srs=srs, attributes=attributes)
             features.append(feature)
 
         features = Collection(type=type, tag=str(typename), features=features, srs=srs)
