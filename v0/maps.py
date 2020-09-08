@@ -1,6 +1,6 @@
 from wfs import WFS, Feature, Filter
 from wmts import WMTS
-from utility import uniform_colors, prints
+from utility import uniform_colors, prints, printe
 
 import matplotlib.pyplot as plt
 from matplotlib.patches import Circle, Polygon
@@ -9,11 +9,12 @@ from matplotlib.collections import PatchCollection
 from time import time
 
 class MPL_Map:
-    def __init__(self, coordinates: Feature, wmts: WMTS, wfs: WFS, wfs_typenames: list, wfs_colors: list = None, init_tile_matrix: int = 15, max_tile_matrix: int = 15, min_tile_matrix: int = 10):
+    def __init__(self, coordinates: Feature, wmts: WMTS, wfs: WFS, wfs_typenames: list, wfs_colors: list = None, init_tile_matrix: int = 15, max_tile_matrix: int = 15, min_tile_matrix: int = 10, radius: float = None):
         self.coordinates = coordinates
         self.wmts = wmts
         self.wfs = wfs
         self.wfs_typenames = wfs_typenames
+        self.radius = radius
 
         self.wfs_colors = wfs_colors
         if wfs_colors == None:
@@ -52,7 +53,11 @@ class MPL_Map:
             elif type == 'Polygon':
                 geometry = [[(x - cx, y - cy) for x, y in zip(xy[0], xy[1])] for xy in features]
 
-            elif type == 'None':
+            elif type == 'LineString':
+                geometry = ([[x - cx for x in xs] for xs, _ in features], [[y - cy for y in ys] for _, ys in features])
+
+            else:
+                printe(f'Feature with type {type} not understood.', tag='MPL_Map')
                 geometry = []
 
             self.cached_pts[(typename, filter)] = {'type': type, 'geometry': geometry}
@@ -67,7 +72,9 @@ class MPL_Map:
 
         background = self.wmts.get_map(style='default', tile_matrix=self.tile_matrix, center=self.coordinates)
 
-        r = 0.5 * min(background.image_height, background.image_width) / background.dpm
+        r = self.radius
+        if r == None:
+            r = 0.5 * min(background.image_height, background.image_width) / background.dpm
 
         wfs_filter = Filter.radius(center=self.coordinates, radius=r, property='geometri')
 
@@ -86,6 +93,16 @@ class MPL_Map:
                 p = PatchCollection(patches, label=typename, facecolor='none', edgecolor=color, linewidth=2 - (0.7 / background.dpm))
                 figpoints.append(plt.gca().add_collection(p))      
                 plt.gca().add_patch(Polygon([[0,0], [0,0]], label=typename, facecolor='none', edgecolor=color))  
+            
+            elif pts['type'] == 'LineString':
+                if len(pts['geometry'][0]) > 0:
+                    xs, ys = pts['geometry']
+
+                    for i, (x, y) in enumerate(zip(xs, ys)):
+                        if i == 0:
+                            figpoints.append(plt.plot(x, y, '-', color=color, label=typename)[0])
+                        else:
+                            figpoints.append(plt.plot(x, y, '-', color=color)[0])
 
         plt.gca().set_xlim(- 0.5 * background.image_width / background.dpm, 0.5 * background.image_width / background.dpm)
         plt.gca().set_ylim(- 0.5 * background.image_height / background.dpm, 0.5 * background.image_height / background.dpm)

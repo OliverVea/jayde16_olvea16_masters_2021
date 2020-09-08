@@ -90,6 +90,14 @@ class Polygon(Feature):
         self.points[srs] = self.pos(srs, transform)
         self.default_srs = srs
 
+class LineString(Polygon):
+    def __init__(self, geometry: list, srs: str, attributes = {}):
+        Feature.__init__(self, 'LineString', attributes)
+
+        self.default_srs = srs
+        
+        self.points = {srs: geometry}
+
 # Måske: 
 # Feature ┬─> Point
 #         └─> Polygon
@@ -206,10 +214,19 @@ class WFS(WebService):
             assert(self._simplify_tag(element.tag) == 'pos')
             geometry = tuple(float(val) for val in element.text.split(' '))
 
-        if tag == 'Polygon':
+        elif tag == 'Polygon':
             t = './/{http://www.opengis.net/gml/3.2}posList'
             temp_geometry = [float(val) for val in element.find(t).text.split(' ')]
             geometry = [tuple(temp_geometry[i*3+j] for i in range(len(temp_geometry)//3)) for j in range(3)]
+
+        elif tag == 'LineString':
+            t = './/{http://www.opengis.net/gml/3.2}posList'
+            temp_geometry = [float(val) for val in element.find(t).text.split(' ')]
+            geometry = [tuple(temp_geometry[i*3+j] for i in range(len(temp_geometry)//3)) for j in range(3)]
+
+        else:
+            printe(f'Geometry type {tag} not supported.', tag='WFS._get_geometry')
+            geometry = []
             
         return geometry, tag
 
@@ -227,9 +244,9 @@ class WFS(WebService):
 
         type = "None"
 
-        for feature in featurelist:
+        for ft in featurelist:
             attributes = {}
-            for attribute in feature.iterchildren():
+            for attribute in ft.iterchildren():
                 tag = self._simplify_tag(attribute.tag)
 
                 if tag == 'geometri':
@@ -239,9 +256,17 @@ class WFS(WebService):
                     attributes[tag] = attribute.text
 
             if type == 'Point':
-                feature = Point(geometry=geometry, srs=srs, attributes=attributes)
+                featureType = Point
             elif type == 'Polygon':
-                feature = Polygon(geometry=geometry, srs=srs, attributes=attributes)
+                featureType = Polygon
+            elif type == 'LineString':
+                featureType = LineString
+            else:
+                printe(f'Geometry type {type} not supported.', tag='WFS.get_features')
+                featureType = Point
+                geometry = (0, 0)
+
+            feature = featureType(geometry=geometry, srs=srs, attributes=attributes)
             features.append(feature)
 
         features = Collection(type=type, tag=str(typename), features=features, srs=srs)
