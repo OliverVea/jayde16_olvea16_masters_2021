@@ -40,43 +40,27 @@ class MPL_Map:
             prints(f'Requesting features of type {typename}.', tag='MPL_Map')
             features = self.wfs.get_features(typename=typename, filter=filter, srs=self.coordinates.default_srs, as_list=True)
             features.to_srs('urn:ogc:def:crs:EPSG:6.3:25832')
+            type = features.type
             
             features = [ft.pos() for ft in features]
 
             cx, cy = self.coordinates.pos('urn:ogc:def:crs:EPSG:6.3:25832')
 
-            x, y = [x - cx for x, _ in features], [y - cy for _, y in features]
+            if type == 'Point':
+                geometry = ([x - cx for x, _ in features], [y - cy for _, y in features])
 
-            self.cached_pts[(typename, filter)] = (x, y)
+            elif type == 'Polygon':
+                geometry = [[(x - cx, y - cy) for x, y in zip(xy[0], xy[1])] for xy in features]
+
+            elif type == 'None':
+                geometry = []
+
+            self.cached_pts[(typename, filter)] = {'type': type, 'geometry': geometry}
         
         else:
             prints(f'Using cached points of type \'{typename}\'.', tag='MPL_Map')
 
         return self.cached_pts[(typename, filter)]
-
-    def _get_building_points(self, filter: str) -> tuple:
-        if not ('Bygning', filter) in self.cached_pts:
-            prints('Requesting features of type Bygning.', tag='MPL_Map')
-            buildings = self.wfs.get_features(typename='Bygning', filter=filter, srs=self.coordinates.default_srs, as_list=True)
-            buildings.to_srs('urn:ogc:def:crs:EPSG:6.3:25832')
-            
-            buildings = [points.pos() for points in buildings]
-
-            cx, cy = self.coordinates.pos('urn:ogc:def:crs:EPSG:6.3:25832')
-
-            center = [cx, cy]
-
-            #image_poses = [[[x - cx for x in building[0]], [y - cy for y in building[1]]] for building in buildings]
-            #for i in range(len(image_poses)): image_poses[i] = list(zip(*image_poses[i]))
-
-            image_poses = [[[xy - c for xy, c in zip([x, y], center)] for x, y in zip(xy[0], xy[1])] for xy in buildings]
-
-            self.cached_pts[('Bygning', filter)] = image_poses
-        
-        else:
-            prints('Using cached points of type Bygning.', tag='MPL_Map')
-
-        return self.cached_pts[('Bygning', filter)]
 
     def _update_figure(self):
         plt.clf()
@@ -91,22 +75,20 @@ class MPL_Map:
         for typename, color in zip(self.wfs_typenames, self.wfs_colors):
             pts = self._get_points(typename, wfs_filter)
 
-            if len(pts[0]) > 0:
-                figpoints.append(plt.plot(pts[0], pts[1], '*', color=color, label=typename)[0])
+            if pts['type'] == 'Point':
+                if len(pts['geometry'][0]) > 0:
+                    figpoints.append(plt.plot(pts['geometry'][0], pts['geometry'][1], '*', color=color, label=typename)[0])
+                
+            elif pts['type'] == 'Polygon':
+                patches = []
+                for building in pts['geometry']:    
+                    patches.append(Polygon(building))
+                p = PatchCollection(patches, label=typename, facecolor='none', edgecolor=color, linewidth=2 - (0.7 / background.dpm))
+                figpoints.append(plt.gca().add_collection(p))      
+                plt.gca().add_patch(Polygon([[0,0], [0,0]], label=typename, facecolor='none', edgecolor=color))  
 
-        #Add buildings     
-        building_pts = self._get_building_points(wfs_filter)
-        patches = []
-        for building in building_pts:    
-            patches.append(Polygon(building))
-        p = PatchCollection(patches, label='Buildings', facecolor='none', edgecolor='red', linewidth=2 - (0.7 / background.dpm))
-        figpoints.append(plt.gca().add_collection(p))
         plt.gca().set_xlim(- 0.5 * background.image_width / background.dpm, 0.5 * background.image_width / background.dpm)
         plt.gca().set_ylim(- 0.5 * background.image_height / background.dpm, 0.5 * background.image_height / background.dpm)
-        
-
-        #matplotlib can't add PatchCollection to legend, this is used to fix it.
-        plt.gca().add_patch(Polygon([[0,0], [0,0]], label='Buildings', facecolor='none', edgecolor='red'))
 
         figpoints.append(plt.gca().add_patch(Circle((0,0), r, color=(0, 0, 0, 0.2), label='Area')))
 
@@ -165,7 +147,7 @@ if __name__ == '__main__':
         password='hrN9aTirUg5c!np',
         version='1.1.0')
 
-    typenames = ['Mast', 'Nedloebsrist', 'Skorsten', 'Telemast', 'Trae', 'Broenddaeksel']
+    typenames = ['Mast', 'Nedloebsrist', 'Skorsten', 'Telemast', 'Trae', 'Broenddaeksel', 'Bygning']
 
     coords = Point(geometry=(55.369837, 10.431700), srs='EPSG:4326')
     coords.to_srs('EPSG:3857')

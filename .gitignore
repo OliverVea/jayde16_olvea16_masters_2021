@@ -134,3 +134,4 @@ dmypy.json
 !v0/filter_templates/*.xml
 *.txt
 *.json
+v0/.vscode/settings.json
