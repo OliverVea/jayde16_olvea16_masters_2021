@@ -17,16 +17,29 @@ class Map:
         self.draw_center = draw_center
 
         self.fig = plt.figure(self.figname)
+        self.fig.canvas.mpl_connect('pick_event', self._on_pick)
 
         self.set_tile_matrix(tile_matrix)
+
+        self.lines = {}
+        self.colors = {}
         
         plt.margins(0, 0)
 
         if draw_center:
-            self._draw_point((0, 0), label='Center', marker='x', color=None)
+            self._draw_point((0, 0), label='Center', annotation=None, marker='x', color=None)
 
     def show(self):
         plt.figure(self.figname)
+
+        lines = {label: line for label, line in zip(self.lines.keys(), self.lines.values()) if label != None}
+        lines, labels = [line[0] for line in lines.values()], [label for label in lines.keys()]
+
+        legend = plt.legend(lines, labels)
+
+        for entry in legend.get_lines() + legend.get_patches():
+            entry.set_picker(8)
+
         plt.show()
 
     def clear_points(self):
@@ -47,20 +60,39 @@ class Map:
 
         plt.imshow(self.background, extent=extent)
 
-    def _draw_point(self, point, label, color, marker):
-        plt.plot(point[0], point[1], marker, label=label, color=color)
+    def _draw_point(self, point, label, annotation, color, marker):
+        line = plt.plot(point[0], point[1], marker, label=label, color=color)[0]
+        self.lines.setdefault(label, []).append(line)
 
-    def add_points(self, points: list, label: str = None, color: str = None, marker: str = '*'):
+        line.set_visible(self.lines[label][0].get_visible())
+
+        if label not in self.colors:
+            self.colors[label] = line.get_color()
+
+        if annotation != None:
+            annotation = plt.text(point[0], point[1], f' {annotation}', color=self.colors[label], size='small')
+            self.lines[label].append(annotation)
+            annotation.set_visible(self.lines[label][0].get_visible())
+
+        return line   
+
+    def add_points(self, points: list, annotations: list = None, label: str = None, color: str = None, marker: str = '*'):
         plt.figure(self.figname)
 
         if not isinstance(points, list):
             points = [points]
 
-        for point in points:
-            point.to_srs(self.srs)
-            self._draw_point((point - self.center).pos(), label=label, color=color, marker=marker)
+        for i, point in enumerate(points):
+            if color == None and label in self.colors:
+                color = self.colors[label]
 
-    
+            annotation = None
+            if annotations != None:
+                annotation = annotations[i]
+
+            point = point.as_srs(self.srs) - self.center
+            self._draw_point(point.pos(), label=label, annotation=annotation, color=color, marker=marker)
+
     def add_linestrings(self, linestrings: list, label: str = None, color: str = None):
         plt.figure(self.figname)
 
@@ -70,6 +102,15 @@ class Map:
 
     def add_circle(self, origin: Feature, radius: float):
         pass    
+
+    def _on_pick(self, event):
+        label = event.artist.get_label()
+        pts = self.lines[label]
+
+        for pt in pts:
+            pt.set_visible(not pt.get_visible())
+
+        self.fig.canvas.draw()
 
 class MPL_Map:
     def __init__(self, coordinates: Feature, wmts: WMTS, wfs: WFS, wfs_typenames: list, wfs_colors: list = None, init_tile_matrix: int = 15, max_tile_matrix: int = 15, min_tile_matrix: int = 10, radius: float = None):
@@ -224,7 +265,7 @@ class MPL_Map:
             pts.set_visible(not pts.get_visible())
         self.fig.canvas.draw()
 
-if __name__ == '__main__':
+if __name__ == '__main__' and False:
 
     from wfs import Feature
 
@@ -241,13 +282,13 @@ if __name__ == '__main__':
 
     typenames = ['Mast', 'Nedloebsrist', 'Skorsten', 'Telemast', 'Trae', 'Broenddaeksel', 'Bygning']
 
-    coords = Feature('Center', geometry=(55.369837, 10.431700), srs='EPSG:4326')
+    coords = Feature(geometry=(55.369837, 10.431700), srs='EPSG:4326')
     coords.to_srs('EPSG:3857')
     map = MPL_Map(coordinates=coords, wmts=wmts, wfs=wfs, wfs_typenames=typenames, init_tile_matrix=12)
 
 if __name__ == '__main__':
 
-    center = Feature('Center', (55.3761308,10.3860752), srs='EPSG:4326')
+    center = Feature((55.3761308, 10.3860752), srs='EPSG:4326', tag='Point')
     center.to_srs('EPSG:3857')
 
     wmts = WMTS('https://services.datafordeler.dk/GeoDanmarkOrto/orto_foraar_wmts/1.0.0/WMTS?',
@@ -258,10 +299,10 @@ if __name__ == '__main__':
 
     map = Map(center=center, wmts=wmts, figname='Figure', tile_matrix=13)
 
-    d = Feature('distance', (0, 0.0001), srs='EPSG:4326')
+    d = Feature((0, 0.0001), srs='EPSG:4326')
 
     pts = [center + d, center - d]
 
-    map.add_points(pts)
+    map.add_points(pts, annotations=[i for i in range(len(pts))])
 
     map.show()

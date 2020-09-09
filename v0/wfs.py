@@ -8,7 +8,7 @@ from pyproj import Transformer
 from PIL import Image
     
 class Feature(object):
-    def __init__(self, tag, geometry, srs, attributes = {}):
+    def __init__(self, geometry, srs: str, tag: str = '', attributes: dict = {}):
         self.tag = tag
         self.attributes = attributes
         self.default_srs = srs
@@ -70,8 +70,7 @@ class Feature(object):
         self.default_srs = srs
 
     def as_srs(self, srs, transform: callable = None):
-        self.points[srs] = self.pos(srs, transform)
-        return type(self)(self.tag, self.points[srs], srs, self.attributes)
+        return Feature(geometry=self.pos(srs, transform), srs=srs, tag=self.tag, attributes=self.attributes)
 
 class Filter:
     @staticmethod
