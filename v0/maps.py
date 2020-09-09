@@ -16,18 +16,17 @@ class Map:
         self.figname = figname
         self.draw_center = draw_center
 
+        self.history = []
+
         self.fig = plt.figure(self.figname)
         self.fig.canvas.mpl_connect('pick_event', self._on_pick)
-
-        self.set_tile_matrix(tile_matrix)
-
+        
         self.lines = {}
         self.colors = {}
+
+        self.set_tile_matrix(tile_matrix)
         
         plt.margins(0, 0)
-
-        if draw_center:
-            self._draw_point((0, 0), label='Center', annotation=None, marker='x', color=None)
 
     def show(self):
         plt.figure(self.figname)
@@ -36,15 +35,25 @@ class Map:
         lines, labels = [line[0] for line in lines.values()], [label for label in lines.keys()]
 
         legend = plt.legend(lines, labels)
+        entries = legend.get_lines() + legend.get_patches()
 
-        for entry in legend.get_lines() + legend.get_patches():
+        for entry in entries:
             entry.set_picker(8)
 
         plt.show()
 
     def clear_points(self):
+        self.lines = {}
         plt.figure(self.figname)
         plt.clf()
+
+    def redraw_history(self):
+        if self.draw_center:
+            self._draw_point((0, 0), label='Center', annotation=None, marker='x', color=None)
+
+        for hist in self.history:
+            add_feature = {'Point': self.add_points, 'Polygon': self.add_polygons, 'LineString': self.add_linestrings}[hist['feature_type']]
+            add_feature(hist['features'], hist['annotations'], hist['label'], hist['color'], hist['marker'], add_to_history=False)
 
     def set_tile_matrix(self, tile_matrix):
         self.clear_points()
@@ -60,6 +69,9 @@ class Map:
 
         plt.imshow(self.background, extent=extent)
 
+        self.redraw_history()
+
+    # Function to actually draw points to the map.
     def _draw_point(self, point, label, annotation, color, marker):
         line = plt.plot(point[0], point[1], marker, label=label, color=color)[0]
         self.lines.setdefault(label, []).append(line)
@@ -74,14 +86,29 @@ class Map:
             self.lines[label].append(annotation)
             annotation.set_visible(self.lines[label][0].get_visible())
 
-        return line   
+        return line  
 
-    def add_points(self, points: list, annotations: list = None, label: str = None, color: str = None, marker: str = '*'):
+    def _add_to_history(self, feature_type: str, features: list, annotations: list = None, label: str = None, color: str = None, marker: str = '*'):
+        self.history.append({
+            'feature_type': feature_type,
+            'features': features,
+            'annotations': annotations,
+            'label': label,
+            'color': color,
+            'marker': marker
+        })
+
+    # Function to add points to the map.
+    def add_points(self, points: list, annotations: list = None, label: str = None, color: str = None, marker: str = '*', add_to_history: bool = True):
+        if add_to_history:
+            self._add_to_history('Point', points, annotations, label, color, marker)
+
         plt.figure(self.figname)
 
-        if not isinstance(points, list):
-            points = [points]
+        # If single point is given.
+        points = [points] if type(points) is str else points
 
+        # This could be done in one go but annotating is probably slightly easier this way.
         for i, point in enumerate(points):
             if color == None and label in self.colors:
                 color = self.colors[label]
@@ -90,15 +117,25 @@ class Map:
             if annotations != None:
                 annotation = annotations[i]
 
+            # A - B is just A with the geometry corresponding to A - B. It keeps tag, attributes & SRS from A.
             point = point.as_srs(self.srs) - self.center
             self._draw_point(point.pos(), label=label, annotation=annotation, color=color, marker=marker)
 
-    def add_linestrings(self, linestrings: list, label: str = None, color: str = None):
+    def add_linestrings(self, linestrings: list, annotations: list = None, label: str = None, color: str = None, marker: str = '*', add_to_history: bool = True):
+        if add_to_history:
+            self._add_to_history('LineString', linestrings, annotations, label, color, marker)
+
         plt.figure(self.figname)
 
-    def add_polygons(self, polygons: list, label: str = None, color: str = None):
+        # If single linestring is given.
+        linestrings = [linestrings] if type(linestrings) is str else linestrings
+        
+
+    def add_polygons(self, polygons: list, annotations: list = None, label: str = None, color: str = None, marker: str = '*', add_to_history: bool = True):
+        if add_to_history:
+            self._add_to_history('Polygon', polygons, annotations, label, color, marker)
+
         plt.figure(self.figname)
-        pass
 
     def add_circle(self, origin: Feature, radius: float):
         pass    
@@ -303,6 +340,9 @@ if __name__ == '__main__':
 
     pts = [center + d, center - d]
 
-    map.add_points(pts, annotations=[i for i in range(len(pts))])
 
+    map.add_points(pts, annotations=[i for i in range(len(pts))], label='Some Points')
+
+    map.show()
+    map.set_tile_matrix(12)
     map.show()
