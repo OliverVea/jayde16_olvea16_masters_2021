@@ -14,7 +14,7 @@ class Feature(object):
         self.default_srs = srs
         self.points = {srs: geometry}
 
-        self.is_list = isinstance(geometry[0], list)
+        self.is_list = type(geometry[0]) in [list, tuple]
 
     def __getitem__(self, key):
         return self.attributes[key]

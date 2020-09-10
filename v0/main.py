@@ -2,7 +2,7 @@ if __name__ == '__main__':
     from wfs import WFS, Feature, Filter
     from wmts import WMTS
     from gps import GPSConnection
-    from maps import MPL_Map
+    from maps import Map
     from utility import printe, prints, set_verbose
 
     #set_verbose(status=False, error=False)
@@ -14,8 +14,8 @@ if __name__ == '__main__':
 
     colors = None
     radius = None
-    init_tile_matrix = 13
-    r = 70
+    tile_matrix = 13
+    r = 100
 
     wfs = WFS('https://services.datafordeler.dk/GeoDanmarkVektor/GeoDanmark60_NOHIST_GML3/1.0.0/WFS?', 
         username='VCSWRCSUKZ',
@@ -32,6 +32,15 @@ if __name__ == '__main__':
         tile_matrix_set='KortforsyningTilingDK')
 
     for center in coords:  
-        center.to_srs('EPSG:3857')  
-        filter = Filter.radius(center=center, radius=r)
-        m = MPL_Map(coordinates=center, wmts=wmts, wfs=wfs, wfs_typenames=typenames, wfs_colors=colors, init_tile_matrix=init_tile_matrix, radius=r)
+        m = Map(center=center.as_srs('urn:ogc:def:crs:EPSG:6.3:25832'), wmts=wmts, figname='Figure', tile_matrix=tile_matrix)
+
+        filter = Filter.radius(center=center.as_srs('EPSG:3857'), radius=r)
+
+        for typename in typenames:
+            features = wfs.get_features(typename=typename, srs='EPSG:3857', filter=filter)
+            #features.to_srs('urn:ogc:def:crs:EPSG:6.3:25832')
+            m.add_feature(features, label=features.tag)
+
+        m.show()
+
+        pass

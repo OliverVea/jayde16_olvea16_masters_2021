@@ -52,13 +52,13 @@ class Map:
             self._draw_point((0, 0), label='Center', annotation=None, marker='x', color=None)
 
         for hist in self.history:
-            add_feature = {'Point': self.add_points, 'Polygon': self.add_polygons, 'LineString': self.add_linestrings}[hist['feature_type']]
+            add_feature = {'Point': self.add_feature, 'Polygon': self.add_polygons, 'LineString': self.add_linestrings}[hist['feature_type']]
             add_feature(hist['features'], hist['annotations'], hist['label'], hist['color'], hist['marker'], add_to_history=False)
 
     def set_tile_matrix(self, tile_matrix):
         self.clear_points()
         self.tile_matrix = tile_matrix
-        self.background = self.wmts.get_map('default', tile_matrix=tile_matrix, center=center)
+        self.background = self.wmts.get_map('default', tile_matrix=tile_matrix, center=self.center)
         self.dpm = self.wmts.dpm(tile_matrix)
         
         w, h = 0.5 * self.background.width / self.dpm, 0.5 * self.background.height / self.dpm
@@ -99,36 +99,31 @@ class Map:
         })
 
     # Function to add points to the map.
-    def add_points(self, points: list, annotations: list = None, label: str = None, color: str = None, marker: str = '*', add_to_history: bool = True):
+    def add_feature(self, features: list, annotations: list = None, label: str = None, color: str = None, marker: str = '*', add_to_history: bool = True):
         if add_to_history:
-            self._add_to_history('Point', points, annotations, label, color, marker)
+            self._add_to_history('Point', features, annotations, label, color, marker)
 
         plt.figure(self.figname)
 
         # If single point is given.
-        points = [points] if type(points) is str else points
+        #features = features if type(features) is list else [features]
+        
+        # A - B is just A with the geometry corresponding to A - B. It keeps tag, attributes & SRS from A.
+        features = [feature.as_srs(self.srs) - self.center for feature in features]
+
+        if color == None and label in self.colors:
+            color = self.colors[label]
 
         # This could be done in one go but annotating is probably slightly easier this way.
-        for i, point in enumerate(points):
-            if color == None and label in self.colors:
-                color = self.colors[label]
-
+        for i, point in enumerate(features):
             annotation = None
             if annotations != None:
                 annotation = annotations[i]
 
-            # A - B is just A with the geometry corresponding to A - B. It keeps tag, attributes & SRS from A.
-            point = point.as_srs(self.srs) - self.center
             self._draw_point(point.pos(), label=label, annotation=annotation, color=color, marker=marker)
 
-    def add_linestrings(self, linestrings: list, annotations: list = None, label: str = None, color: str = None, marker: str = '*', add_to_history: bool = True):
-        if add_to_history:
-            self._add_to_history('LineString', linestrings, annotations, label, color, marker)
-
-        plt.figure(self.figname)
-
-        # If single linestring is given.
-        linestrings = [linestrings] if type(linestrings) is str else linestrings
+    def add_linestrings(self, features: list, annotations: list = None, label: str = None, color: str = None, marker: str = '*', add_to_history: bool = True):
+        pass
         
 
     def add_polygons(self, polygons: list, annotations: list = None, label: str = None, color: str = None, marker: str = '*', add_to_history: bool = True):
@@ -185,7 +180,7 @@ class MPL_Map:
         if not (typename, filter) in self.cached_pts:
             prints(f'Requesting features of type {typename}.', tag='MPL_Map')
             features = self.wfs.get_features(typename=typename, filter=filter, srs=self.coordinates.default_srs, as_list=True)
-            features.to_srs('urn:ogc:def:crs:EPSG:6.3:25832')
+            features.to_srs()
             type = features.type
             
             features = [ft.pos() for ft in features]
