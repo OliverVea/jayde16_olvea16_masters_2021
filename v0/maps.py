@@ -10,7 +10,7 @@ import matplotlib.patheffects as pe
 from time import time
 
 class Map:
-    def __init__(self, center: Feature, wmts: WMTS, figname: str = None, tile_matrix: int = 15, draw_center: bool = True):
+    def __init__(self, center: Feature, wmts: WMTS, figname: str = None, tile_matrix: int = 15, draw_center: bool = True, figsize: tuple = None, dpi: int = 300):
         self.center = center
         self.srs = center.default_srs
         self.wmts = wmts
@@ -19,7 +19,12 @@ class Map:
 
         self.history = []
 
-        self.fig = plt.figure(self.figname)
+        if figsize != None:
+            self.figsize = figsize
+
+        self.dpi = dpi
+
+        self.fig = plt.figure(self.figname, figsize=figsize)
         self.fig.canvas.mpl_connect('pick_event', self._on_pick)
         
         self.lines = {}
@@ -29,7 +34,7 @@ class Map:
         
         plt.margins(0, 0)
 
-    def show(self):
+    def show(self, show: bool = True, block: bool = True):
         plt.figure(self.figname)
 
         lines = {label: line for label, line in zip(self.lines.keys(), self.lines.values()) if label != None}
@@ -41,9 +46,12 @@ class Map:
         for entry in entries:
             entry.set_picker(8)
 
-        plt.tight_layout()
+        #plt.tight_layout()
 
-        plt.show()
+        plt.savefig(f'output/{self.figname}.pdf', dpi=self.dpi)
+
+        if show:
+            plt.show(block=block)
 
     def clear_points(self):
         self.lines = {}
@@ -61,7 +69,7 @@ class Map:
     def set_tile_matrix(self, tile_matrix):
         self.clear_points()
         self.tile_matrix = tile_matrix
-        self.background = self.wmts.get_map('default', tile_matrix=tile_matrix, center=self.center, screen_width=8000, screen_height=8000)
+        self.background = self.wmts.get_map('default', tile_matrix=tile_matrix, center=self.center, screen_width=self.figsize[0] * self.dpi, screen_height=self.figsize[1] * self.dpi)
         self.dpm = self.wmts.dpm(tile_matrix)
         
         w, h = 0.5 * self.background.width / self.dpm, 0.5 * self.background.height / self.dpm
@@ -150,7 +158,10 @@ class Map:
             self._draw_point(x, y, label=label, annotation=annotation, color=color, marker=marker)
 
     def add_circle(self, origin: Feature, radius: float):
-        pass    
+        origin.to_srs(self.srs)
+        origin = origin - self.center
+        circle = Circle((origin.x(), origin.y()), radius=radius, fill=False, edgecolor='black')
+        plt.gca().add_patch(circle)  
 
     def _on_pick(self, event):
         label = event.artist.get_label()

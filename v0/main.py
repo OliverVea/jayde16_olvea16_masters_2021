@@ -23,8 +23,7 @@ if __name__ == '__main__':
         version='1.1.0')
 
     markers = {'suburb': (55.3761308,10.3860752), 'university_parking': (55.3685818,10.4317584), 'university_campus': (55.3689566,10.4281531), 'downtown': (55.3947509,10.3833619), 'harbor': (55.4084239,10.3813301), 'park': (55.391766,10.3821373)}
-    markers = {'university_parking': (55.3685818,10.4317584)}
-    coords = [Feature(tag=key, geometry=value, srs='EPSG:4326', attributes={}) for key, value in zip(markers.keys(), markers.values())]
+    #markers = {'university_parking': (55.3685818,10.4317584)}
 
     wmts = WMTS('https://services.datafordeler.dk/GeoDanmarkOrto/orto_foraar_wmts/1.0.0/WMTS?',
         username='VCSWRCSUKZ',
@@ -36,23 +35,35 @@ if __name__ == '__main__':
         f.write(','.join(['Date:', '', 'Time:','']) + '\n')
         f.write(','.join(['Area', 'Feature Type', 'Feature Tag', 'Feature ID', 'Feature #', 'Presence', 'Area of Visibility', 'Orientational Visibility', 'Domain', 'Note']) + '\n')
 
-    for center in coords: 
-        n = 1
+    dpi = 300
+    figsize = (20, 20)
+    
+    for area, center in zip(markers.keys(), markers.values()):
+        center = Feature(tag=area, geometry=center, srs='EPSG:4326', attributes={})
+        N = 1
+
+        m = Map(center=center.as_srs('urn:ogc:def:crs:EPSG:6.3:25832'), wmts=wmts, figname=f'{area}_all', tile_matrix=tile_matrix, figsize=figsize, dpi=dpi)
+
         filter = Filter.radius(center=center.as_srs('EPSG:3857'), radius=r)
         for typename in typenames:
+            mt = Map(center=center.as_srs('urn:ogc:def:crs:EPSG:6.3:25832'), wmts=wmts, figname=f'{area}_{typename.lower()}', tile_matrix=tile_matrix, figsize=figsize, dpi=dpi)
+
             features = wfs.get_features(typename=typename, srs='EPSG:3857', filter=filter)
-            for i, feature in enumerate(features):
-                ln = [center.tag, features.type, features.tag, feature['id.lokalId'], str(i + n), '', '', '', '', '']
-                with open('test_doc.csv', 'a') as f:
-                    f.write(','.join(ln) + '\n')
+            n = len(features.features)
 
-        m = Map(center=center.as_srs('urn:ogc:def:crs:EPSG:6.3:25832'), wmts=wmts, figname='Figure', tile_matrix=tile_matrix)
+            if n > 0:
+                m.add_feature(features, label=features.tag, annotations=[N + i for i in range(n)])
+                mt.add_feature(features, label=features.tag, annotations=[N + i for i in range(n)])
 
+                mt.add_circle(center, r)
+                mt.show(show=False)
 
-        for typename in typenames:
-            features = wfs.get_features(typename=typename, srs='EPSG:3857', filter=filter)
-            m.add_feature(features, label=features.tag, annotations=[n + i for i in range(len(features.features))])
+                for i, feature in enumerate(features):
+                    ln = [center.tag, features.type, features.tag, feature['id.lokalId'], str(i + N), '', '', '', '', '']
+                    with open('test_doc.csv', 'a') as f:
+                        f.write(','.join(ln) + '\n')
 
-            n += len(features.features)
+                N += n
 
-        m.show()
+        m.add_circle(center, r)
+        m.show(show=False)
