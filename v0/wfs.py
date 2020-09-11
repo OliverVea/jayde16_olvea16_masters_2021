@@ -39,7 +39,8 @@ class Feature(object):
         x, y = pt.pos(self.default_srs)
 
         if self.is_list:
-            geometry =  [(sx - x, sy - y) for sx in self.x() for sy in self.y()]
+            xs, ys = self.x(), self.y()
+            geometry =  [(sx - x, sy - y) for sx, sy in zip(xs, ys)]
         else:
             geometry = (self.x() - x, self.y() - y)
 

@@ -5,6 +5,7 @@ from utility import uniform_colors, prints, printe
 import matplotlib.pyplot as plt
 from matplotlib.patches import Circle, Polygon
 from matplotlib.collections import PatchCollection
+import matplotlib.patheffects as pe
 
 from time import time
 
@@ -40,6 +41,8 @@ class Map:
         for entry in entries:
             entry.set_picker(8)
 
+        plt.tight_layout()
+
         plt.show()
 
     def clear_points(self):
@@ -49,16 +52,16 @@ class Map:
 
     def redraw_history(self):
         if self.draw_center:
-            self._draw_point((0, 0), label='Center', annotation=None, marker='x', color=None)
+            self._draw_point(0, 0, label='Center', annotation=None, marker='x', color=None)
 
         for hist in self.history:
-            add_feature = {'Point': self.add_feature, 'Polygon': self.add_polygons, 'LineString': self.add_linestrings}[hist['feature_type']]
+            add_feature = {'Point': self.add_feature}[hist['feature_type']]
             add_feature(hist['features'], hist['annotations'], hist['label'], hist['color'], hist['marker'], add_to_history=False)
 
     def set_tile_matrix(self, tile_matrix):
         self.clear_points()
         self.tile_matrix = tile_matrix
-        self.background = self.wmts.get_map('default', tile_matrix=tile_matrix, center=self.center)
+        self.background = self.wmts.get_map('default', tile_matrix=tile_matrix, center=self.center, screen_width=8000, screen_height=8000)
         self.dpm = self.wmts.dpm(tile_matrix)
         
         w, h = 0.5 * self.background.width / self.dpm, 0.5 * self.background.height / self.dpm
@@ -72,8 +75,8 @@ class Map:
         self.redraw_history()
 
     # Function to actually draw points to the map.
-    def _draw_point(self, point, label, annotation, color, marker):
-        line = plt.plot(point[0], point[1], marker, label=label, color=color)[0]
+    def _draw_point(self, x, y, label, annotation, color, marker):
+        line = plt.plot(x, y, marker, label=label, color=color)[0]
         self.lines.setdefault(label, []).append(line)
 
         line.set_visible(self.lines[label][0].get_visible())
@@ -82,7 +85,15 @@ class Map:
             self.colors[label] = line.get_color()
 
         if annotation != None:
-            annotation = plt.text(point[0], point[1], f' {annotation}', color=self.colors[label], size='small')
+            pes = [pe.Stroke(linewidth=1, foreground='black'), pe.Normal()]
+
+            if isinstance(x, list):
+                i = len(x) // 2
+                annotation = plt.text(x[i], y[i], f' {annotation}', color=self.colors[label], size='small', path_effects=pes)
+            
+            else:
+                annotation = plt.text(x, y, f' {annotation}', color=self.colors[label], size='small', path_effects=pes)
+
             self.lines[label].append(annotation)
             annotation.set_visible(self.lines[label][0].get_visible())
 
@@ -105,32 +116,38 @@ class Map:
 
         plt.figure(self.figname)
 
+        feature_type = features.type
+
         # If single point is given.
         #features = features if type(features) is list else [features]
         
         # A - B is just A with the geometry corresponding to A - B. It keeps tag, attributes & SRS from A.
+        features.to_srs(self.srs)
         features = [feature.as_srs(self.srs) - self.center for feature in features]
 
-        if color == None and label in self.colors:
-            color = self.colors[label]
 
         # This could be done in one go but annotating is probably slightly easier this way.
-        for i, point in enumerate(features):
+        for i, feature in enumerate(features):
+            if color == None and label in self.colors:
+                color = self.colors[label]
+
+            if feature_type == 'LineString' or feature_type == 'Polygon':
+                x, y = [x for x, _ in feature.pos()], [y for _, y in feature.pos()]
+                marker = '-'
+
+            if feature_type == 'Polygon':
+                x.append(x[0])
+                y.append(y[0])
+                
+            if feature_type == 'Point':
+                x, y = feature.pos()[0], feature.pos()[1]
+                marker='*'
+
             annotation = None
             if annotations != None:
                 annotation = annotations[i]
 
-            self._draw_point(point.pos(), label=label, annotation=annotation, color=color, marker=marker)
-
-    def add_linestrings(self, features: list, annotations: list = None, label: str = None, color: str = None, marker: str = '*', add_to_history: bool = True):
-        pass
-        
-
-    def add_polygons(self, polygons: list, annotations: list = None, label: str = None, color: str = None, marker: str = '*', add_to_history: bool = True):
-        if add_to_history:
-            self._add_to_history('Polygon', polygons, annotations, label, color, marker)
-
-        plt.figure(self.figname)
+            self._draw_point(x, y, label=label, annotation=annotation, color=color, marker=marker)
 
     def add_circle(self, origin: Feature, radius: float):
         pass    
