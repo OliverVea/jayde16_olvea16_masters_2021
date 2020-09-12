@@ -34,6 +34,10 @@ class Map:
         
         plt.margins(0, 0)
 
+    def close(self):
+        plt.figure(self.figname)
+        plt.close()
+
     def show(self, show: bool = True, block: bool = True):
         plt.figure(self.figname)
 
@@ -345,27 +349,3 @@ if __name__ == '__main__' and False:
     coords = Feature(geometry=(55.369837, 10.431700), srs='EPSG:4326')
     coords.to_srs('EPSG:3857')
     map = MPL_Map(coordinates=coords, wmts=wmts, wfs=wfs, wfs_typenames=typenames, init_tile_matrix=12)
-
-if __name__ == '__main__':
-
-    center = Feature((55.3761308, 10.3860752), srs='EPSG:4326', tag='Point')
-    center.to_srs('EPSG:3857')
-
-    wmts = WMTS('https://services.datafordeler.dk/GeoDanmarkOrto/orto_foraar_wmts/1.0.0/WMTS?',
-            username='VCSWRCSUKZ',
-            password='hrN9aTirUg5c!np',
-            layer='orto_foraar_wmts',
-            tile_matrix_set='KortforsyningTilingDK')
-
-    map = Map(center=center, wmts=wmts, figname='Figure', tile_matrix=13)
-
-    d = Feature((0, 0.0001), srs='EPSG:4326')
-
-    pts = [center + d, center - d]
-
-
-    map.add_points(pts, annotations=[i for i in range(len(pts))], label='Some Points')
-
-    map.show()
-    map.set_tile_matrix(12)
-    map.show()

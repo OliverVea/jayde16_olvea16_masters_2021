@@ -76,7 +76,7 @@ class Feature(object):
 class Filter:
     @staticmethod
     def radius(center: Feature, radius: float, property: str = 'geometri', srs: str = None):
-        with open('filter_templates/radius.xml', 'r') as f:
+        with open('filter_templates/Radius.xml', 'r') as f:
             filt = f.read()
 
         for ch in ['\t', '\n']:
@@ -94,6 +94,33 @@ class Filter:
             filt = filt.replace('xxx', str(center.x()))
             filt = filt.replace('yyy', str(center.y()))
             filt = filt.replace('ccc', center.default_srs)
+
+        return filt
+        
+    @staticmethod
+    def polygon(vertices: list, property: str = 'geometri', srs: str = None):
+        with open('filter_templates/Polygon.xml', 'r') as f:
+            filt = f.read()
+
+        points = []
+        if srs != None:
+            for vertex in vertices:
+                points += [str(vertex.x(srs=srs)), str(vertex.y(srs=srs))]
+        else:
+            for vertex in vertices:
+                points += [str(vertex.x()), str(vertex.y())]
+            srs = vertices[0].default_srs
+        polyvertices = ' '.join(points)
+        
+        filt = filt.replace('propertyname', property)
+        filt = filt.replace('srsname', srs)
+        filt = filt.replace('polyvertexcount', str(len(vertices)))
+        filt = filt.replace('polyvertices', polyvertices)
+
+        print(filt)
+        for ch in ['\t', '\n', '  ']:
+            filt = filt.replace(ch, '')
+        print(filt)
 
         return filt
 

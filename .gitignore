@@ -135,3 +135,5 @@ dmypy.json
 *.txt
 *.json
 v0/.vscode/settings.json
+*.pdf
+*.csv

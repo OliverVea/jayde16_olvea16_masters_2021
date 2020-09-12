@@ -8,13 +8,11 @@ if __name__ == '__main__':
     #set_verbose(status=False, error=False)
 
     typenames = []
-    with open('filtered_categories.txt', 'r') as f:
+    with open('input/filtered_categories.txt', 'r') as f:
         for line in f:
             typenames.append(line[:-1])
 
-    colors = None
-    radius = None
-    tile_matrix = 15
+    tile_matrix = 14
     r = 100
 
     wfs = WFS('https://services.datafordeler.dk/GeoDanmarkVektor/GeoDanmark60_NOHIST_GML3/1.0.0/WFS?', 
@@ -22,8 +20,9 @@ if __name__ == '__main__':
         password='hrN9aTirUg5c!np',
         version='1.1.0')
 
-    markers = {'suburb': (55.3761308,10.3860752), 'university_parking': (55.3685818,10.4317584), 'university_campus': (55.3689566,10.4281531), 'downtown': (55.3947509,10.3833619), 'harbor': (55.4084239,10.3813301), 'park': (55.391766,10.3821373)}
-    #markers = {'university_parking': (55.3685818,10.4317584)}
+    markers = {'suburb': (55.3761308,10.3860752), 'university_parking': (55.3685818,10.4317584), 'downtown': (55.3947509,10.3833619), 'harbor': (55.4083756,10.3787729), 'park': (55.3916561,10.3828329)}
+
+    markers = {key: markers[key] for key in ['downtown']}
 
     wmts = WMTS('https://services.datafordeler.dk/GeoDanmarkOrto/orto_foraar_wmts/1.0.0/WMTS?',
         username='VCSWRCSUKZ',
@@ -31,39 +30,27 @@ if __name__ == '__main__':
         layer='orto_foraar_wmts',
         tile_matrix_set='KortforsyningTilingDK')
 
-    with open('test_doc.csv', 'w') as f:
-        f.write(','.join(['Date:', '', 'Time:','']) + '\n')
-        f.write(','.join(['Area', 'Feature Type', 'Feature Tag', 'Feature ID', 'Feature #', 'Presence', 'Area of Visibility', 'Orientational Visibility', 'Domain', 'Note']) + '\n')
-
     dpi = 300
-    figsize = (20, 20)
+    figsize = (8, 8)
     
-    for area, center in zip(markers.keys(), markers.values()):
-        center = Feature(tag=area, geometry=center, srs='EPSG:4326', attributes={})
-        N = 1
+    vertices=[
+            Feature(tag='Polygon Vertex', geometry=(55.374723,10.3958534), srs='EPSG:4326'), 
+            Feature(tag='Polygon Vertex', geometry=(55.375596,10.3975671), srs='EPSG:4326'), 
+            Feature(tag='Polygon Vertex', geometry=(55.3737163,10.3990483), srs='EPSG:4326')
+            ]
 
-        m = Map(center=center.as_srs('urn:ogc:def:crs:EPSG:6.3:25832'), wmts=wmts, figname=f'{area}_all', tile_matrix=tile_matrix, figsize=figsize, dpi=dpi)
+    vertices = [v.as_srs('EPSG:3857') for v in vertices]
 
-        filter = Filter.radius(center=center.as_srs('EPSG:3857'), radius=r)
-        for typename in typenames:
-            mt = Map(center=center.as_srs('urn:ogc:def:crs:EPSG:6.3:25832'), wmts=wmts, figname=f'{area}_{typename.lower()}', tile_matrix=tile_matrix, figsize=figsize, dpi=dpi)
+    center = vertices[0]
+    
+    filter = Filter.polygon(vertices=vertices)
 
-            features = wfs.get_features(typename=typename, srs='EPSG:3857', filter=filter)
-            n = len(features.features)
+    m = Map(center=center.as_srs('urn:ogc:def:crs:EPSG:6.3:25832'), wmts=wmts, figname=f'fig', tile_matrix=tile_matrix, figsize=figsize, dpi=dpi)
 
-            if n > 0:
-                m.add_feature(features, label=features.tag, annotations=[N + i for i in range(n)])
-                mt.add_feature(features, label=features.tag, annotations=[N + i for i in range(n)])
+    for typename in typenames:
+        features = wfs.get_features(typename=typename, srs='EPSG:3857', filter=filter) 
 
-                mt.add_circle(center, r)
-                mt.show(show=False)
+        m.add_feature(features, label=features.tag)
 
-                for i, feature in enumerate(features):
-                    ln = [center.tag, features.type, features.tag, feature['id.lokalId'], str(i + N), '', '', '', '', '']
-                    with open('test_doc.csv', 'a') as f:
-                        f.write(','.join(ln) + '\n')
-
-                N += n
-
-        m.add_circle(center, r)
-        m.show(show=False)
+    m.add_feature(vertices, [i for i in range(len(vertices))], 'Vertices', marker='-')
+    m.show()

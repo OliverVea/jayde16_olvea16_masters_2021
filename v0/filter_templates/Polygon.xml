@@ -1,0 +1,12 @@
+ <ogc:Filter xmlns:ogc="http://www.opengis.net/ogc" xmlns:gml="http://www.opengis.net/gml">
+	<ogc:Intersects>
+		<PropertyName>propertyname</PropertyName>
+		<gml:Polygon srsName="srsname">
+          <gml:outerBoundaryIs>
+            <gml:LinearRing>
+              <gml:posList>polyvertices</gml:posList>
+            </gml:LinearRing>
+          </gml:outerBoundaryIs>
+        </gml:Polygon>
+	</ogc:Intersects>
+</ogc:Filter>
