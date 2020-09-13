@@ -31,7 +31,7 @@ if __name__ == '__main__':
         tile_matrix_set='KortforsyningTilingDK')
 
     dpi = 300
-    figsize = (8, 8)
+    figsize = (24, 24)
     
     vertices=[
             Feature(tag='Polygon Vertex', geometry=(55.374723,10.3958534), srs='EPSG:4326'), 

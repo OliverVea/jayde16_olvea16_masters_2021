@@ -1,4 +1,5 @@
 from wfs import WebService, WFS, Feature
+from utility import prints
 
 from PIL import Image
 from math import ceil
@@ -101,6 +102,8 @@ class WMTS(WebService):
         y = center.y(srs=self.srs)
         center_y = tm['matrix_height'] * (tm['top_left_y'] - y) / tm['map_height']
         center_row = int(center_y)
+        
+        prints(f'Gathering map of size ({cols}, {rows}) with resolution ({screen_width}, {screen_height}). Please wait.')
 
         tiles = []
         for col in range(center_col - cols, cols + center_col + 1):

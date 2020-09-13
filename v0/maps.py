@@ -38,7 +38,7 @@ class Map:
         plt.figure(self.figname)
         plt.close()
 
-    def show(self, show: bool = True, block: bool = True):
+    def show(self, show: bool = True, save_pdf: bool = True, save_png: bool = True, block: bool = True):
         plt.figure(self.figname)
 
         lines = {label: line for label, line in zip(self.lines.keys(), self.lines.values()) if label != None}
@@ -50,9 +50,13 @@ class Map:
         for entry in entries:
             entry.set_picker(8)
 
-        #plt.tight_layout()
+        plt.tight_layout()
 
-        plt.savefig(f'output/{self.figname}.pdf', dpi=self.dpi)
+        if save_pdf:
+            plt.savefig(f'output/{self.figname}.pdf', dpi=self.dpi)
+
+        if save_png:
+            plt.savefig(f'output/{self.figname}.png', dpi=self.dpi)
 
         if show:
             plt.show(block=block)
@@ -101,7 +105,9 @@ class Map:
 
             if isinstance(x, list):
                 i = len(x) // 2
-                annotation = plt.text(x[i], y[i], f' {annotation}', color=self.colors[label], size='small', path_effects=pes)
+                x = (x[i - 1] + x[i]) / 2
+                y = (y[i - 1] + y[i]) / 2
+                annotation = plt.text(x, y, f' {annotation}', color=self.colors[label], size='small', path_effects=pes)
             
             else:
                 annotation = plt.text(x, y, f' {annotation}', color=self.colors[label], size='small', path_effects=pes)
