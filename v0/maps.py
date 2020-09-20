@@ -141,7 +141,7 @@ class Map:
         
         # A - B is just A with the geometry corresponding to A - B. It keeps tag, attributes & SRS from A.
         features.to_srs(self.srs)
-        features = [feature.as_srs(self.srs) - self.center for feature in features]
+        features = [feature.as_srs(self.srs) - self.center.as_srs(self.srs) for feature in features]
 
 
         # This could be done in one go but annotating is probably slightly easier this way.
@@ -227,7 +227,7 @@ class MPL_Map:
             
             features = [ft.pos() for ft in features]
 
-            cx, cy = self.coordinates.pos('urn:ogc:def:crs:EPSG:6.3:25832')
+            cx, cy = self.coordinates.pos('EPSG:25832')
 
             if type == 'Point':
                 geometry = ([x - cx for x, _ in features], [y - cy for _, y in features])

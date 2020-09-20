@@ -1,0 +1,8 @@
+<ogc:Filter>
+   <ogc:Contains>
+      <ogc:PropertyName>ppp</ogc:PropertyName>
+      <gml:Point srsName='ccc'>
+         <gml:coordinates>xxx yyy</gml:coordinates>
+      </gml:Point>
+   </ogc:Contains>
+</ogc:Filter>

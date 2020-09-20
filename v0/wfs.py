@@ -123,6 +123,15 @@ class Filter:
         print(filt)
 
         return filt
+    
+    @staticmethod
+    def bbox(center: Feature, width: float, height: float, srs: str=None):
+        bottom_left_corner = Feature((center.x('EPSG:25832') - width / 2, center.y('EPSG:25832') - height / 2), srs='EPSG:25832')
+
+        top_right_corner = Feature((center.x('EPSG:25832') + width / 2, center.y('EPSG:25832') + height / 2), srs='EPSG:25832')
+
+        return f'{bottom_left_corner.x(srs)},{bottom_left_corner.y(srs)},{top_right_corner.x(srs)},{top_right_corner.y(srs)}'
+
 
 class Collection:
     def __init__(self, tag: str, type: str, features: list, srs: str):
@@ -152,22 +161,30 @@ class Collection:
 
 
 class WebService(object):
-    def __init__(self, url, username, password, version):
+    def __init__(self, url, username=None, password=None, version=None):
         self.url = url
-        self.username = username
-        self.password = password
+        self.use_login = False
+        if username != None and password != None:
+            self.username = username
+            self.password = password
+            self.use_login = True
+        
+
         self.version = version
 
-    def _make_url(self, service, use_login=True, **args):
-        arguments = {'service': service, 'version': self.version}
+    def _make_url(self, service, **args):
+        if self.version != None:
+            arguments = {'service': service.upper(), 'version': self.version}
+        else:
+            arguments = {'service': service}
         arguments.update(args)
 
-        if use_login:
+        if self.use_login:
             arguments['username'] = self.username
             arguments['password'] = self.password
 
         arguments = [f'{str(key)}={str(value)}' for key, value in zip(arguments.keys(), arguments.values()) if value != None]
-        arguments = '&'.join(arguments)
+        arguments = '&' + '&'.join(arguments)
 
         return self.url + arguments
 
@@ -205,15 +222,25 @@ class WFS(WebService):
         tag = self._simplify_tag(element.tag)
 
         if tag == 'Point':
-            element = element.getchildren()[0]
-            assert(self._simplify_tag(element.tag) == 'pos')
-            geometry = tuple(float(val) for val in element.text.split(' '))
+            if (geometry := element.find('.//{http://www.opengis.net/gml/3.2}pos')) != None:
+                geometry = tuple(float(val) for val in geometry.text.split(' '))
+            elif (geometry := element.find('.//{http://www.opengis.net/gml}coordinates')) != None:
+                geometry = tuple(float(val) for val in geometry.text.split(','))
+            else:
+                printe(f'Geometry subtype {tag} not supported.', tag='WFS._get_geometry')
+                geometry = []
 
         elif tag == 'Polygon' or tag == 'LineString':
-            t = './/{http://www.opengis.net/gml/3.2}posList'
-            temp_geometry = [float(val) for val in element.find(t).text.split(' ')]
-            geometry = [tuple(temp_geometry[i*3+j] for i in range(len(temp_geometry)//3)) for j in range(3)]
-
+            if (geometry := element.find('.//{http://www.opengis.net/gml/3.2}posList')) != None:
+                geometry = [float(val) for val in geometry.text.split(' ')]
+                geometry = [tuple(geometry[i*3+j] for i in range(len(geometry)//3)) for j in range(3)]
+            elif (geometry := element.find('.//{http://www.opengis.net/gml}coordinates')) != None:
+                points = [point for point in geometry.text.split(' ')]
+                geometry = [tuple(float(val) for val in point.split(',')) for point in points]
+                geometry = list(zip(*geometry)) #Transpose list for later
+            else:
+                printe(f'Geometry subtype {tag} not supported.', tag='WFS._get_geometry')
+                geometry = []
         else:
             printe(f'Geometry type {tag} not supported.', tag='WFS._get_geometry')
             geometry = []
@@ -221,28 +248,37 @@ class WFS(WebService):
         return geometry, tag
 
     def get_capabilities(self):
-        url = self._make_url('wfs', request='GetCapabilities')
+        url = self._make_url('WFS', request='GetCapabilities')
         featureCollection = self._query_url(url)
 
+
     def get_features(self, srs, typename=None, bbox=None, filter=None, max_features=None, as_list=False):
-        url = self._make_url('wfs', request='GetFeature', typename=typename, bbox=bbox, filter=filter, maxFeatures=max_features, srsName=srs)
+        url = self._make_url('WFS', request='GetFeature', typename=typename, bbox=bbox, filter=filter, maxFeatures=max_features, srsName=srs)
+        #url = 'https://services.drift.kortinfo.net/kortinfo/services/Wfs.ashx?Site=Odense&Page=Kortopslag&service=WFS&request=GetFeature&typename=TL695099&bbox=585591,6139205,588876,6141364'
+        #url = 'https://services.drift.kortinfo.net/kortinfo/services/Wfs.ashx?Site=Odense&Page=Kortopslag&service=WFS&'\
+        #    'request=GetFeature&typename=TL965167'
+
         featureCollection = self._query_url(url)
 
         if featureCollection == None or self._simplify_tag(featureCollection.tag) != 'FeatureCollection':
             printe('Error in retrieving features. Returning empty dictionary.', tag='WFS')
             return {}
 
-        featurelist = [member.getchildren()[0] for member in featureCollection.iterchildren()]
+        featurelist = [member.getchildren()[0] for member in featureCollection.iterchildren()][1:]
         features = []
 
-        type = "None"
 
+        f = './/{http://www.opengis.net/gml}coordinates'
+        test = featurelist[1].find(f).text
+
+        type = "None"
+        
         for ft in featurelist:
             attributes = {}
             for attribute in ft.iterchildren():
                 tag = self._simplify_tag(attribute.tag)
 
-                if tag == 'geometri':
+                if tag == 'geometri' or tag == 'obj':
                     geometry, type = self._get_geometry(attribute)
 
                 else:
@@ -254,7 +290,7 @@ class WFS(WebService):
         features = Collection(type=type, tag=str(typename), features=features, srs=srs)
 
         prints(f'Received {len(featurelist)} features from \'{shortstring(url, maxlen=90)}\'.', tag='WFS')
-
+        
         return features
 
 if __name__ == '__main__':

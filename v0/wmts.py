@@ -5,7 +5,7 @@ from PIL import Image
 from math import ceil
 
 class WMTS(WebService):
-    def __init__(self, url: str, username: str, password: str, layer: str, tile_matrix_set: str, format: str='image/jpeg', version: str='1.0.0'):
+    def __init__(self, use_login, url: str, username: str, password: str, layer: str, tile_matrix_set: str, format: str='image/jpeg', version: str='1.0.0'):
         super(WMTS, self).__init__(url, username, password, version)
         self.pixel_size = 0.00028
         self.layer = layer
@@ -14,7 +14,7 @@ class WMTS(WebService):
 
         self.cache = {}
 
-        self._get_capabilities()
+        self._get_capabilities(use_login)
 
 
     def _to_px(self, scale_denominator, rw=None, m=None):
@@ -32,8 +32,8 @@ class WMTS(WebService):
             return px * self.pixel_size
         return rw / scale_denominator
 
-    def _get_capabilities(self):
-        url = self._make_url(service='wmts', request='GetCapabilities')
+    def _get_capabilities(self, use_login):
+        url = self._make_url(service='wmts', use_login=use_login, request='GetCapabilities')
         response = self._query_url(url)
 
         tms = response.Contents.TileMatrixSet

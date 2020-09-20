@@ -45,7 +45,7 @@ if __name__ == '__main__':
     
     filter = Filter.polygon(vertices=vertices)
 
-    m = Map(center=center.as_srs('urn:ogc:def:crs:EPSG:6.3:25832'), wmts=wmts, figname=f'fig', tile_matrix=tile_matrix, figsize=figsize, dpi=dpi)
+    m = Map(center=center.as_srs('EPSG:25832'), wmts=wmts, figname=f'fig', tile_matrix=tile_matrix, figsize=figsize, dpi=dpi)
 
     for typename in typenames:
         features = wfs.get_features(typename=typename, srs='EPSG:3857', filter=filter) 

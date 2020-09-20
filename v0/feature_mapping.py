@@ -27,49 +27,70 @@ if __name__ == '__main__':
     typenames = []
     with open('input/filtered_categories.txt', 'r') as f:
         for line in f:
-            typenames.append(line[:-1])
+            if line[0] != '#':
+                typenames.append(line[:-1])
     
+    typename_dict = {
+        'TL695099': 'Buildings',
+        'TL965167': 'Road wells',
+        'TL362': 'Park points',
+        'TL881260': 'Park trees'
+    }
+
     markers = {
-        'suburb': (55.3761308, 10.3860752), 
-        'university_parking': (55.3685818, 10.4317584), 
+        #'suburb': (55.3761308, 10.3860752), 
+        #'university_parking': (55.3685818, 10.4317584), 
         'downtown': (55.3947509, 10.3833619), 
-        'harbor': (55.4083756, 10.3787729), 
-        'park': (55.3916561, 10.3828329)
+        #'harbor': (55.4083756, 10.3787729), 
+        #'park': (55.3916561, 10.3828329)
     }
 
     #############
     ## OPTIONS ##
     #############
 
-    tile_matrix = 15
+    tile_matrix = 14
     r = 100
+    width = 200
+    height = 200
 
     dpi = 300
-    figsize = (16, 16)
+    figsize = (8, 8)
 
     csv_header = ['feature type', 'id.lokalId', 'feature #', 'lat', 'lon']
+
+    save_everything = True
 
     show_figure = False
     save_figure_pdf = False
     save_figure_png = False
 
-    save_csv = True
+    save_csv = False
+
 
     ####################
     ## END OF OPTIONS ##
     ####################
     
+    if save_everything:
+        show_figure = True
+        save_figure_pdf = True
+        save_figure_png = True
+        save_csv = True
+
     try:
         markers = {key: markers[key] for key in areas}
     except:
         pass
 
-    wfs = WFS('https://services.datafordeler.dk/GeoDanmarkVektor/GeoDanmark60_NOHIST_GML3/1.0.0/WFS?', 
-        username='VCSWRCSUKZ',
-        password='hrN9aTirUg5c!np',
-        version='1.1.0')
-
-    wmts = WMTS('https://services.datafordeler.dk/GeoDanmarkOrto/orto_foraar_wmts/1.0.0/WMTS?',
+    wfs = WFS('https://services.drift.kortinfo.net/kortinfo/services/Wfs.ashx?Site=Odense&Page=Kortopslag', 
+        #username='VCSWRCSUKZ',
+        #password='hrN9aTirUg5c!np',
+        #version='1.1.0'
+        )
+    #https://services.drift.kortinfo.net/kortinfo/services/Wmts.ashx?Site=Odense&Page=Kortopslag
+    #https://services.datafordeler.dk/GeoDanmarkOrto/orto_foraar_wmts/1.0.0/WMTS?
+    wmts = WMTS(use_login=True, url='https://services.datafordeler.dk/GeoDanmarkOrto/orto_foraar_wmts/1.0.0/WMTS?', 
         username='VCSWRCSUKZ',
         password='hrN9aTirUg5c!np',
         layer='orto_foraar_wmts',
@@ -77,33 +98,37 @@ if __name__ == '__main__':
 
     for area, center in zip(markers.keys(), markers.values()):
         center = Feature(tag=area, geometry=center, srs='EPSG:4326', attributes={})
-        center.to_srs('EPSG:3857')
+        center.to_srs('EPSG:25832')
 
         N = 0
 
         if show_figure or save_figure_pdf or save_figure_png:
-            m = Map(center=center.as_srs('urn:ogc:def:crs:EPSG:6.3:25832'), wmts=wmts, figname=f'{area}', tile_matrix=tile_matrix, figsize=figsize, dpi=dpi)
+            m = Map(center=center.as_srs('EPSG:25832'), wmts=wmts, figname=f'{area}', tile_matrix=tile_matrix, figsize=figsize, dpi=dpi)
 
         if save_csv:
             f = csvfile(f'output/{area}_features.csv', csv_header)
 
-        filter = Filter.radius(center=center, radius=r)
+        filter = Filter.radius(center=center, radius=r, srs='EPSG:25832')
+        bbox = Filter.bbox(center=center, width=width, height=height)
+
         for typename in typenames:
 
-            features = wfs.get_features(typename=typename, srs='EPSG:3857', filter=filter) 
+            features = wfs.get_features(srs='EPSG:25832', typename=typename, bbox=bbox)
+            
             n = len(features.features)
 
             if n > 0:
 
                 if show_figure or save_figure_pdf or save_figure_png:
-                    m.add_feature(features, label=features.tag, annotations=[N + i for i in range(n)])
+                    m.add_feature(features, label=typename_dict[features.tag], annotations=[N + i for i in range(n)])
                 
                 if save_csv:
                     features.to_srs('EPSG:4326')
                     for i, feature in enumerate(features.features):
-                        f.writeline({'feature type': typename, 'id.lokalId': feature['id.lokalId'], 'feature #': i + N, 'lat': feature.x(), 'lon': feature.y()})
+                        f.writeline({'feature type': typename, 'id.lokalId': 0, 'feature #': i + N, 'lat': feature.x(), 'lon': feature.y()})
 
                 N += n
+            
         
         with open(f'output/{area}_features.csv', 'a') as f:    
             f.write(','.join([area, '', 'total', str(N)]) + '\n')
@@ -112,3 +137,5 @@ if __name__ == '__main__':
         if show_figure or save_figure_pdf or save_figure_png:
             m.add_circle(center, r)
             m.show(show=show_figure, save_pdf=save_figure_pdf, save_png=save_figure_png)
+
+    dummy = 0
