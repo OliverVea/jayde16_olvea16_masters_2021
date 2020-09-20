@@ -137,3 +137,5 @@ dmypy.json
 v0/.vscode/settings.json
 *.pdf
 *.csv
+
+!documents/methodology_v1/*
