@@ -17,14 +17,12 @@ class csvfile:
         with open(self.filename, 'a') as f:
             f.write(self.delimiter.join(line) + '\n')
 
-if __name__ == '__main__':
+if __name__ == '__main__': 
     from wfs import WFS, Feature, Filter
     from wmts import WMTS
     from gps import GPSConnection
     from maps import Map
     from utility import printe, prints, set_verbose
-
-    #set_verbose(status=False, error=False)
 
     typenames = []
     with open('input/filtered_categories.txt', 'r') as f:
@@ -37,7 +35,7 @@ if __name__ == '__main__':
         'downtown': (55.3947509, 10.3833619), 
         'harbor': (55.4083756, 10.3787729), 
         'park': (55.3916561, 10.3828329)
-        }
+    }
 
     #############
     ## OPTIONS ##
@@ -56,9 +54,6 @@ if __name__ == '__main__':
     save_figure_png = False
 
     save_csv = True
-
-    #areas = ['suburb']
-    #typenames = ['Bygning']
 
     ####################
     ## END OF OPTIONS ##

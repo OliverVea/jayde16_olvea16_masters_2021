@@ -147,6 +147,9 @@ class Collection:
             for ft in self.features:
                 ft.to_srs(srs)
 
+    def filter(self, filter):
+        return Collection(self.tag, self.type, [feature for feature in self.features if filter(feature)], self.cached_srs[0])
+
 
 class WebService(object):
     def __init__(self, url, username, password, version):
