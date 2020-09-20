@@ -220,6 +220,9 @@ class WFS(WebService):
             
         return geometry, tag
 
+    def get_capabilities(self):
+        url = self._make_url('wfs', request='GetCapabilities')
+        featureCollection = self._query_url(url)
 
     def get_features(self, srs, typename=None, bbox=None, filter=None, max_features=None, as_list=False):
         url = self._make_url('wfs', request='GetFeature', typename=typename, bbox=bbox, filter=filter, maxFeatures=max_features, srsName=srs)
