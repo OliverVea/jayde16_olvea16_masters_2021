@@ -128,7 +128,7 @@ class Map:
         })
 
     # Function to add points to the map.
-    def add_feature(self, features: list, annotations: list = None, label: str = None, color: str = None, marker: str = '*', add_to_history: bool = True):
+    def add_feature(self, features: list, annotations: list = None, label: str = None, color: str = None, marker: str = None, add_to_history: bool = True):
         if add_to_history:
             self._add_to_history('Point', features, annotations, label, color, marker)
 
@@ -151,7 +151,9 @@ class Map:
 
             if feature_type == 'LineString' or feature_type == 'Polygon':
                 x, y = [x for x, _ in feature.pos()], [y for _, y in feature.pos()]
-                marker = '-'
+
+                if marker == None:
+                    marker = '-'
 
             if feature_type == 'Polygon':
                 x.append(x[0])
@@ -159,7 +161,9 @@ class Map:
                 
             if feature_type == 'Point':
                 x, y = feature.pos()[0], feature.pos()[1]
-                marker='*'
+
+                if marker == None:
+                    marker = '*'
 
             annotation = None
             if annotations != None:
