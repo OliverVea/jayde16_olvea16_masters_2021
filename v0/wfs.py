@@ -6,6 +6,8 @@ from requests import get, post
 from lxml import objectify, etree
 from pyproj import Transformer
 from PIL import Image
+
+from math import sqrt
     
 class Feature(object):
     def __init__(self, geometry, srs: str, tag: str = '', attributes: dict = {}):
@@ -45,6 +47,15 @@ class Feature(object):
             geometry = (self.x() - x, self.y() - y)
 
         return Feature(tag=self.tag, geometry=geometry, srs=self.default_srs, attributes={})
+
+    def dist(self, pt):
+        if self.is_list:
+            dists = self - pt.as_srs(self.default_srs)
+            dists = [sqrt(sum(dist[i] * dist[i] for i in range(2))) for dist in dists]
+            return min(dists)
+        else:
+            dist = self - pt.as_srs(self.default_srs)
+            return sqrt(dist.x() * dist.x() + dist.y() * dist.y())
 
     def pos(self, srs=None, transform: callable = None):
         if srs == None:
@@ -195,31 +206,52 @@ class WebService(object):
         response = get(url)
         content = response.content
 
-        try:
-            content = objectify.fromstring(content)
-
-            children = {self._simplify_tag(c.tag): c for c in content.iterchildren()}
-
-            if 'Exception' in children:
-                printe(str(children['Exception'].ExceptionText), tag='WebService')
-                return None
-
-            if response_type == 'xml':
-                with open('last_response.xml', 'wb') as f:
-                    f.write(etree.tostring(content, pretty_print=True))
-                return content
-        except:
-            pass
-
         if response_type == 'jpeg':
             return Image.open(io.BytesIO(content))
+        else:
+            try:
+                content = objectify.fromstring(content)
+
+                children = {self._simplify_tag(c.tag): c for c in content.iterchildren()}
+
+                if 'Exception' in children:
+                    printe(str(children['Exception'].ExceptionText), tag='WebService')
+                    return None
+
+                if response_type == 'xml':
+                    with open('last_response.xml', 'wb') as f:
+                        f.write(etree.tostring(content, pretty_print=True))
+                    
+            except Exception as e:
+                printe(str(e))
+        
+        return content
+
 
 
 class WFS(WebService):
+    def __init__(self, url: str, username: str=None, password: str=None, version: str=None, getCapabilitiesFilename: str = None):
+        WebService.__init__(self, url, username, password, version)
+
+        if getCapabilitiesFilename != None:
+            url = self._make_url('WFS', request='GetCapabilities')
+            wfsCapabilities = self._query_url(url)
+            with open(getCapabilitiesFilename, 'wb') as f:
+                f.write(etree.tostring(wfsCapabilities, pretty_print=True))
+
+
+        # TODO: Expand with more services
+        #capabilities = self.get_capabilities()
+        pass
+
     def _get_geometry(self, element):
 
         element = element.getchildren()[0]
         tag = self._simplify_tag(element.tag)
+
+        if tag == 'MultiPoint':
+            element = element.find('.//{http://www.opengis.net/gml}Point')
+            tag = self._simplify_tag(element.tag)
 
         if tag == 'Point':
             if (geometry := element.find('.//{http://www.opengis.net/gml/3.2}pos')) != None:
@@ -227,7 +259,7 @@ class WFS(WebService):
             elif (geometry := element.find('.//{http://www.opengis.net/gml}coordinates')) != None:
                 geometry = tuple(float(val) for val in geometry.text.split(','))
             else:
-                printe(f'Geometry subtype {tag} not supported.', tag='WFS._get_geometry')
+                printe(f'Point subtype {tag} not supported.', tag='WFS._get_geometry')
                 geometry = []
 
         elif tag == 'Polygon' or tag == 'LineString':
@@ -239,7 +271,7 @@ class WFS(WebService):
                 geometry = [tuple(float(val) for val in point.split(',')) for point in points]
                 geometry = list(zip(*geometry)) #Transpose list for later
             else:
-                printe(f'Geometry subtype {tag} not supported.', tag='WFS._get_geometry')
+                printe(f'Polygon subtype {tag} not supported.', tag='WFS._get_geometry')
                 geometry = []
         else:
             printe(f'Geometry type {tag} not supported.', tag='WFS._get_geometry')
@@ -248,33 +280,31 @@ class WFS(WebService):
         return geometry, tag
 
     def get_capabilities(self):
+        # Only works for kortinfo.
         url = self._make_url('WFS', request='GetCapabilities')
-        featureCollection = self._query_url(url)
+        wfsCapabilities = self._query_url(url)
+
+        service = wfsCapabilities.find('.//Service')
+        serviceName = service.find('.//Name').text
+
+        pass
+        return serviceName
 
 
     def get_features(self, srs, typename=None, bbox=None, filter=None, max_features=None, as_list=False):
         url = self._make_url('WFS', request='GetFeature', typename=typename, bbox=bbox, filter=filter, maxFeatures=max_features, srsName=srs)
-        #url = 'https://services.drift.kortinfo.net/kortinfo/services/Wfs.ashx?Site=Odense&Page=Kortopslag&service=WFS&request=GetFeature&typename=TL695099&bbox=585591,6139205,588876,6141364'
-        #url = 'https://services.drift.kortinfo.net/kortinfo/services/Wfs.ashx?Site=Odense&Page=Kortopslag&service=WFS&'\
-        #    'request=GetFeature&typename=TL965167'
-
         featureCollection = self._query_url(url)
 
         if featureCollection == None or self._simplify_tag(featureCollection.tag) != 'FeatureCollection':
-            printe('Error in retrieving features. Returning empty dictionary.', tag='WFS')
+            printe(f'Error in retrieving features. Returning empty dictionary. url: \'{url}\'', tag='WFS')
             return {}
 
         featurelist = [member.getchildren()[0] for member in featureCollection.iterchildren()][1:]
         features = []
 
-
-        f = './/{http://www.opengis.net/gml}coordinates'
-        test = featurelist[1].find(f).text
-
         type = "None"
-        
         for ft in featurelist:
-            attributes = {}
+            attributes = dict(ft.attrib)
             for attribute in ft.iterchildren():
                 tag = self._simplify_tag(attribute.tag)
 

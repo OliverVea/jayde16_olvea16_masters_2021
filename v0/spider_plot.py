@@ -36,7 +36,11 @@ class SpiderPlot:
         plt.xticks(self.angles[:-1], self.category_labels, color='grey', size=8)
 
         for i, (data, color) in enumerate(self.data):
-            self.ax.plot(self.angles, data + data[:1], color=color, linewidth=1, linestyle='solid', label=self.feature_types[i])
+            lin = self.ax.plot(self.angles, data + data[:1], color=color, linewidth=1, linestyle='solid', label=self.feature_types[i])
+            
+            if color == None:
+                color = lin[0].get_color()
+
             self.ax.fill(self.angles, data + data[:1], 'b', color=color, alpha=0.1)
 
         plt.legend(bbox_to_anchor=(0.1, 0.1))
