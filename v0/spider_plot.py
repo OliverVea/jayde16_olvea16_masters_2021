@@ -4,10 +4,11 @@ from random import random
 from math import pi
 
 class SpiderPlot:
-    def __init__(self, title: str, figname: str = None):
+    def __init__(self, title: str, feature_types: list, figname: str = None):
         self.N = 0
         self.category_labels = []
         self.data = []
+        self.feature_types = feature_types
 
         self.id = uuid.uuid1()
         self.fig = plt.figure(self.id)
@@ -29,14 +30,16 @@ class SpiderPlot:
         self.data.append((data, color))
 
     def show(self):
-        self.angles = [n / float(N) * 2 * pi for n in range(N)]
+        self.angles = [n / float(self.N) * 2 * pi for n in range(self.N)]
         self.angles += self.angles[:1]
 
         plt.xticks(self.angles[:-1], self.category_labels, color='grey', size=8)
 
-        for data, color in self.data:
-            self.ax.plot(self.angles, data + data[:1], color=color, linewidth=1, linestyle='solid')
+        for i, (data, color) in enumerate(self.data):
+            self.ax.plot(self.angles, data + data[:1], color=color, linewidth=1, linestyle='solid', label=self.feature_types[i])
             self.ax.fill(self.angles, data + data[:1], 'b', color=color, alpha=0.1)
+
+        plt.legend(bbox_to_anchor=(0.1, 0.1))
 
         plt.show()
 

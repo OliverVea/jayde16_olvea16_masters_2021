@@ -81,6 +81,7 @@ class CSV:
 
         return features
 
-csv_file = CSV('input/park.csv')
-features = csv_file.read()
+if __name__ == '__main__':
+    csv_file = CSV('input/park.csv')
+    features = csv_file.read()
 
