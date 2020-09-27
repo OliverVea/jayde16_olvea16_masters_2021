@@ -90,13 +90,14 @@ if __name__ == '__main__':
         for key in data[0]:
             feature_types.append(key)
 
-        spider_plot = SpiderPlot(f'{area}_data', feature_types)
+        spider_plot = SpiderPlot(title=f'{area.capitalize()} Data', feature_types=feature_types, figname=f'{area}_data')
 
         for category in categories:
             spider_plot.add_category(category, [k/(K - 1) for k in range(K)], [f'{100*k/(K - 1)}%' for k in range(K)])
 
         for d in data_list:
             spider_plot.add_data(d)
+            
         spider_plot.show(block=(i == len(areas) - 1))
 
         pass

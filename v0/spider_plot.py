@@ -14,11 +14,11 @@ class SpiderPlot:
         if figname == None:
             self.id = uuid.uuid1()
             
+        self.title = title
+
         self.fig = plt.figure(self.id)
 
-        plt.title(title)
-
-        self.ax = plt.axes(polar=True)        
+        self._init()    
         
     def add_category(self, label, tick_values: list, tick_labels: list, color='grey', size=7):
         plt.figure(self.id)
@@ -31,11 +31,26 @@ class SpiderPlot:
 
         self.N += 1
 
+        self._draw()
+
     def add_data(self, data, color = None):
         self.data.append((data, color))
+        self._draw()
 
-    def show(self, block=True):
+    def _init(self):
         plt.figure(self.id)
+
+        plt.title(self.title)
+
+        self.ax = plt.axes(polar=True)     
+
+
+    def _draw(self):
+        plt.figure(self.id)
+        plt.clf()
+        
+        self._init()    
+
         self.angles = [n / float(self.N) * 2 * pi for n in range(self.N)]
         self.angles += self.angles[:1]
 
@@ -43,16 +58,17 @@ class SpiderPlot:
 
         self.legend_dict = {}
         for i, (data, color) in enumerate(self.data):
-            #self.legend_dict[]
             lin = self.ax.plot(self.angles, data + data[:1], color=color, linewidth=1, linestyle='solid', label=self.feature_types[i])
             
             if color == None:
                 color = lin[0].get_color()
 
-            fill = self.ax.fill(self.angles, data + data[:1], 'b', color=color, alpha=0.1)
+            self.ax.fill(self.angles, data + data[:1], 'b', color=color, alpha=0.1)
 
         plt.legend(bbox_to_anchor=(0.1, 0.1))
 
+    def show(self, block=True):
+        self._draw()
         plt.show(block=block)
 
 if __name__ == '__main__':
