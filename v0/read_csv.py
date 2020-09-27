@@ -79,6 +79,10 @@ class CSV:
 
         features = [feature for row in data if (feature := self._row_to_feature(row)) != None]
 
+        #types = list({feature['Feature Tag'] for feature in features})
+
+        features = Collection(tag=self.filename.split('/')[-1].split('.')[0], type='Various', features=features, srs='EPSG:4326')
+
         return features
 
 if __name__ == '__main__':

@@ -154,6 +154,13 @@ class Collection:
     def __iter__(self):
         return self.features.__iter__()
 
+    def __len__(self):
+        return len(self.features)
+
+    def __add__(self, collection):
+        srs = self.cached_srs[0]
+        return Collection(self.tag, self.type, self.features + collection.as_srs(srs).features, srs)
+
     def to_srs(self, srs):
         if len(self.features) > 0 and srs not in self.cached_srs:
             transformer = Transformer.from_crs(self.cached_srs[0], srs)
@@ -166,6 +173,16 @@ class Collection:
         else:
             for ft in self.features:
                 ft.to_srs(srs)
+    
+    def as_srs(self, srs):
+        transformer = None
+        if len(self.features) > 0 and srs not in self.cached_srs:
+            transformer = Transformer.from_crs(self.cached_srs[0], srs)
+            self.cached_srs.append(srs)
+
+        features = [ft.as_srs(srs, transformer) for ft in self.features]
+        
+        return Collection(self.tag, self.type, features, srs)
 
     def filter(self, filter):
         return Collection(self.tag, self.type, [feature for feature in self.features if filter(feature)], self.cached_srs[0])

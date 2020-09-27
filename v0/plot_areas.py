@@ -5,13 +5,15 @@ from math import pi
 from spider_plot import SpiderPlot
 from read_csv import CSV
 
+def avg(l: list):
+    return sum(l) / len(l)
 
-def format_data(features):
-    
+def format_data(features, fill_when_zero: bool = False):
     categories = ['Accessibility', 'Occluded Visibility', 'True Positive', 'False Positive', 'False Negative', 'Unknown']
     categories_data = {}
     for category in categories:
         categories_data[category] = {}
+
 
     for ft in features:
         for key in categories_data:
@@ -45,11 +47,23 @@ def format_data(features):
             precision[key] = 0.0
             recall[key] = 0.0
             f1[key] = 0.0
+    '''
+    types = list({ft['English'] for ft in features})       
+    categories = list({ft['Category'] for ft in features})
 
-    return [categories_data['Accessibility'], categories_data['Occluded Visibility'], precision, recall, f1]
-    
+    fts = {tp: {cat: features.filter(lambda ft: ft['Category'] == cat and ft['English'] == tp) for cat in categories} for tp in types}
+    ftl = {tp: {cat: len(fts[tp][cat]) for cat in fts[tp]} for tp in types}
 
+    m = {metric: {tp: 0 for tp in types if fill_when_zero} for metric in ['precision', 'recall', 'f1']}
 
+    m['precision'].update({tp: ftl[tp]['True Positive'] / (ftl[tp]['True Positive'] + ftl[tp]['False Positive']) for tp in types if ftl[tp]['True Positive'] + ftl[tp]['False Positive'] != 0})
+    m['recall'].update({tp: ftl[tp]['True Positive'] / (ftl[tp]['True Positive'] + ftl[tp]['False Negative']) for tp in types if ftl[tp]['True Positive'] + ftl[tp]['False Negative'] != 0})
+    m['f1'].update({tp: 2 * m['precision'][tp] *  m['recall'][tp] / (m['precision'][tp] +  m['recall'][tp]) for tp in types if (tp in m['precision'] and tp in m['recall']) and (m['precision'][tp] + m['recall'][tp] != 0)})  
+
+    m['accessibility'] = {tp: avg([float(ft['Accessibility']) / 100 for ft in fts[tp]['True Positive'] + fts[tp]['False Negative']]) for tp in types}
+    m['visibility'] = {tp: avg([float(ft['Accessibility']) / 100 + (1 - float(ft['Accessibility']) / 100) * float(ft['Occluded Visibility']) / 100 for ft in fts[tp]['True Positive'] + fts[tp]['False Negative']]) for tp in types}
+    '''
+    return m
 
 if __name__ == '__main__':
 
@@ -60,15 +74,15 @@ if __name__ == '__main__':
 
     data = format_data(features)
 
-    N = len(categories)
-    K = 5
+    N = len(data)
+    K = len(list(data.values())[0])
 
-    data_list = [[] for i in data[0]]
+    data_list = [[] for i in list(data.values())[0]]
     feature_types = []
 
-    for category in data:
-        for i, key in enumerate(category):
-            data_list[i].append(category[key])
+    for category in data.values():
+        for i, val in enumerate(category.values()):
+            data_list[i].append(val)
     
     for key in data[0]:
         feature_types.append(key)
