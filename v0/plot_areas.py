@@ -69,7 +69,7 @@ if __name__ == '__main__':
 
     areas = ['Harbor', 'Park', 'SDU', 'Suburb']
 
-    for area in areas:
+    for i, area in enumerate(areas):
         csv_file = CSV(f'input/{area}_Data_Analysis.csv')
         features = csv_file.read()
 
@@ -84,8 +84,8 @@ if __name__ == '__main__':
         feature_types = []
 
         for category in data:
-            for i, val in enumerate(category.values()):
-                data_list[i].append(val)
+            for j, val in enumerate(category.values()):
+                data_list[j].append(val)
         
         for key in data[0]:
             feature_types.append(key)
@@ -97,4 +97,6 @@ if __name__ == '__main__':
 
         for d in data_list:
             spider_plot.add_data(d)
-    spider_plot.show()
+        spider_plot.show(block=(i == len(areas) - 1))
+
+        pass
