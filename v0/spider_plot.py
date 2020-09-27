@@ -24,14 +24,13 @@ class SpiderPlot:
 
         self.category_labels.append(label)
 
-        self.ax.set_rlabel_position(0)
         plt.yticks(tick_values, tick_labels, color=color, size=size)
         plt.ylim(0, 1)
 
         self.N += 1
 
         if self.autodraw:
-            self._draw()
+            self.draw()
 
     def add_data(self, feature_type, data, color = None):
         self.data.append((data, color))
@@ -39,16 +38,16 @@ class SpiderPlot:
         self.feature_types.append(feature_type)
 
         if self.autodraw:
-            self._draw()
+            self.draw()
 
-    def _draw(self):
+    def draw(self):
         plt.figure(self.id)
         plt.clf()
 
         self.ax = plt.axes(polar=True)     
+        self.ax.set_rlabel_position(0)
 
         plt.title(self.title)
-  
 
         self.angles = [n / float(self.N) * 2 * pi for n in range(self.N)]
         self.angles += self.angles[:1]
@@ -68,7 +67,7 @@ class SpiderPlot:
 
     def show(self, block=True):
         if self.autodraw:
-            self._draw()
+            self.draw()
         plt.show(block=block)
 
 if __name__ == '__main__':
