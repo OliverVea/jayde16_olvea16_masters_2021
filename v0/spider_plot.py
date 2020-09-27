@@ -10,7 +10,10 @@ class SpiderPlot:
         self.data = []
         self.feature_types = feature_types
 
-        self.id = uuid.uuid1()
+        self.id = figname
+        if figname == None:
+            self.id = uuid.uuid1()
+            
         self.fig = plt.figure(self.id)
 
         self.ax = plt.axes(polar=True)        
