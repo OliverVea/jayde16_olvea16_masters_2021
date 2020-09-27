@@ -30,6 +30,7 @@ class SpiderPlot:
         self.data.append((data, color))
 
     def show(self):
+        plt.figure(self.id)
         self.angles = [n / float(self.N) * 2 * pi for n in range(self.N)]
         self.angles += self.angles[:1]
 
