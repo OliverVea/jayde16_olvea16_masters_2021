@@ -92,7 +92,7 @@ if __name__ == '__main__':
         for key in data[0]:
             feature_types.append(key)
 
-        spider_plot = SpiderPlot(title=f'{area.capitalize()} Data', figname=f'{area}_data')
+        spider_plot = SpiderPlot(title=f'{area} Data', figname=f'{area}_data', autodraw=False)
 
         for category in categories:
             spider_plot.add_category(category, [k/(K - 1) for k in range(K)], [f'{100*k/(K - 1)}%' for k in range(K)])
