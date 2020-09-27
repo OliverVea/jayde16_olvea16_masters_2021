@@ -67,7 +67,7 @@ def format_data(features, fill_when_zero: bool = False):
 
 if __name__ == '__main__':
 
-    csv_file = CSV('input/Park_Data_Analysis.csv')
+    csv_file = CSV('input/Harbor_Data_Analysis.csv')
     features = csv_file.read()
 
     categories = ['Accessibility', 'Occluded Visibility', 'Precision', 'Recall', 'F1-value']
@@ -86,18 +86,11 @@ if __name__ == '__main__':
     
     for key in data[0]:
         feature_types.append(key)
-    
-    #d1 = [random() for _ in range(N)]
-    #d2 = [random() for _ in range(N)]
-    #d3 = [random() for _ in range(N)]
 
     spider_plot = SpiderPlot('Park_data', feature_types)
 
     for category in categories:
         spider_plot.add_category(category, [k/(K - 1) for k in range(K)], [f'{100*k/(K - 1)}%' for k in range(K)])
-
-    #colors = ['green', 'red', 'blue', 'purple', 'yellow']
-    #data = [d1, d2, d3]
 
     for d in data_list:
         spider_plot.add_data(d)
