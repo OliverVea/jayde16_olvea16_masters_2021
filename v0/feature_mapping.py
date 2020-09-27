@@ -40,10 +40,10 @@ if __name__ == '__main__':
     }
 
     markers = {
-        'downtown': (55.3947509, 10.3833619), 
-        'suburb': (55.3761308, 10.3860752), 
-        'university_parking': (55.3685818, 10.4317584), 
-        'harbor': (55.4083756, 10.3787729), 
+        #'downtown': (55.3947509, 10.3833619), 
+        #'suburb': (55.3761308, 10.3860752), 
+        #'university_parking': (55.3685818, 10.4317584), 
+        #'harbor': (55.4083756, 10.3787729), 
         'park': (55.3916561, 10.3828329)
     }
 
@@ -62,11 +62,11 @@ if __name__ == '__main__':
 
     save_everything = False
 
-    show_figure = True
-    save_figure_pdf = True
-    save_figure_png = True
+    show_figure = False
+    save_figure_pdf = False
+    save_figure_png = False
 
-    save_csv = True
+    save_csv = False
 
     areas = ['downtown']
 
