@@ -4,11 +4,12 @@ from random import random
 from math import pi
 
 class SpiderPlot:
-    def __init__(self, title: str, feature_types: list, figname: str = None):
+    def __init__(self, title: str, figname: str = None, autodraw: bool = False):
         self.N = 0
         self.category_labels = []
         self.data = []
-        self.feature_types = feature_types
+        self.autodraw = autodraw
+        self.feature_types = []
 
         self.id = figname
         if figname == None:
@@ -17,8 +18,6 @@ class SpiderPlot:
         self.title = title
 
         self.fig = plt.figure(self.id)
-
-        self._init()    
         
     def add_category(self, label, tick_values: list, tick_labels: list, color='grey', size=7):
         plt.figure(self.id)
@@ -31,25 +30,25 @@ class SpiderPlot:
 
         self.N += 1
 
-        self._draw()
+        if self.autodraw:
+            self._draw()
 
-    def add_data(self, data, color = None):
+    def add_data(self, feature_type, data, color = None):
         self.data.append((data, color))
-        self._draw()
 
-    def _init(self):
-        plt.figure(self.id)
+        self.feature_types.append(feature_type)
 
-        self.ax = plt.axes(polar=True)     
-
-        plt.title(self.title)
-
+        if self.autodraw:
+            self._draw()
 
     def _draw(self):
         plt.figure(self.id)
         plt.clf()
 
-        self._init()    
+        self.ax = plt.axes(polar=True)     
+
+        plt.title(self.title)
+  
 
         self.angles = [n / float(self.N) * 2 * pi for n in range(self.N)]
         self.angles += self.angles[:1]
@@ -68,7 +67,8 @@ class SpiderPlot:
         plt.legend(bbox_to_anchor=(0.1, 0.1))
 
     def show(self, block=True):
-        self._draw()
+        if self.autodraw:
+            self._draw()
         plt.show(block=block)
 
 if __name__ == '__main__':
