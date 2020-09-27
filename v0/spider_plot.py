@@ -61,7 +61,27 @@ class SpiderPlot:
 
         self.fig = plt.figure(self.id)
 
-        self.fig.canvas.mpl_connect('pick_event', self._on_pick)
+        #Code partly from https://matplotlib.org/3.1.1/gallery/event_handling/legend_picking.html
+        def _on_pick(event):
+            for shape in self.shapes:
+                if shape.legline == event.artist:
+                    if event.mouseevent.button in ['up', 'down']:
+                        if shape.state == 'invisible':
+                            shape.set_state('transparent')
+                        else:
+                            shape.set_state('invisible')
+                    elif shape.state == 'visible':
+                        shape.set_state('transparent')
+                    elif shape.state == 'transparent':
+                        shape.set_state('visible')
+                else:
+                    if shape.state != 'invisible':
+                        shape.set_state('transparent')
+                     
+            plt.figure(self.id)   
+            plt.draw()
+
+        self.fig.canvas.mpl_connect('pick_event', _on_pick)
         
     def add_category(self, label, tick_values: list, tick_labels: list, color='grey', size=7):
         plt.figure(self.id)
@@ -115,27 +135,7 @@ class SpiderPlot:
             self.shapes.append(current_shape)
             
         for shape, legline in zip(self.shapes, plt.legend(loc='lower left').get_lines()): 
-            shape.set_legline(legline, pick_radius=8)
-
-    #Code partly from https://matplotlib.org/3.1.1/gallery/event_handling/legend_picking.html
-    def _on_pick(self, event):
-        for shape in self.shapes:
-            if shape.legline == event.artist:
-                if event.mouseevent.button in ['up', 'down']:
-                    if shape.state == 'invisible':
-                        shape.set_state('transparent')
-                    else:
-                        shape.set_state('invisible')
-                elif shape.state == 'visible':
-                    shape.set_state('transparent')
-                elif shape.state == 'transparent':
-                    shape.set_state('visible')
-            else:
-                if shape.state != 'invisible':
-                    shape.set_state('transparent')
-                    
-        plt.draw()
-
+            shape.set_legline(legline, pick_radius=8) 
 
     def show(self, block=True):
         if self.autodraw:
