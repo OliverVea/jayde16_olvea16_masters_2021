@@ -63,7 +63,7 @@ def format_data(features, fill_when_zero: bool = False):
     m['accessibility'] = {tp: avg([float(ft['Accessibility']) / 100 for ft in fts[tp]['True Positive'] + fts[tp]['False Negative']]) for tp in types}
     m['visibility'] = {tp: avg([float(ft['Accessibility']) / 100 + (1 - float(ft['Accessibility']) / 100) * float(ft['Occluded Visibility']) / 100 for ft in fts[tp]['True Positive'] + fts[tp]['False Negative']]) for tp in types}
     '''
-    return m
+    return categories_data['Accessibility'], categories_data['Occluded Visibility'], precision, recall, f1
 
 if __name__ == '__main__':
 
@@ -75,12 +75,12 @@ if __name__ == '__main__':
     data = format_data(features)
 
     N = len(data)
-    K = len(list(data.values())[0])
+    K = len(list(data[0]))
 
-    data_list = [[] for i in list(data.values())[0]]
+    data_list = [[] for i in list(data[0])]
     feature_types = []
 
-    for category in data.values():
+    for category in data:
         for i, val in enumerate(category.values()):
             data_list[i].append(val)
     
