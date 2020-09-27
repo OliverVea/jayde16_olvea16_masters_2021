@@ -13,6 +13,8 @@ class SpiderPlot:
         self.id = uuid.uuid1()
         self.fig = plt.figure(self.id)
 
+        plt.title(title)
+
         self.ax = plt.axes(polar=True)        
         
     def add_category(self, label, tick_values: list, tick_labels: list, color='grey', size=7):
@@ -29,7 +31,7 @@ class SpiderPlot:
     def add_data(self, data, color = None):
         self.data.append((data, color))
 
-    def show(self):
+    def show(self, block=True):
         self.angles = [n / float(self.N) * 2 * pi for n in range(self.N)]
         self.angles += self.angles[:1]
 
@@ -47,7 +49,7 @@ class SpiderPlot:
 
         plt.legend(bbox_to_anchor=(0.1, 0.1))
 
-        plt.show()
+        plt.show(block=block)
 
 if __name__ == '__main__':
     categories = ['Strength', 'Dexterity', 'Wisdom', 'Endurance', 'Luck']

@@ -67,32 +67,38 @@ def format_data(features, fill_when_zero: bool = False):
 
 if __name__ == '__main__':
 
-    csv_file = CSV('input/Harbor_Data_Analysis.csv')
-    features = csv_file.read()
+    areas = ['Harbor', 'Park', 'SDU', 'Suburb']
 
-    categories = ['Accessibility', 'Occluded Visibility', 'Precision', 'Recall', 'F1-value']
+    for area in areas:
+        csv_file = CSV(f'input/{area}_Data_Analysis.csv')
+        features = csv_file.read()
 
-    data = format_data(features)
+        categories = ['Accessibility', 'Occluded Visibility', 'Precision', 'Recall', 'F1-value']
 
-    N = len(data)
-    K = len(list(data[0]))
+        data = format_data(features)
 
-    data_list = [[] for i in list(data[0])]
-    feature_types = []
+        N = len(data)
+        K = len(list(data[0]))
 
-    for category in data:
-        for i, val in enumerate(category.values()):
-            data_list[i].append(val)
-    
-    for key in data[0]:
-        feature_types.append(key)
+        data_list = [[] for i in list(data[0])]
+        feature_types = []
 
-    spider_plot = SpiderPlot('Park_data', feature_types)
+        for category in data:
+            for i, val in enumerate(category.values()):
+                data_list[i].append(val)
+        
+        for key in data[0]:
+            feature_types.append(key)
 
-    for category in categories:
-        spider_plot.add_category(category, [k/(K - 1) for k in range(K)], [f'{100*k/(K - 1)}%' for k in range(K)])
+        spider_plot = SpiderPlot(f'{area}_data', feature_types)
 
-    for d in data_list:
-        spider_plot.add_data(d)
+        for category in categories:
+            spider_plot.add_category(category, [k/(K - 1) for k in range(K)], [f'{100*k/(K - 1)}%' for k in range(K)])
 
-    spider_plot.show()
+        for d in data_list:
+            spider_plot.add_data(d)
+
+        if area == areas[-1]:
+            spider_plot.show(block=True)
+        else:
+            spider_plot.show(block=False)

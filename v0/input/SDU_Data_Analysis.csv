@@ -1,4 +1,3 @@
-"Date: 11/09, Time: 11.00, Area: University Parking Lot",,,,,,,,,,,,
 Feature Tag,English,id.lokalId,Feature #,Latitude,Longtitude,Timestamp,Exists?,Accessibility,Occluded Visibility,Domain,Category,Note (optional)
 Broenddaeksel,Manhole Cover,1103665955,0,55.36774877,10.43137629,9/11/2020 12:51:12,Yes,100,100,Public,True Positive,
 Broenddaeksel,Manhole Cover,1034152827,1,55.36901208,10.43250911,9/11/2020 11:21:03,Yes,100,100,Public,True Positive,
