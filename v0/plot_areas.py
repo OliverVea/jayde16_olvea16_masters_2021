@@ -97,8 +97,4 @@ if __name__ == '__main__':
 
         for d in data_list:
             spider_plot.add_data(d)
-
-        if area == areas[-1]:
-            spider_plot.show(block=True)
-        else:
-            spider_plot.show(block=False)
+    spider_plot.show()
