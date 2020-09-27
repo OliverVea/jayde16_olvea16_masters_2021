@@ -13,7 +13,7 @@ class SpiderPlot:
         self.id = figname
         if figname == None:
             self.id = uuid.uuid1()
-
+            
         self.fig = plt.figure(self.id)
 
         plt.title(title)
@@ -31,16 +31,11 @@ class SpiderPlot:
 
         self.N += 1
 
-        self._draw()
-
     def add_data(self, data, color = None):
         self.data.append((data, color))
-        self._draw()
 
-    def _draw(self):
+    def show(self, block=True):
         plt.figure(self.id)
-        plt.clf()
-
         self.angles = [n / float(self.N) * 2 * pi for n in range(self.N)]
         self.angles += self.angles[:1]
 
@@ -48,6 +43,7 @@ class SpiderPlot:
 
         self.legend_dict = {}
         for i, (data, color) in enumerate(self.data):
+            #self.legend_dict[]
             lin = self.ax.plot(self.angles, data + data[:1], color=color, linewidth=1, linestyle='solid', label=self.feature_types[i])
             
             if color == None:
@@ -57,11 +53,7 @@ class SpiderPlot:
 
         plt.legend(bbox_to_anchor=(0.1, 0.1))
 
-
-    def show(self):
-        plt.figure(self.id)
-        self._draw()
-        plt.show()
+        plt.show(block=block)
 
 if __name__ == '__main__':
     categories = ['Strength', 'Dexterity', 'Wisdom', 'Endurance', 'Luck']
@@ -71,7 +63,7 @@ if __name__ == '__main__':
     d2 = [random() for _ in range(N)]
     d3 = [random() for _ in range(N)]
 
-    spider_plot = SpiderPlot('title', categories)
+    spider_plot = SpiderPlot('title')
 
     for category in categories:
         spider_plot.add_category(category, [k/(K - 1) for k in range(K)], [f'{100*k/(K - 1)}%' for k in range(K)])
