@@ -10,7 +10,10 @@ class SpiderPlot:
         self.data = []
         self.feature_types = feature_types
 
-        self.id = uuid.uuid1()
+        self.id = figname
+        if figname == None:
+            self.id = uuid.uuid1()
+            
         self.fig = plt.figure(self.id)
 
         plt.title(title)
@@ -31,7 +34,8 @@ class SpiderPlot:
     def add_data(self, data, color = None):
         self.data.append((data, color))
 
-    def show(self, block=True):
+    def show(self):
+        plt.figure(self.id)
         self.angles = [n / float(self.N) * 2 * pi for n in range(self.N)]
         self.angles += self.angles[:1]
 
