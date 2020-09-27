@@ -78,7 +78,6 @@ class SpiderPlot:
                     if shape.state != 'invisible':
                         shape.set_state('transparent')
                      
-            plt.figure(self.id)   
             plt.draw()
 
         self.fig.canvas.mpl_connect('pick_event', _on_pick)
