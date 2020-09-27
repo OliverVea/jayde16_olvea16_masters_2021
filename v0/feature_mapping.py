@@ -1,7 +1,7 @@
 import json
 
 class csvfile:
-    def __init__(self, filename, header, delimiter=';'):
+    def __init__(self, filename, header, delimiter=','):
         self.filename = filename
         self.header = header
         self.delimiter = delimiter
@@ -14,7 +14,7 @@ class csvfile:
 
         for key, value in zip(elements.keys(), elements.values()):
             if key in self.header:
-                line[self.header.index(key)] = str(value)
+                line[self.header.index(key)] = f'"{value}"'
             
         with open(self.filename, 'a') as f:
             f.write(self.delimiter.join(line) + '\n')
@@ -62,9 +62,9 @@ if __name__ == '__main__':
 
     save_everything = False
 
-    show_figure = True
-    save_figure_pdf = True
-    save_figure_png = True
+    show_figure = False
+    save_figure_pdf = False
+    save_figure_png = False
 
     save_csv = True
 
