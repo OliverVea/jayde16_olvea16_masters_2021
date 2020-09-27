@@ -40,15 +40,15 @@ class SpiderPlot:
     def _init(self):
         plt.figure(self.id)
 
-        plt.title(self.title)
-
         self.ax = plt.axes(polar=True)     
+
+        plt.title(self.title)
 
 
     def _draw(self):
         plt.figure(self.id)
         plt.clf()
-        
+
         self._init()    
 
         self.angles = [n / float(self.N) * 2 * pi for n in range(self.N)]

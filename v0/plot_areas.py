@@ -62,6 +62,8 @@ def format_data(features, fill_when_zero: bool = False):
 
     m['accessibility'] = {tp: avg([float(ft['Accessibility']) / 100 for ft in fts[tp]['True Positive'] + fts[tp]['False Negative']]) for tp in types}
     m['visibility'] = {tp: avg([float(ft['Accessibility']) / 100 + (1 - float(ft['Accessibility']) / 100) * float(ft['Occluded Visibility']) / 100 for ft in fts[tp]['True Positive'] + fts[tp]['False Negative']]) for tp in types}
+
+    return m['accessibility'], m['visibility'], m['precision'], m['recall'], m['f1']
     '''
     return categories_data['Accessibility'], categories_data['Occluded Visibility'], precision, recall, f1
 
@@ -97,7 +99,7 @@ if __name__ == '__main__':
 
         for d in data_list:
             spider_plot.add_data(d)
-            
+
         spider_plot.show(block=(i == len(areas) - 1))
 
         pass
