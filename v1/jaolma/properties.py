@@ -1,3 +1,5 @@
+from jaolma.gis.wfs import Feature
+
 class Properties:
     areas = {
         'downtown': (55.3947509, 10.3833619), 
@@ -6,3 +8,5 @@ class Properties:
         'harbor': (55.4083756, 10.3787729), 
         'park': (55.3916561, 10.3828329)
     }
+
+    areas = {Feature(geometry, 'EPSG:4326', key) for key, geometry in zip(areas.keys(), areas.values())}
