@@ -9,7 +9,7 @@ class CSV:
     def _split_without_parentheses(self, text, delimiter):
         openers = {'[': 0, '{': 0, '(': 0, '"': False, "'": False}
 
-        is_inside = lambda openers: (openers['['] > 0) or (openers['{']) > 0 or (openers['(']) or openers['"'] or openers['\'']
+        is_inside = lambda openers: (openers['['] > 0) or (openers['{']) > 0 or (openers['(']) > 0 or openers['"'] or openers["'"]
 
         result = []
         current_string = ''
