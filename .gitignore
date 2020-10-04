@@ -142,4 +142,4 @@ v0/.vscode/settings.json
 *.png
 v0/.vscode/settings.json
 !v0/input/*
-!v1/input/*
+!v1/input/*/*
