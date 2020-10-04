@@ -1,4 +1,3 @@
-print(__name__)
 from jaolma.utility.utility import prints, printe
 from jaolma.gis.wfs import Feature
 

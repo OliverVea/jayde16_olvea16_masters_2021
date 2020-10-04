@@ -4,8 +4,6 @@ _utility_verbose_options_timestamp=True
 _utility_verbose_options_tag_whitelist=[]
 _utility_verbose_options_tag_blacklist=[]
 
-print(__name__)
-
 import datetime
 from colorsys import hsv_to_rgb
 

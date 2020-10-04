@@ -11,4 +11,4 @@ class Properties:
 
     areas = {key: Feature(geometry, 'EPSG:4326', key) for key, geometry in zip(areas.keys(), areas.values())}
 
-    default_srs = 'EPSG:4326'
+    default_srs = 'EPSG:25832'

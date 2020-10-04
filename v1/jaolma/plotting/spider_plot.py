@@ -1,5 +1,3 @@
-print(__name__)
-
 import matplotlib.pyplot as plt
 import uuid
 from random import random

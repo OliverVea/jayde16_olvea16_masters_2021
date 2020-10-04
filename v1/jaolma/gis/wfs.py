@@ -1,4 +1,3 @@
-print(__name__)
 from jaolma.utility.utility import printe, prints, shortstring
 
 import io
@@ -42,8 +41,7 @@ class Feature(object):
         x, y = pt.pos(self.default_srs)
 
         if self.is_list:
-            xs, ys = self.x(), self.y()
-            geometry =  [(sx - x, sy - y) for sx, sy in zip(xs, ys)]
+            geometry =  [[sx - x for sx in self.x()], [sy - y for sy in self.y()]]
         else:
             geometry = (self.x() - x, self.y() - y)
 
@@ -72,11 +70,21 @@ class Feature(object):
 
         return self.points[srs]
 
-    def x(self, srs=None):
-        return self.pos(srs)[0]
+    def x(self, srs=None, enforce_list: bool = False):
+        x = self.pos(srs)[0]
 
-    def y(self, srs=None):
-        return self.pos(srs)[1]
+        if enforce_list and not isinstance(x, (list, tuple)):
+            x = [x]
+
+        return x
+
+    def y(self, srs=None, enforce_list: bool = False):
+        y = self.pos(srs)[1]
+
+        if enforce_list and not isinstance(y, (list, tuple)):
+            y = [y]
+            
+        return y
 
     def to_srs(self, srs, transform: callable = None):
         self.points[srs] = self.pos(srs, transform)
@@ -146,6 +154,9 @@ class Filter:
 
 
 class Collection:
+    def __getitem__(self, key):
+        return self.features[key]
+
     def __init__(self, tag: str, type: str, features: list, srs: str):
         self.tag = tag
         self.type = type

@@ -1,13 +1,49 @@
-print(__name__)
+from jaolma.gis.wfs import WFS, Filter
+from jaolma.properties import Properties
+from jaolma.utility.csv import CSV
 
-from jaolma.gis.wfs import *
-from jaolma.gis.wmts import *
+wfs = WFS('https://services.datafordeler.dk/GeoDanmarkVektor/GeoDanmark60_NOHIST_GML3/1.0.0/WFS?', 
+    username='VCSWRCSUKZ',
+    password='hrN9aTirUg5c!np',
+    version='1.1.0')
 
-from jaolma.utility.csv import *
-from jaolma.utility.gps import *
-from jaolma.utility.utility import *
+typenames = [
+    'Bygning',
+    'Broenddaeksel',
+    'Mast',
+    'Hegn',
+    'Soe',
+    'KratBevoksning',
+    'Trae',
+    'Nedloebsrist',
+    'Chikane',
+    'Vandloebskant',
+    'Helle',
+    'Soe',
+    'Skorsten',
+    'Jernbane',
+    'Bassin',
+]
 
-from jaolma.plotting.maps import *
-from jaolma.plotting.spider_plot import *
+for area, center in zip(Properties.areas.keys(), Properties.areas.values()):
+    center.to_srs(Properties.default_srs)
 
-pass
+    n = 0
+    content = []
+    for typename in typenames:
+        features = wfs.get_features(
+            srs=Properties.default_srs, 
+            typename=typename, 
+            filter=Filter.radius(center, radius=100))
+
+        geometries = [';'.join([feature.tag] + [','.join([str(x), str(y)]) for x, y in zip(feature.x(enforce_list=True), feature.y(enforce_list=True))]) for feature in features]
+        
+        content += [{'#': n + i, 
+            'id': feature['id.lokalId'], 
+            'description': typename, 
+            'geometry': f'"{geometry}"'} 
+            for i, (feature, geometry) in enumerate(zip(features, geometries))]
+
+        n += len(features)
+
+    CSV.create_file(f'files/area_data/{area}_geodanmark.csv', delimiter=',', header=['#', 'id', 'description', 'geometry'], content=content, types=['int', 'int', 'str', 'str'])

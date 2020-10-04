@@ -1,5 +1,3 @@
-print(__name__)
-
 from os.path import exists, join
 from os import getcwd
 

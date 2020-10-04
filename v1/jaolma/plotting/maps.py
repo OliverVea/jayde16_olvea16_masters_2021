@@ -1,5 +1,3 @@
-print(__name__)
-
 from jaolma.gis.wfs import WFS, Feature, Filter
 from jaolma.gis.wmts import WMTS
 from jaolma.utility.utility import uniform_colors, prints, printe
@@ -136,8 +134,6 @@ class Map:
 
         plt.figure(self.figname)
 
-        feature_type = features.type
-
         # If single point is given.
         #features = features if type(features) is list else [features]
         
@@ -145,33 +141,35 @@ class Map:
         features.to_srs(self.srs)
         features = [feature.as_srs(self.srs) - self.center.as_srs(self.srs) for feature in features]
 
-
         # This could be done in one go but annotating is probably slightly easier this way.
         for i, feature in enumerate(features):
+            _marker = marker
             if color == None and label in self.colors:
                 color = self.colors[label]
 
-            if feature_type == 'LineString' or feature_type == 'Polygon':
-                x, y = [x for x, _ in feature.pos()], [y for _, y in feature.pos()]
+            if feature.tag in ['LineString', 'Polygon']:
+                x, y = feature.x(), feature.y()
 
-                if marker == None:
-                    marker = '-'
+                if _marker == None:
+                    _marker = '-'
 
-            if feature_type == 'Polygon':
+            if feature.tag == 'Polygon':
+                if not isinstance(x, list):
+                    print('error')
                 x.append(x[0])
                 y.append(y[0])
                 
-            if feature_type == 'Point':
-                x, y = feature.pos()[0], feature.pos()[1]
+            if feature.tag == 'Point':
+                x, y = feature.x(), feature.y()
 
-                if marker == None:
-                    marker = '*'
+                if _marker == None:
+                    _marker = '*'
 
             annotation = None
             if annotations != None:
                 annotation = annotations[i]
 
-            self._draw_point(x, y, label=label, annotation=annotation, color=color, marker=marker)
+            self._draw_point(x, y, label=label, annotation=annotation, color=color, marker=_marker)
 
     def add_circle(self, origin: Feature, radius: float):
         origin.to_srs(self.srs)
