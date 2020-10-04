@@ -1,3 +1,1 @@
-from geometry import *
-from wfs import *
-from wmts import *
+print(__name__)

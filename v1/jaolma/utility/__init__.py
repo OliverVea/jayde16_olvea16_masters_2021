@@ -1,2 +1,1 @@
-from csv import *
-from gps import *
+print(__name__)

@@ -1,6 +1,8 @@
-from wfs import WFS, Feature, Filter
-from wmts import WMTS
-from utility import uniform_colors, prints, printe
+print(__name__)
+
+from jaolma.gis.wfs import WFS, Feature, Filter
+from jaolma.gis.wmts import WMTS
+from jaolma.utility.utility import uniform_colors, prints, printe
 
 import matplotlib.pyplot as plt
 from matplotlib.patches import Circle, Polygon

@@ -1,5 +1,6 @@
-from jaolma.utility import prints, printe
-from wfs import Feature
+print(__name__)
+from jaolma.utility.utility import prints, printe
+from jaolma.gis.wfs import Feature
 
 import socket
 import json

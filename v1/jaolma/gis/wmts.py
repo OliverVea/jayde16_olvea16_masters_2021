@@ -1,5 +1,8 @@
-from wfs import WebService, WFS, Feature
-from jaolma.utility import prints
+print(__name__)
+
+from jaolma.gis.wfs import WebService, WFS, Feature
+from jaolma.utility.utility import prints
+
 
 from PIL import Image
 from math import ceil

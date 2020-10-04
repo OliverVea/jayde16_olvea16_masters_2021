@@ -1,3 +1,4 @@
+print(__name__)
 # TODO:
 
 # Maybe:

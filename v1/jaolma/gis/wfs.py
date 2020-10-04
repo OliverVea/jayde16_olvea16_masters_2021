@@ -1,4 +1,5 @@
-from jaolma.utility import printe, prints, shortstring
+print(__name__)
+from jaolma.utility.utility import printe, prints, shortstring
 
 import io
 

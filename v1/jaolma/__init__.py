@@ -1,1 +1,1 @@
-from gis import *
+print(__name__)
