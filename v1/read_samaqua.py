@@ -6,7 +6,7 @@ radius = 100
 
 for area in Properties.areas:
 
-    center = area.as_srs(srs='EPSG:25832').points['EPSG:25832']
+    center = Properties.areas[area].as_srs(srs='EPSG:25832').points['EPSG:25832']
 
     def filter(row):
         if row['X_Node'] != None:
@@ -19,7 +19,7 @@ for area in Properties.areas:
         return False
         
 
-    input_csv = CSV('input/Node_Cover_wHeader.csv', delimiter=',', type_row = True)
+    input_csv = CSV('input/Samaqua/Node_Cover_wHeader.csv', delimiter=',', type_row = True)
     input_data = input_csv.read(filter=filter)
 
     output_data = [{}]*len(input_data)
