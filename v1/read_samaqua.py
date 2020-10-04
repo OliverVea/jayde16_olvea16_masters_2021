@@ -20,9 +20,9 @@ for area in Properties.areas:
 
     for i, row in enumerate(input_data):
         output_data[i]['#'] = i
-        output_data[i]['ID'] = row['FeatureGUID'] + '_node'
-        output_data[i]['Description'] = 'Water node'
-        output_data[i]['Geometry'] = f'"Point;{row["X_Node"]},{row["Y_Node"]}"'
+        output_data[i]['id'] = row['FeatureGUID'] + '_node'
+        output_data[i]['description'] = 'Water node'
+        output_data[i]['geometry'] = f'"Point;{row["X_Node"]},{row["Y_Node"]}"'
 
     if len(output_data) > 0:
         types = [type(typ).__name__ for typ in output_data[0].values()]

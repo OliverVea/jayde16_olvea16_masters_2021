@@ -1,4 +1,4 @@
-#,ID,Description,Geometry
+#,id,description,geometry
 int,str,str,str
 0,3047363d-3331-44a1-bc33-666dc2a19bef_node,Water node,"Point;587836.91514447,6137525.0312156"
 1,8dd6a07c-8463-4969-986e-2a2680ba3e76_node,Water node,"Point;587774.84989883,6137565.05821456"
