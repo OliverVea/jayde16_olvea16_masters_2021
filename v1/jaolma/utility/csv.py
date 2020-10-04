@@ -1,3 +1,5 @@
+
+
 class CSV(object):
     def _split(self, text):
         openers = {'[': 0, '{': 0, '(': 0, '"': False, "'": False}

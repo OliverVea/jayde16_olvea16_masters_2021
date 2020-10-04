@@ -1,4 +1,4 @@
-from utility import prints, printe
+from jaolma.utility import prints, printe
 from wfs import Feature
 
 import socket
