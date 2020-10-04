@@ -143,3 +143,6 @@ v0/.vscode/settings.json
 v0/.vscode/settings.json
 !v0/input/*
 !v1/input/*/*
+!v1/files/*
+!v1/files/*/*
+!v1/files/*/*/*

@@ -2,7 +2,7 @@ from jaolma.utility.csv import *
 from jaolma.properties import Properties
 from math import sqrt
 
-radius = 100
+radius = 300
 
 for area in Properties.areas:
 
@@ -14,12 +14,13 @@ for area in Properties.areas:
                 return True
 
         if row['X_Cover'] != None:
-            return sqrt((row['X_Cover'] - center[0])**2 + (row['Y_Cover'] - center[1])**2) < radius
+            if sqrt((row['X_Cover'] - center[0])**2 + (row['Y_Cover'] - center[1])**2) < radius:
+                return True
 
         return False
         
 
-    input_csv = CSV('input/Samaqua/Node_Cover_wHeader.csv', delimiter=',', type_row = True)
+    input_csv = CSV('input/Samaqua/Node_Cover_wHeader.csv', delimiter=';')
     input_data = input_csv.read(filter=filter)
 
     output_data = [{}]*len(input_data)
@@ -41,7 +42,5 @@ for area in Properties.areas:
 
 
 
-    #out = CSV('input/_Node_Cover_wHeader.csv', delimiter=',', type_row = True)
-    #out.write(a)
-    dummy = 0
-    pass
+    out = CSV('files/area_data' + area + '_samaqua.csv', delimiter=',', type_row = True)
+    out.write(output_data)
