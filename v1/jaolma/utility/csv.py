@@ -32,6 +32,8 @@ class CSV(object):
 
         self.type_row = type_row
 
+        self.typedict = {'int': int, 'float': float, 'str': str, 'bool': bool}
+
     def read(self, cols: list = None, filter: callable = None) -> list:
         with open(self.filename, 'r') as f:
             rows = [self._split(row) for row in f]
@@ -47,7 +49,7 @@ class CSV(object):
             if val == 'None':
                 return None
 
-            return {'int': int, 'float': float, 'str': str, 'bool': bool}[t](val)
+            return self.typedict[t](val)
         
         if self.type_row:
             rows = rows[1:]
