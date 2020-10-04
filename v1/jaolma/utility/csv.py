@@ -1,6 +1,32 @@
 print(__name__)
 
+from os.path import exists, join
+from os import getcwd
+
 class CSV(object):
+    @staticmethod
+    def _read(self):
+        pass
+
+    @staticmethod
+    def _write(filename, delimiter, header, content, types: list = None):
+        with open(filename, 'w') as f:
+            f.write(delimiter.join(header) + '\n')
+
+            if types != None:
+                f.write(delimiter.join(types) + '\n')
+
+            for row in content:
+                f.write(delimiter.join([str(el) for el in row.values()]) + '\n')
+
+    @staticmethod
+    def create_file(filename: str, delimiter: str, header: list, content: list = [], types: list = None):
+        CSV._write(filename=filename, delimiter=delimiter, header=header, content=content, types=types)
+        return CSV(filename, delimiter)
+
+    def file_exists(self):
+        return exists(join(getcwd(), self.filename))
+
     def _split(self, text):
         is_inside = False
 
@@ -31,9 +57,11 @@ class CSV(object):
             self.filename = filename + '.csv'
 
         self.typedict = {'int': int, 'float': float, 'str': str, 'bool': bool}
-        self.type_row = all([typename in self.typedict for typename in self.get_types()])
 
-    def read(self, cols: list = None, filter: callable = None) -> list:
+        if self.file_exists():
+            self.type_row = all([typename in self.typedict for typename in self.get_types()])
+
+    def load(self, cols: list = None, filter: callable = None) -> list:
         with open(self.filename, 'r') as f:
             rows = [self._split(row) for row in f]
 
@@ -68,30 +96,27 @@ class CSV(object):
 
         return data
 
-    def write(self, content: list):
+    def save(self, content: list):
         header = self.get_header()
         types = self.get_types()
 
-        with open(self.filename, 'w') as f:
-            f.write(self.delimiter.join(header) + '\n')
-
-            if self.type_row:
-                f.write(self.delimiter.join(types) + '\n')
-
-            for row in content:
-                f.write(self.delimiter.join([str(el) for el in row.values()]) + '\n')
+        CSV._write(self.filename, self.delimiter, header, content, types)
 
     def get_header(self) -> list:
         with open(self.filename, 'r') as f:
             rows = [self._split(row) for row in f]
 
-        return rows[0]
+        if len(rows) > 0:
+            return rows[0]
+        return None
 
     def get_types(self) -> list:
         with open(self.filename, 'r') as f:
             rows = [self._split(row) for row in f]
 
-        return rows[1]
+        if len(rows) > 1:
+            return rows[1]
+        return None
 
     def set_column_name(self, current_name: str, new_name: str):
         pass
