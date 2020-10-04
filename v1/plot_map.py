@@ -10,7 +10,8 @@ except:
 
     dirs = [f for f in os.listdir(path) if os.path.isdir(os.path.join(path, f)) and f in Properties.areas]
 
-    while True:
+    file_path = None
+    while file_path == None:
         print('\n'.join([f'{i + 1}: {dir}' for i, dir in enumerate(dirs)]))
         i = input('Please select an option or enter the full path of a .csv file: ')
 
@@ -21,32 +22,32 @@ except:
                 continue
 
             dir = dirs[i]
-            break
+            sub_path = os.path.join(path, dir)
+
+            files = [f for f in os.listdir(sub_path) if os.path.isfile(os.path.join(sub_path, f)) and f.endswith('.csv')]
+
+            if len(files) == 0:
+                print(f'No .csv files in folder \'{dir}\'.')
+                continue
+
+            while True:
+                print('\n'.join([f'{i + 1}: {dir}' for i, dir in enumerate(files)]))
+                i = input('Please select an option: ')
+
+                if i.isnumeric():
+                    i = int(i) - 1
+                    if 0 > i or i >= len(dirs):
+                        print('Invalid index.')
+                        continue
+
+                    file = files[i]
+                    break
+
+            file_path = os.path.join(sub_path, file)
 
         else:
             print(f'Using path \'{i}\'.')
             file_path = i
-            break
-        
-    if isinstance(i, int):
-        path = os.path.join(path, dir)
-
-        files = [f for f in os.listdir(path) if os.path.isfile(os.path.join(path, f)) and f.endswith('.csv')]
-
-        while True:
-            print('\n'.join([f'{i + 1}: {dir}' for i, dir in enumerate(files)]))
-            i = input('Please select an option: ')
-
-            if i.isnumeric():
-                i = int(i) - 1
-                if 0 > i or i >= len(dirs):
-                    print('Invalid index.')
-                    continue
-
-                file = files[i]
-                break
-
-        file_path = path = os.path.join(path, file)
 
 with open(file_path, 'r') as f:
     print(''.join([row for row in f]))

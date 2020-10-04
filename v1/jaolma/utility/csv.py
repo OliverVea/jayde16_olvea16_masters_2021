@@ -23,16 +23,15 @@ class CSV(object):
 
         return result
 
-    def __init__(self, filename: str, delimiter: str = ';', type_row: bool = False):
+    def __init__(self, filename: str, delimiter: str = ';'):
         self.delimiter = delimiter
 
         self.filename = filename
         if not filename.endswith('.csv'):
             self.filename = filename + '.csv'
 
-        self.type_row = type_row
-
         self.typedict = {'int': int, 'float': float, 'str': str, 'bool': bool}
+        self.type_row = all([typename in self.typedict for typename in self.get_types()])
 
     def read(self, cols: list = None, filter: callable = None) -> list:
         with open(self.filename, 'r') as f:
