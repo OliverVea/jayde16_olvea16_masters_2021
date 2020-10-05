@@ -21,6 +21,7 @@ for area in Properties.areas:
     for i, row in enumerate(input_data):
         output_data[i]['#'] = i
         output_data[i]['id'] = row['FeatureGUID'] + '_node'
+        output_data[i]['name'] = 'water_node'
         output_data[i]['description'] = 'Water node'
         output_data[i]['geometry'] = f'"Point;{row["X_Node"]},{row["Y_Node"]}"'
 

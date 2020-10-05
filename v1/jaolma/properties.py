@@ -13,6 +13,8 @@ class Properties:
 
     default_srs = 'EPSG:25832'
 
+    radius = 100
+
     feature_properties = {
         'TL695099': {'label': 'Buildings (ki)', 'color': '#700000'},
         'TL965167': {'label': 'Road Wells (ki)', 'color': '#ff00ff'},
@@ -32,6 +34,7 @@ class Properties:
         'Skorsten': {'label': 'Chimney (gd)', 'color': '#292927'},
         'Jernbane': {'label': 'Railroad (gd)', 'color': '#75756a'},
         'Bassin': {'label': 'Pool (gd)', 'color': '#00a2ff'},
+        'water_node': {'label': 'Water Node (sa)', 'color': '#5b45a3'},
     }
 
     @staticmethod
@@ -39,7 +42,7 @@ class Properties:
         if feature_name in Properties.feature_properties:
             if Properties.feature_properties[feature_name]['label'] != '':
                 return Properties.feature_properties[feature_name]['label']
-        return ''
+        return None
 
     @staticmethod
     def get_feature_color(feature_name):

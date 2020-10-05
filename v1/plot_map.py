@@ -81,6 +81,7 @@ for file_path in file_paths:
     center.to_srs('EPSG:25832')
 
     map = Map(center, wmts, figname=file_name, tile_matrix=tile_matrix, draw_center=True, figsize=figsize, dpi=dpi)
+    map.add_circle(center, Properties.radius)
 
     for type_name, feature_list in zip(features.keys(), features.values()):
         collection = Collection(tag=source.capitalize(), type=feature_list[0].tag, features=feature_list, srs=feature_list[0].default_srs)
