@@ -6,10 +6,10 @@ wfs = WFS('https://services.drift.kortinfo.net/kortinfo/services/Wfs.ashx?Site=O
         version='1.0.0')
 
 typenames = [
-        'TL695099',         # Buildings
-        'TL965167',         # Road wells
+        #'TL695099',         # Buildings
+        #'TL965167',         # Road wells
         'L418883_421469',   # Park trees
-        'L167365_421559',   # Park points
+        #'L167365_421559',   # Park points
 ]
 
 for area, center in zip(Properties.areas.keys(), Properties.areas.values()):
@@ -18,19 +18,23 @@ for area, center in zip(Properties.areas.keys(), Properties.areas.values()):
     n = 0
     content = []
     for typename in typenames:
+        bbox = Filter.bbox(center=center, width=110, height=110)
         features = wfs.get_features(
             srs=Properties.default_srs, 
             typename=typename, 
-            filter=Filter.radius(center, radius=100))
+            bbox=bbox)
+
+        features = features.filter(lambda feature: feature.dist(center) <= 100)
 
         geometries = [';'.join([feature.tag] + [','.join([str(x), str(y)]) for x, y in zip(feature.x(enforce_list=True), feature.y(enforce_list=True))]) for feature in features]
         
         content += [{'#': n + i, 
-            'id': feature['id.lokalId'], 
-            'description': typename, 
+            'id': feature['objekt_id'], 
+            'name': typename,
+            'description': '_'.join([feature[key] for key in ['hovedelement_tekst', 'element_tekst', 'underelement_tekst']]), 
             'geometry': f'"{geometry}"'} 
             for i, (feature, geometry) in enumerate(zip(features, geometries))]
 
         n += len(features)
 
-    CSV.create_file(f'files/area_data/{area}_kortinfo.csv', delimiter=',', header=['#', 'id', 'description', 'geometry'], content=content, types=['int', 'int', 'str', 'str'])
+    CSV.create_file(f'files/area_data/{area}_kortopslag.csv', delimiter=',', header=['#', 'id', 'name', 'description', 'geometry'], content=content, types=['int', 'int', 'str', 'str', 'str'])
