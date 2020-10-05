@@ -16,14 +16,16 @@ for area in Properties.areas:
     input_csv = CSV('input/Samaqua/Node_Cover_wHeader.csv', delimiter=';')
     input_data = input_csv.load(filter=filter)
 
-    output_data = [{} for _ in input_data]
+    output_data = []
 
     for i, row in enumerate(input_data):
-        output_data[i]['#'] = i
-        output_data[i]['id'] = row['FeatureGUID'] + '_node'
-        output_data[i]['name'] = 'water_node'
-        output_data[i]['description'] = 'Water node'
-        output_data[i]['geometry'] = f'"Point;{row["X_Node"]},{row["Y_Node"]}"'
+        if row['FeatureGUID'] not in [data['id'] for data in output_data]:
+            output_data.append({})
+            output_data[i]['#'] = i
+            output_data[i]['id'] = row['FeatureGUID']
+            output_data[i]['name'] = 'water_node'
+            output_data[i]['description'] = 'Water node'
+            output_data[i]['geometry'] = f'"Point;{row["X_Node"]},{row["Y_Node"]}"'
 
     if len(output_data) > 0:
         types = [type(typ).__name__ for typ in output_data[0].values()]
