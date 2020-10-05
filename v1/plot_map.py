@@ -45,7 +45,7 @@ for file_path in file_paths:
 
     prints(f'Plotting map for file \'{file_name}\'.')
 
-    features = []
+    features = {}
     for row in content:
         geometry = [[float(v) for v in s.split(',')] for s in row['geometry'][1:-1].split(';')[1:]]
 
@@ -59,13 +59,12 @@ for file_path in file_paths:
 
         del row['geometry']
 
-        features.append(Feature(geometry, srs=Properties.default_srs, tag=tag, attributes=row))
+        features.setdefault(row['name'], [])
+        features[row['name']].append(Feature(geometry, srs=Properties.default_srs, tag=tag, attributes=row))
 
     if len(features) == 0:
         input('No features in file.')
         exit()
-
-    features = Collection(tag=source.capitalize(), type=features[0].tag, features=features, srs=features[0].default_srs)
 
     wmts = WMTS(use_login=True, url='https://services.datafordeler.dk/GeoDanmarkOrto/orto_foraar_wmts/1.0.0/WMTS?', 
         username='VCSWRCSUKZ',
@@ -79,12 +78,19 @@ for file_path in file_paths:
     dpi = 300
     figsize = (16, 16)
 
-    annotations = [feature['#'] for feature in features]
-
     center.to_srs('EPSG:25832')
 
     map = Map(center, wmts, figname=file_name, tile_matrix=tile_matrix, draw_center=True, figsize=figsize, dpi=dpi)
-    map.add_feature(features, annotations)
+
+    for type_name, feature_list in zip(features.keys(), features.values()):
+        collection = Collection(tag=source.capitalize(), type=feature_list[0].tag, features=feature_list, srs=feature_list[0].default_srs)
+
+        annotations = [feature['#'] for feature in feature_list]
+        label = Properties.get_feature_label(type_name)
+        color = Properties.get_feature_color(type_name)
+
+        map.add_feature(collection, annotations=annotations, label=label, color=color)
+
     map.show(show=(len(file_paths) == 1))
 
 input('Press enter to close.')

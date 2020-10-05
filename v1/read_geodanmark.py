@@ -19,7 +19,6 @@ typenames = [
     'Chikane',
     'Vandloebskant',
     'Helle',
-    'Soe',
     'Skorsten',
     'Jernbane',
     'Bassin',
@@ -40,10 +39,11 @@ for area, center in zip(Properties.areas.keys(), Properties.areas.values()):
         
         content += [{'#': n + i, 
             'id': feature['id.lokalId'], 
+            'name': typename,
             'description': typename, 
             'geometry': f'"{geometry}"'} 
             for i, (feature, geometry) in enumerate(zip(features, geometries))]
 
         n += len(features)
 
-    CSV.create_file(f'files/area_data/{area}_geodanmark.csv', delimiter=',', header=['#', 'id', 'description', 'geometry'], content=content, types=['int', 'int', 'str', 'str'])
+    CSV.create_file(f'files/area_data/{area}_geodanmark.csv', delimiter=',', header=['#', 'id', 'name', 'description', 'geometry'], content=content, types=['int', 'int', 'str', 'str', 'str'])
