@@ -3,7 +3,8 @@ from jaolma.properties import Properties
 from jaolma.utility.csv import CSV
 
 wfs = WFS('https://services.drift.kortinfo.net/kortinfo/services/Wfs.ashx?Site=Odense&Page=Kortopslag',
-        version='1.0.0')
+        version='1.0.0',
+        getCapabilitiesFilename='files/capabilities_kortopslag.xml')
 
 typenames = [
         #'TL695099',         # Buildings

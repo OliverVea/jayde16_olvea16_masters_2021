@@ -5,7 +5,8 @@ from jaolma.utility.csv import CSV
 wfs = WFS('https://services.datafordeler.dk/GeoDanmarkVektor/GeoDanmark60_NOHIST_GML3/1.0.0/WFS?', 
     username='VCSWRCSUKZ',
     password='hrN9aTirUg5c!np',
-    version='1.1.0')
+    version='1.1.0',
+    getCapabilitiesFilename='files/capabilities_geodanmark.xml')
 
 typenames = [
     'Bygning',
