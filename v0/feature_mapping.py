@@ -40,11 +40,11 @@ if __name__ == '__main__':
     }
 
     markers = {
-        #'downtown': (55.3947509, 10.3833619), 
+        'downtown': (55.3947509, 10.3833619), 
         #'suburb': (55.3761308, 10.3860752), 
         #'university_parking': (55.3685818, 10.4317584), 
         #'harbor': (55.4083756, 10.3787729), 
-        'park': (55.3916561, 10.3828329)
+        #'park': (55.3916561, 10.3828329)
     }
 
     #############
@@ -88,12 +88,14 @@ if __name__ == '__main__':
     except:
         pass
 
-    wfs = WFS('https://services.drift.kortinfo.net/kortinfo/services/Wfs.ashx?Site=Odense&Page=Kortopslag', 
+    wfs = WFS('https://services.drift.kortinfo.net/kortinfo/services/Wfs.ashx?Site=Odense&Page=Lyssignalanlaeg', 
         #username='VCSWRCSUKZ',
         #password='hrN9aTirUg5c!np',
         version='1.0.0',
-        getCapabilitiesFilename='output/kortinfo_capabilities.xml'
+        getCapabilitiesFilename='output/lyssignalanlaeg_capabilities.xml'
         )
+    #https://services.drift.kortinfo.net/kortinfo/services/Wfs.ashx?Site=Odense&Page=Kortopslag
+    #https://services.drift.kortinfo.net/kortinfo/services/Wfs.ashx?Site=Odense&Page=Lyssignalanlaeg
     #https://services.drift.kortinfo.net/kortinfo/services/Wmts.ashx?Site=Odense&Page=Kortopslag
     #https://services.datafordeler.dk/GeoDanmarkOrto/orto_foraar_wmts/1.0.0/WMTS?
     wmts = WMTS(use_login=True, url='https://services.datafordeler.dk/GeoDanmarkOrto/orto_foraar_wmts/1.0.0/WMTS?', 
