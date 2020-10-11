@@ -5,6 +5,7 @@ from math import pi
 from jaolma.plotting.spider_plot import SpiderPlot
 from jaolma.utility.read_csv import CSV
 from jaolma.properties import Properties
+from jaolma.utility.utility import uniform_colors
 
 def avg(l: list):
     return sum(l) / len(l)
@@ -98,8 +99,10 @@ if __name__ == '__main__':
         for category in categories:
             spider_plot.add_category(category, [k/(K - 1) for k in range(K)], [f'{100*k/(K - 1)}%' for k in range(K)])
 
-        for feature_type, d in zip(feature_types, data_list):
-            spider_plot.add_data(Properties.get_feature_label(feature_type), d, color=Properties.feature_properties[feature_type]['color'])
+        colors = uniform_colors(len(data_list))
+
+        for feature_type, d, color in zip(feature_types, data_list, colors):
+            spider_plot.add_data(Properties.get_feature_label(feature_type), d, color=color)
 
         spider_plot.draw()
     plt.show()

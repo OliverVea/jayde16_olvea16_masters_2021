@@ -58,5 +58,8 @@ def shortstring(s, maxlen):
 def uniform_colors(n):
     return ['#' + "".join("%02X" % round(i*255) for i in hsv_to_rgb(j/n, 1, 1)) for j in range(n)]
 
+def transpose(l):
+    return [list(row) for row in zip(*l)]
+
 with open('log.txt', 'a+') as f:
     f.write('\n---\n\n')
