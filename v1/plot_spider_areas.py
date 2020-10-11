@@ -2,9 +2,9 @@ import matplotlib.pyplot as plt
 import uuid
 from random import random
 from math import pi
-from spider_plot import SpiderPlot
-from read_csv import CSV
-from properties import Properties
+from jaolma.plotting.spider_plot import SpiderPlot
+from jaolma.utility.read_csv import CSV
+from jaolma.properties import Properties
 
 def avg(l: list):
     return sum(l) / len(l)
@@ -73,7 +73,7 @@ if __name__ == '__main__':
     areas = ['Harbor', 'Park', 'SDU', 'Suburb']
 
     for i, area in enumerate(areas):
-        csv_file = CSV(f'input/{area}_Data_Analysis.csv')
+        csv_file = CSV(f'input/SpiderData/{area}_Data_Analysis.csv')
         features = csv_file.read()
 
         categories = ['Accessibility', 'Occluded Visibility', 'Precision', 'Recall', 'F1-value']

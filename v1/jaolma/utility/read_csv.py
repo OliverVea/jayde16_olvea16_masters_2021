@@ -1,4 +1,4 @@
-from wfs import Feature, Collection
+from jaolma.gis.wfs import Feature, Collection
 
 class CSV:
     def __init__(self, filename: str, delimiter: str = ','):

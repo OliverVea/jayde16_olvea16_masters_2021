@@ -29,9 +29,9 @@ class SpiderPlot:
                     self.fill.set_alpha(0.8)
                     self.legline.set_alpha(0.8)
                 elif state == 'transparent':
-                    self.line.set_alpha(0.2)
-                    self.fill.set_alpha(0.2)
-                    self.legline.set_alpha(0.2)
+                    self.line.set_alpha(0.75)
+                    self.fill.set_alpha(0.25)
+                    self.legline.set_alpha(0.25)
                 elif state == 'invisible':
                     self.line.set_alpha(0)
                     self.fill.set_alpha(0)
@@ -118,7 +118,6 @@ class SpiderPlot:
         plt.xticks(self.angles[:-1], self.category_labels, color='grey', size=8)
 
         self.figlines.clear()
-
 
         self.shapes.clear()
         for i, (data, color) in enumerate(self.data):
