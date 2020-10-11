@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import uuid
 from math import pi
-from jaolma.utility.utility import transpose
+from jaolma.utility.utility import transpose, linstring
 
 class SpiderPlot:
     class Shape:
@@ -108,13 +108,14 @@ class SpiderPlot:
         if self.autodraw:
             self.draw()
 
-    def draw(self):
+    def draw(self, min_percentage: float = 0.2):
         plt.figure(self.id)
         plt.clf()
 
-
         self.ax = plt.axes(polar=True)     
         self.ax.set_rlabel_position(0)
+
+        plt.ylim(0, 1)
         
         plt.title(self.title)
 
@@ -127,30 +128,51 @@ class SpiderPlot:
         
         self.shapes.clear()
 
-        for i, (label, angle, data) in enumerate(zip(self.tick_values, self.angles[:-1], transpose(self.data))):
-            if self.scale_plot:
-                min_tick_value = min(data + self.tick_values[label])
-                max_tick_value = max(data + self.tick_values[label])
-                y_lim_lower = min_tick_value - (max_tick_value - min_tick_value) * 0.2
-                y_lim_upper = max_tick_value
-                for j, elem in enumerate(self.data):
-                    elem[i] = (data[j] - min_tick_value) / (max_tick_value - min_tick_value) * 0.8 + 0.2
+        data = [[e for e in row] for row in self.data]
 
-            for tick_value, tick_label in zip(self.tick_values[label], self.tick_labels[label]):
+        for i, (label, angle, d) in enumerate(zip(self.tick_values, self.angles[:-1], transpose(data))):
+            if self.tick_values[label] == None:
+                if self.scale_plot:
+                    mi, ma = min(d), max(d)
+                else:
+                    mi, ma = 0, 1
+                    
+                tick_values = linstring(mi, ma, 5)
+                tick_labels = [f'{tick_value * (ma - mi) + mi:.3g}' for tick_value in tick_values]
+            else:
+                tick_values = self.tick_values[label].copy()
+                tick_labels = self.tick_labels[label].copy()
+
+            if self.scale_plot:
+                scale = lambda val, mi, ma, a: (val - mi) / (ma - mi) * (1 - a) + a
+
+                p = min_percentage
+                if len(tick_values) != 0 and min(d) > min(tick_values):
+                    p = 0
+
+                mi = min(d + tick_values)
+                ma = max(d + tick_values)
+
+                tick_values = [scale(tick_value, mi, ma, p) for tick_value in tick_values]
+
+                for j, e in enumerate(d):
+                    data[j][i] = scale(e, mi, ma, p)
+
+            plt.yticks(tick_values)
+            for tick_value, tick_label in zip(tick_values, tick_labels):
                 plt.text(angle, tick_value, tick_label, color="grey", size=7)
 
             plt.tick_params(axis='y', labelleft=False)
 
-
-        for i, (data, color) in enumerate(zip(self.data, self.color)):
+        for i, (d, color) in enumerate(zip(data, self.color)):
             current_shape = self.Shape()
-            lin = self.ax.plot(self.angles, data + data[:1], color=color, linewidth=1, linestyle='solid', label=self.feature_types[i])
+            lin = self.ax.plot(self.angles, d + d[:1], color=color, linewidth=1, linestyle='solid', label=self.feature_types[i])
             current_shape.set_line(lin[0])
 
             if color == None:
                 color = lin[0].get_color()
 
-            fill = self.ax.fill(self.angles, data + data[:1], 'b', color=color, alpha=0.2)
+            fill = self.ax.fill(self.angles, d + d[:1], 'b', color=color, alpha=0.2)
             current_shape.set_fill(fill[0])
             self.shapes.append(current_shape)
             
@@ -158,7 +180,17 @@ class SpiderPlot:
             legline.set_alpha(0.5)
             shape.set_legline(legline, pick_radius=8) 
 
-    def show(self, block=True):
+    def show(self, dpi: int = 300, show: bool = True, save_png: bool = False, save_pdf: bool = False, block=True):
         if self.autodraw:
             self.draw()
-        plt.show(block=block)
+
+        plt.figure(self.id)
+
+        if save_pdf:
+            plt.savefig(f'output/{self.id}.pdf', dpi=dpi)
+
+        if save_png:
+            plt.savefig(f'output/{self.id}.png', dpi=dpi)
+
+        if show:
+            plt.show(block=block)
