@@ -25,6 +25,12 @@ class CSV(object):
     def file_exists(self):
         return exists(join(getcwd(), self.filename))
 
+    def get_length(self):
+        with open(self.filename, 'r') as f:
+            lines = f.readlines()
+        n = len(lines)
+        return n
+
     def _split(self, text):
         is_inside = False
 
@@ -56,7 +62,9 @@ class CSV(object):
 
         self.typedict = {'int': int, 'float': float, 'str': str, 'bool': bool}
 
-        if self.file_exists():
+        n = self.get_length()
+
+        if self.file_exists() and n > 1:
             self.type_row = all([typename in self.typedict for typename in self.get_types()])
 
     def load(self, cols: list = None, filter: callable = None) -> list:

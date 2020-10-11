@@ -13,11 +13,43 @@ for area in Properties.areas:
             return sqrt((row['X_Node'] - center[0])**2 + (row['Y_Node'] - center[1])**2) < radius
         return False
 
-    input_csv = CSV('input/Samaqua/Node_Cover_wHeader.csv', delimiter=';')
-    input_data = input_csv.load(filter=filter)
+    #header_node_cover = CSV('input/Samaqua/HeaderNodeCover.csv', delimiter=';').load()
+    node_type_code = CSV('input/Samaqua/NodeTypeCode.csv', delimiter=';')
+    d_knudekode_beskrivelse = {row['KnudeKode']: row['Beskrivelse'] for row in node_type_code.load()}
 
-    output_data = []
+    origin_code = CSV('input/Samaqua/OriginCode.csv', delimiter=';')
+    d_coordorigincode_beskrivelse = {row['CoordOriginCode']: row['Beskrivelse'] for row in origin_code.load()}
 
+    owner_id = CSV('input/Samaqua/OwnerID_wHeader.csv', delimiter=';')
+    d_oid_ownershipname = {row['ObjectID']: row[' OwnershipName'] for row in owner_id.load()}
+    
+    origin_journal = CSV('input/Samaqua/OriginJournal_wHeader.csv', delimiter=';')
+    d_oid_journal = {row['ObjectID']: row for row in origin_journal.load()}
+
+    nodes = CSV('input/Samaqua/Node_Cover_wHeader.csv', delimiter=';').load()
+
+    for row in nodes:
+        update = {}
+        object_id = row['OID_Node']
+        update['Ownership'] = d_oid_ownershipname.setdefault(object_id, 'None')
+
+        if object_id in d_oid_journal:
+            journal = d_oid_journal[object_id]
+        else:
+            journal = {key: None for key in origin_journal.get_header()}
+
+        a = list(d_oid_journal.keys())[960:970]
+
+        row.setdefault('KnudeKode', 'None')
+        update['KnudeBeskrivelse'] = objectid_ownershipname.setdefault(row['KnudeKode'], 'None')
+
+        if any([val != 'None' for val in [update['Ownership'], update['KnudeBeskrivelse']]]):
+            print(update)
+
+        origin_journal[i].update(update)
+
+
+    pass
     for i, row in enumerate(input_data):
         if row['FeatureGUID'] not in [data['id'] for data in output_data]:
             output_data.append({})
