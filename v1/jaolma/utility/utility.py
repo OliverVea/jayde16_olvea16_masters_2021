@@ -64,5 +64,5 @@ def transpose(l):
 with open('log.txt', 'a+') as f:
     f.write('\n---\n\n')
 
-def linstring(min, max, N):
+def linspace(min, max, N):
     return [n/(N - 1) * (max - min) + min for n in range(N)]

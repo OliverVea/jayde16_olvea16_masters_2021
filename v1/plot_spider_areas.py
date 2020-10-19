@@ -5,7 +5,8 @@ from math import pi
 from jaolma.plotting.spider_plot import SpiderPlot
 from jaolma.utility.read_csv import CSV
 from jaolma.properties import Properties
-from jaolma.utility.utility import uniform_colors
+from jaolma.utility.utility import uniform_colors, linspace
+
 
 def avg(l: list):
     return sum(l) / len(l)
@@ -69,40 +70,50 @@ def format_data(features, fill_when_zero: bool = False):
     '''
     return categories_data['Accessibility'], categories_data['Occluded Visibility'], precision, recall, f1
 
-if __name__ == '__main__':
 
-    areas = ['Harbor', 'Park', 'SDU', 'Suburb']
 
-    for i, area in enumerate(areas):
-        csv_file = CSV(f'input/SpiderData/{area}_Data_Analysis.csv')
-        features = csv_file.read()
+min_tick = 0
+max_tick = 1
+N_tick = 5
 
-        categories = ['Accessibility', 'Occluded Visibility', 'Precision', 'Recall', 'F1-value']
+areas = ['Harbor', 'Park', 'SDU', 'Suburb']
 
-        data = format_data(features)
+for i, area in enumerate(areas):
+    csv_file = CSV(f'input/SpiderData/{area}_Data_Analysis.csv')
+    features = csv_file.read()
 
-        N = len(data)
-        K = len(list(data[0]))
+    categories = ['Accessibility', 'Occluded Visibility', 'Precision', 'Recall', 'F1-value']
 
-        data_list = [[] for i in list(data[0])]
-        feature_types = []
+    data = format_data(features)
 
-        for category in data:
-            for j, val in enumerate(category.values()):
-                data_list[j].append(val)
-        
-        for key in data[0]:
-            feature_types.append(key)
+    N = len(data)
+    K = len(list(data[0]))
 
-        spider_plot = SpiderPlot(title=f'{area} Data', figname=f'{area}_data', autodraw=False)
+    data_list = [[] for i in list(data[0])]
+    feature_types = []
 
-        for category in categories:
-            spider_plot.add_category(category, [k/(K - 1) for k in range(K)], [f'{100*k/(K - 1)}%' for k in range(K)])
+    for category in data:
+        for j, val in enumerate(category.values()):
+            data_list[j].append(val)
+    
+    for key in data[0]:
+        feature_types.append(key)
 
-        colors = uniform_colors(len(data_list))
+    spider_plot = SpiderPlot(title=f'{area} Data', figname=f'{area}_data', autodraw=False, scale_plot=True, figsize=(12,12))
 
-        for feature_type, d, color in zip(feature_types, data_list, colors):
-            spider_plot.add_data(Properties.get_feature_label(feature_type), d, color=color)
 
-        spider_plot.draw()
-    plt.show()
+    for category in categories:
+        tick_values = linspace(min_tick, max_tick, N_tick)
+        tick_labels = [f'{100*val:0.1f}%' for val in tick_values]
+
+        tick_values = tick_labels = None
+        spider_plot.add_category(category, tick_values, tick_labels)
+
+
+    colors = uniform_colors(len(data_list))
+
+    for feature_type, d, color in zip(feature_types, data_list, colors):
+        spider_plot.add_data(Properties.get_feature_label(feature_type), d, color=color)
+
+    spider_plot.draw()
+    spider_plot.show(save_png=True)

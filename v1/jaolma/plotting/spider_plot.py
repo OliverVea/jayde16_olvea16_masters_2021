@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import uuid
 from math import pi
-from jaolma.utility.utility import transpose, linstring
+from jaolma.utility.utility import transpose, linspace
 
 class SpiderPlot:
     class Shape:
@@ -43,8 +43,9 @@ class SpiderPlot:
                 else:
                     print(f'{state} is not a valid state')
 
-    def __init__(self, title: str, figname: str = None, autodraw: bool = True, scale_plot: bool = False):
+    def __init__(self, title: str, figname: str = None, autodraw: bool = True, scale_plot: bool = False, figsize: tuple = None):
         self.N = 0
+        self.figsize = figsize
         self.category_labels = []
         self.data = []
         self.color = []
@@ -63,7 +64,9 @@ class SpiderPlot:
             
         self.title = title
 
-        self.fig = plt.figure(self.id)
+        self.fig = plt.figure(self.id, figsize=figsize)
+
+        
 
         #Code partly from https://matplotlib.org/3.1.1/gallery/event_handling/legend_picking.html
         def _on_pick(event):
@@ -86,7 +89,7 @@ class SpiderPlot:
 
         self.fig.canvas.mpl_connect('pick_event', _on_pick)
         
-    def add_category(self, label, tick_values: list, tick_labels: list, color='grey', size=7):
+    def add_category(self, label, tick_values: list, tick_labels: list):
         plt.figure(self.id)
 
         self.category_labels.append(label)
@@ -117,12 +120,15 @@ class SpiderPlot:
 
         plt.ylim(0, 1)
         
-        plt.title(self.title)
+        plt.title(self.title, size=self.figsize[0]*2)
 
         self.angles = [n / float(self.N) * 2 * pi for n in range(self.N)]
         self.angles += self.angles[:1]
 
-        plt.xticks(self.angles[:-1], self.category_labels, color='grey', size=10)
+        #locs, labels = plt.xticks(self.angles[:-1], self.category_labels, color='black', size=self.figsize[0])
+        plt.xticks(self.angles[:-1], '', color='black', size=self.figsize[0])
+        for angle, category in zip(self.angles, self.category_labels):
+            plt.text(angle-0.03, 1.05, category, color="black", size=self.figsize[0], horizontalalignment='center', verticalalignment='center')
 
         self.figlines.clear()
         
@@ -131,36 +137,51 @@ class SpiderPlot:
         data = [[e for e in row] for row in self.data]
 
         for i, (label, angle, d) in enumerate(zip(self.tick_values, self.angles[:-1], transpose(data))):
+            p = None
+
             if self.tick_values[label] == None:
                 if self.scale_plot:
                     mi, ma = min(d), max(d)
                 else:
                     mi, ma = 0, 1
-                    
-                tick_values = linstring(mi, ma, 5)
-                tick_labels = [f'{tick_value * (ma - mi) + mi:.3g}' for tick_value in tick_values]
+
+                if mi == ma: 
+                    p = min_percentage
+                    mi = min(mi,min_percentage)
+                    ma = max(ma,1) 
+
+                tick_values = linspace(mi, ma, 5)
             else:
                 tick_values = self.tick_values[label].copy()
-                tick_labels = self.tick_labels[label].copy()
 
             if self.scale_plot:
                 scale = lambda val, mi, ma, a: (val - mi) / (ma - mi) * (1 - a) + a
 
-                p = min_percentage
-                if len(tick_values) != 0 and min(d) > min(tick_values):
+                if len(tick_values) != 0 and min(d) > min(tick_values) and p == None:
                     p = 0
+                elif p == None:
+                    p = min_percentage
 
                 mi = min(d + tick_values)
                 ma = max(d + tick_values)
+                if mi == ma: 
+                    p = min_percentage
+                    mi = min(mi,min_percentage)
+                    ma = max(ma,1)
 
                 tick_values = [scale(tick_value, mi, ma, p) for tick_value in tick_values]
-
+                    
                 for j, e in enumerate(d):
                     data[j][i] = scale(e, mi, ma, p)
 
+            if self.tick_labels[label] == None:
+                tick_labels = [f'{tick_value * (ma - mi) + mi:.3g}' for tick_value in tick_values]
+            else:
+                tick_labels = self.tick_labels[label].copy()
+
             plt.yticks(tick_values)
             for tick_value, tick_label in zip(tick_values, tick_labels):
-                plt.text(angle, tick_value, tick_label, color="grey", size=7)
+                plt.text(angle, tick_value, tick_label, color="black", size=self.figsize[0])
 
             plt.tick_params(axis='y', labelleft=False)
 
@@ -176,7 +197,7 @@ class SpiderPlot:
             current_shape.set_fill(fill[0])
             self.shapes.append(current_shape)
             
-        for shape, legline in zip(self.shapes, plt.legend(loc='lower left').get_lines()):
+        for shape, legline in zip(self.shapes, plt.legend(loc='lower left', bbox_to_anchor=(0, -0.1)).get_lines()):
             legline.set_alpha(0.5)
             shape.set_legline(legline, pick_radius=8) 
 
