@@ -16,10 +16,10 @@ class Properties:
     radius = 100
 
     feature_properties = {
-        'TL695099': {'label': 'Buildings (ki)', 'color': '#700000'},
-        'TL965167': {'label': 'Road Wells (ki)', 'color': '#ff00ff'},
-        'L418883_421469': {'label': 'Park Trees (ki)', 'color': '#00851b'},
-        'L167365_421559': {'label': 'Park Points (ki)', 'color': '#6e452f'},
+        'TL695099': {'label': 'Buildings (ko)', 'color': '#700000'},
+        'TL965167': {'label': 'Road Wells (ko)', 'color': '#ff00ff'},
+        'L418883_421469': {'label': 'Park Trees (ko)', 'color': '#00851b'},
+        'L167365_421559': {'label': 'Park Points (ko)', 'color': '#6e452f'},
         'Bygning': {'label': 'Building (gd)', 'color': '#ff0000'},
         'Broenddaeksel': {'label': 'Manhole Cover (gd)', 'color': '#ac0fdb'},
         'Mast': {'label': 'Light Fixture (gd)', 'color': '#e0de38'},
