@@ -3,15 +3,15 @@
     <Name>KortInfo WFS - Odense - Lyssignalanlaeg</Name>
     <Title>KortInfo WFS - Odense - Lyssignalanlaeg</Title>
     <Abstract/>
-    <OnlineResource>https://services.drift.kortinfo.net/kortinfo/services/Wfs.ashx?client=MapInfo&amp;version=1.0.0&amp;service=WFS&amp;Site=Odense&amp;Page=lyssignalanlaeg</OnlineResource>
+    <OnlineResource>https://services.drift.kortinfo.net/kortinfo/services/Wfs.ashx?client=MapInfo&amp;version=1.0.0&amp;service=WFS&amp;Site=Odense&amp;Page=Lyssignalanlaeg</OnlineResource>
   </Service>
   <Capability>
     <Request>
       <GetCapabilities>
         <DCPType>
           <HTTP>
-            <Get onlineResource="https://services.drift.kortinfo.net/kortinfo/services/Wfs.ashx?client=MapInfo&amp;version=1.0.0&amp;service=WFS&amp;Site=Odense&amp;Page=lyssignalanlaeg"/>
-            <Post onlineResource="https://services.drift.kortinfo.net/kortinfo/services/Wfs.ashx?client=MapInfo&amp;version=1.0.0&amp;service=WFS&amp;Site=Odense&amp;Page=lyssignalanlaeg"/>
+            <Get onlineResource="https://services.drift.kortinfo.net/kortinfo/services/Wfs.ashx?client=MapInfo&amp;version=1.0.0&amp;service=WFS&amp;Site=Odense&amp;Page=Lyssignalanlaeg"/>
+            <Post onlineResource="https://services.drift.kortinfo.net/kortinfo/services/Wfs.ashx?client=MapInfo&amp;version=1.0.0&amp;service=WFS&amp;Site=Odense&amp;Page=Lyssignalanlaeg"/>
           </HTTP>
         </DCPType>
       </GetCapabilities>
@@ -21,8 +21,8 @@
         </SchemaDescriptionLanguage>
         <DCPType>
           <HTTP>
-            <Get onlineResource="https://services.drift.kortinfo.net/kortinfo/services/Wfs.ashx?client=MapInfo&amp;version=1.0.0&amp;service=WFS&amp;Site=Odense&amp;Page=lyssignalanlaeg"/>
-            <Post onlineResource="https://services.drift.kortinfo.net/kortinfo/services/Wfs.ashx?client=MapInfo&amp;version=1.0.0&amp;service=WFS&amp;Site=Odense&amp;Page=lyssignalanlaeg"/>
+            <Get onlineResource="https://services.drift.kortinfo.net/kortinfo/services/Wfs.ashx?client=MapInfo&amp;version=1.0.0&amp;service=WFS&amp;Site=Odense&amp;Page=Lyssignalanlaeg"/>
+            <Post onlineResource="https://services.drift.kortinfo.net/kortinfo/services/Wfs.ashx?client=MapInfo&amp;version=1.0.0&amp;service=WFS&amp;Site=Odense&amp;Page=Lyssignalanlaeg"/>
           </HTTP>
         </DCPType>
       </DescribeFeatureType>
@@ -33,8 +33,8 @@
         </ResultFormat>
         <DCPType>
           <HTTP>
-            <Get onlineResource="https://services.drift.kortinfo.net/kortinfo/services/Wfs.ashx?client=MapInfo&amp;version=1.0.0&amp;service=WFS&amp;Site=Odense&amp;Page=lyssignalanlaeg"/>
-            <Post onlineResource="https://services.drift.kortinfo.net/kortinfo/services/Wfs.ashx?client=MapInfo&amp;version=1.0.0&amp;service=WFS&amp;Site=Odense&amp;Page=lyssignalanlaeg"/>
+            <Get onlineResource="https://services.drift.kortinfo.net/kortinfo/services/Wfs.ashx?client=MapInfo&amp;version=1.0.0&amp;service=WFS&amp;Site=Odense&amp;Page=Lyssignalanlaeg"/>
+            <Post onlineResource="https://services.drift.kortinfo.net/kortinfo/services/Wfs.ashx?client=MapInfo&amp;version=1.0.0&amp;service=WFS&amp;Site=Odense&amp;Page=Lyssignalanlaeg"/>
           </HTTP>
         </DCPType>
       </GetFeature>
@@ -45,15 +45,15 @@
         </ResultFormat>
         <DCPType>
           <HTTP>
-            <Get onlineResource="https://services.drift.kortinfo.net/kortinfo/services/Wfs.ashx?client=MapInfo&amp;version=1.0.0&amp;service=WFS&amp;Site=Odense&amp;Page=lyssignalanlaeg"/>
-            <Post onlineResource="https://services.drift.kortinfo.net/kortinfo/services/Wfs.ashx?client=MapInfo&amp;version=1.0.0&amp;service=WFS&amp;Site=Odense&amp;Page=lyssignalanlaeg"/>
+            <Get onlineResource="https://services.drift.kortinfo.net/kortinfo/services/Wfs.ashx?client=MapInfo&amp;version=1.0.0&amp;service=WFS&amp;Site=Odense&amp;Page=Lyssignalanlaeg"/>
+            <Post onlineResource="https://services.drift.kortinfo.net/kortinfo/services/Wfs.ashx?client=MapInfo&amp;version=1.0.0&amp;service=WFS&amp;Site=Odense&amp;Page=Lyssignalanlaeg"/>
           </HTTP>
         </DCPType>
       </GetFeatureWithLock>
       <Transaction>
         <DCPType>
           <HTTP>
-            <Post onlineResource="https://services.drift.kortinfo.net/kortinfo/services/Wfs.ashx?client=MapInfo&amp;version=1.0.0&amp;service=WFS&amp;Site=Odense&amp;Page=lyssignalanlaeg"/>
+            <Post onlineResource="https://services.drift.kortinfo.net/kortinfo/services/Wfs.ashx?client=MapInfo&amp;version=1.0.0&amp;service=WFS&amp;Site=Odense&amp;Page=Lyssignalanlaeg"/>
           </HTTP>
         </DCPType>
       </Transaction>
@@ -12849,6 +12849,76 @@
     <FeatureType>
       <Name>ugis:TL967006</Name>
       <Title>Redningskranse</Title>
+      <Abstract/>
+      <SRS>EPSG:25832</SRS>
+      <Operations>
+        <Query/>
+      </Operations>
+      <LatLongBoundingBox minx="0" miny="0" maxx="0" maxy="0"/>
+    </FeatureType>
+    <FeatureType>
+      <Name>ugis:TL974156</Name>
+      <Title>Vinter total</Title>
+      <Abstract/>
+      <SRS>EPSG:25832</SRS>
+      <Operations>
+        <Query/>
+      </Operations>
+      <LatLongBoundingBox minx="0" miny="0" maxx="0" maxy="0"/>
+    </FeatureType>
+    <FeatureType>
+      <Name>ugis:TL974162</Name>
+      <Title>A-veje</Title>
+      <Abstract/>
+      <SRS>EPSG:25832</SRS>
+      <Operations>
+        <Query/>
+      </Operations>
+      <LatLongBoundingBox minx="0" miny="0" maxx="0" maxy="0"/>
+    </FeatureType>
+    <FeatureType>
+      <Name>ugis:TL974168</Name>
+      <Title>B-veje</Title>
+      <Abstract/>
+      <SRS>EPSG:25832</SRS>
+      <Operations>
+        <Query/>
+      </Operations>
+      <LatLongBoundingBox minx="0" miny="0" maxx="0" maxy="0"/>
+    </FeatureType>
+    <FeatureType>
+      <Name>ugis:TL974174</Name>
+      <Title>C-veje</Title>
+      <Abstract/>
+      <SRS>EPSG:25832</SRS>
+      <Operations>
+        <Query/>
+      </Operations>
+      <LatLongBoundingBox minx="0" miny="0" maxx="0" maxy="0"/>
+    </FeatureType>
+    <FeatureType>
+      <Name>ugis:TL974180</Name>
+      <Title>D-veje</Title>
+      <Abstract/>
+      <SRS>EPSG:25832</SRS>
+      <Operations>
+        <Query/>
+      </Operations>
+      <LatLongBoundingBox minx="0" miny="0" maxx="0" maxy="0"/>
+    </FeatureType>
+    <FeatureType>
+      <Name>ugis:TL974186</Name>
+      <Title>B-klasse</Title>
+      <Abstract/>
+      <SRS>EPSG:25832</SRS>
+      <Operations>
+        <Query/>
+      </Operations>
+      <LatLongBoundingBox minx="0" miny="0" maxx="0" maxy="0"/>
+    </FeatureType>
+    <FeatureType>
+      <Name>ugis:TL974192</Name>
+      <Title>C-klasse</Title>
       <Abstract/>
       <SRS>EPSG:25832</SRS>
       <Operations>

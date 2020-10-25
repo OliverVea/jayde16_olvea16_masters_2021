@@ -1,2 +1,2 @@
 #,id,name,description,geometry
-int,int,str,str,str
+int,str,str,str,str

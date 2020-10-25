@@ -1741,7 +1741,7 @@
         <Update/>
         <Delete/>
       </Operations>
-      <LatLongBoundingBox minx="436270.206239877" miny="6033331.78695912" maxx="891873.213387606" maxy="6420849.57696348"/>
+      <LatLongBoundingBox minx="436270.206350194" miny="6033331.79486436" maxx="891873.211960872" maxy="6420849.58294221"/>
     </FeatureType>
     <FeatureType>
       <Name>ugis:TL204598</Name>
@@ -2191,7 +2191,7 @@
       <Operations>
         <Query/>
       </Operations>
-      <LatLongBoundingBox minx="579619.919918939" miny="6128690.5011912" maxx="596056.289617492" maxy="6150311.67853828"/>
+      <LatLongBoundingBox minx="579291.921247538" miny="6129048.70934129" maxx="595934.166767587" maxy="6149105.39446935"/>
     </FeatureType>
     <FeatureType>
       <Name>ugis:TL331385</Name>
@@ -2201,7 +2201,7 @@
       <Operations>
         <Query/>
       </Operations>
-      <LatLongBoundingBox minx="579291.921249305" miny="6129048.70924311" maxx="595934.166769716" maxy="6149105.39437139"/>
+      <LatLongBoundingBox minx="579291.921247538" miny="6129048.70934129" maxx="595934.166767587" maxy="6149105.39446935"/>
     </FeatureType>
     <FeatureType>
       <Name>ugis:L229425_266247</Name>

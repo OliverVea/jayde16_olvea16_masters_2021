@@ -6,7 +6,6 @@ import json, os
 radius = 100
 
 for area in Properties.areas:
-
     center = Properties.areas[area].as_srs(srs='EPSG:25832').points['EPSG:25832']
 
     with open("input/FjernvarmeFyn/Casings.json", "r") as f:

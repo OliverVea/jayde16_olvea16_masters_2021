@@ -111,7 +111,7 @@ class SpiderPlot:
         if self.autodraw:
             self.draw()
 
-    def draw(self, min_percentage: float = 0.2):
+    def draw(self, n_ticks: int = 5):
         plt.figure(self.id)
         plt.clf()
 
@@ -120,15 +120,21 @@ class SpiderPlot:
 
         plt.ylim(0, 1)
         
-        plt.title(self.title, size=self.figsize[0]*2)
+
+        size = textsize = None
+        if self.figsize != None:
+            size = self.figsize[0]*2
+            textsize = self.figsize[0]
+
+        plt.title(self.title, size=size)
 
         self.angles = [n / float(self.N) * 2 * pi for n in range(self.N)]
         self.angles += self.angles[:1]
 
         #locs, labels = plt.xticks(self.angles[:-1], self.category_labels, color='black', size=self.figsize[0])
-        plt.xticks(self.angles[:-1], '', color='black', size=self.figsize[0])
+        plt.xticks(self.angles[:-1], '', color='black', size=size)
         for angle, category in zip(self.angles, self.category_labels):
-            plt.text(angle-0.03, 1.05, category, color="black", size=self.figsize[0], horizontalalignment='center', verticalalignment='center')
+            plt.text(angle-0.03, 1.05, category, color="black", size=textsize, horizontalalignment='center', verticalalignment='center')
 
         self.figlines.clear()
         
@@ -137,8 +143,6 @@ class SpiderPlot:
         data = [[e for e in row] for row in self.data]
 
         for i, (label, angle, d) in enumerate(zip(self.tick_values, self.angles[:-1], transpose(data))):
-            p = None
-
             if self.tick_values[label] == None:
                 if self.scale_plot:
                     mi, ma = min(d), max(d)
@@ -146,33 +150,26 @@ class SpiderPlot:
                     mi, ma = 0, 1
 
                 if mi == ma: 
-                    p = min_percentage
-                    mi = min(mi,min_percentage)
-                    ma = max(ma,1) 
+                    mi = min(mi, 0)
+                    ma = max(ma, 1) 
 
-                tick_values = linspace(mi, ma, 5)
+                tick_values = linspace(mi, ma, n_ticks)
             else:
                 tick_values = self.tick_values[label].copy()
 
             if self.scale_plot:
-                scale = lambda val, mi, ma, a: (val - mi) / (ma - mi) * (1 - a) + a
-
-                if len(tick_values) != 0 and min(d) > min(tick_values) and p == None:
-                    p = 0
-                elif p == None:
-                    p = min_percentage
+                scale = lambda val, mi, ma: (val - mi) / (ma - mi)
 
                 mi = min(d + tick_values)
                 ma = max(d + tick_values)
                 if mi == ma: 
-                    p = min_percentage
-                    mi = min(mi,min_percentage)
+                    mi = min(mi,0)
                     ma = max(ma,1)
 
-                tick_values = [scale(tick_value, mi, ma, p) for tick_value in tick_values]
+                tick_values = [scale(tick_value, mi, ma) for tick_value in tick_values]
                     
                 for j, e in enumerate(d):
-                    data[j][i] = scale(e, mi, ma, p)
+                    data[j][i] = scale(e, mi, ma)
 
             if self.tick_labels[label] == None:
                 tick_labels = [f'{tick_value * (ma - mi) + mi:.3g}' for tick_value in tick_values]
@@ -181,7 +178,7 @@ class SpiderPlot:
 
             plt.yticks(tick_values)
             for tick_value, tick_label in zip(tick_values, tick_labels):
-                plt.text(angle, tick_value, tick_label, color="black", size=self.figsize[0])
+                plt.text(angle, tick_value, tick_label, color="black", size=textsize)
 
             plt.tick_params(axis='y', labelleft=False)
 

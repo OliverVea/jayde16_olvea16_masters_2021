@@ -8,6 +8,8 @@ from jaolma.utility.utility import prints, printe
 import sys
 import os
 
+import matplotlib.pyplot as plt
+
 if len(sys.argv) > 1:
     file_paths = sys.argv[1:]
     
@@ -93,5 +95,6 @@ for file_path in file_paths:
         map.add_feature(collection, annotations=annotations, label=label, color=color)
 
     map.show(show=(len(file_paths) == 1))
+    plt.close()
 
 input('Press enter to close.')

@@ -147,8 +147,10 @@ class Filter:
     @staticmethod
     def bbox(center: Feature, width: float, height: float, srs: str=None):
         bottom_left_corner = Feature((center.x('EPSG:25832') - width / 2, center.y('EPSG:25832') - height / 2), srs='EPSG:25832')
-
         top_right_corner = Feature((center.x('EPSG:25832') + width / 2, center.y('EPSG:25832') + height / 2), srs='EPSG:25832')
+
+        if srs == None:
+            srs = center.default_srs
 
         return f'{bottom_left_corner.x(srs)},{bottom_left_corner.y(srs)},{top_right_corner.x(srs)},{top_right_corner.y(srs)}'
 
@@ -256,8 +258,6 @@ class WebService(object):
         
         return content
 
-
-
 class WFS(WebService):
     def __init__(self, url: str, username: str=None, password: str=None, version: str=None, getCapabilitiesFilename: str = None):
         WebService.__init__(self, url, username, password, version)
@@ -273,7 +273,7 @@ class WFS(WebService):
         #capabilities = self.get_capabilities()
         pass
 
-    def _get_geometry(self, element):
+    def _get_geometry(self, element, reverse_x_y: bool = False):
 
         element = element.getchildren()[0]
         tag = self._simplify_tag(element.tag)
@@ -305,7 +305,10 @@ class WFS(WebService):
         else:
             printe(f'Geometry type {tag} not supported.', tag='WFS._get_geometry')
             geometry = []
-            
+        
+        if reverse_x_y:
+            geometry = list(reversed(geometry))
+
         return geometry, tag
 
     def get_capabilities(self):
@@ -319,7 +322,7 @@ class WFS(WebService):
         return serviceName
 
 
-    def get_features(self, srs, typename=None, bbox=None, filter=None, max_features=None, as_list=False):
+    def get_features(self, srs, typename=None, bbox=None, filter=None, max_features=None, as_list=False, reverse_x_y: bool = False):
         url = self._make_url('WFS', request='GetFeature', typename=typename, bbox=bbox, filter=filter, maxFeatures=max_features, srsName=srs)
         featureCollection = self._query_url(url)
 
@@ -337,7 +340,7 @@ class WFS(WebService):
                 tag = self._simplify_tag(attribute.tag)
 
                 if tag == 'geometri' or tag == 'obj':
-                    geometry, type = self._get_geometry(attribute)
+                    geometry, type = self._get_geometry(attribute, reverse_x_y=reverse_x_y)
 
                 else:
                     attributes[tag] = attribute.text
