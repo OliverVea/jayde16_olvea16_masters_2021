@@ -3,8 +3,7 @@ from jaolma.properties import Properties
 from jaolma.utility.utility import prints
 
 import pandas as pd
-import json, os
-from math import sqrt
+import json
 from datetime import datetime
 
 servicename = 'fjernvarme'
