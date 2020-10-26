@@ -1,50 +1,58 @@
 from jaolma.gis.wfs import WFS, Filter
 from jaolma.properties import Properties
-from jaolma.utility.csv import CSV
+from jaolma.utility.utility import prints, set_verbose
 
-wfs = WFS('https://services.datafordeler.dk/GeoDanmarkVektor/GeoDanmark60_NOHIST_GML3/1.0.0/WFS?', 
-    username='VCSWRCSUKZ',
-    password='hrN9aTirUg5c!np',
-    version='1.1.0',
-    getCapabilitiesFilename='files/capabilities_geodanmark.xml')
+import pandas as pd
 
-typenames = [
-    'Bygning',
-    'Broenddaeksel',
-    'Mast',
-    'Hegn',
-    'Soe',
-    'KratBevoksning',
-    'Trae',
-    'Nedloebsrist',
-    'Chikane',
-    'Vandloebskant',
-    'Helle',
-    'Skorsten',
-    'Jernbane',
-    'Bassin',
-]
+set_verbose(tag_blacklist=['WFS'])
+
+servicename = 'geodanmark'
+service = Properties.services['wfs'][servicename]
+
+wfs = WFS(service['url'], version=service['version'], username=service['username'], password=service['password'])
+
+typenames = [typename for typename in Properties.feature_properties if 'origin' in Properties.feature_properties[typename] and Properties.feature_properties[typename]['origin'] == servicename]
+
+prints(f'Retrieving features: {", ".join([Properties.feature_properties[typename]["label"] + " (" + typename + ")" for typename in typenames])}', tag='Main')
+prints(f'In areas: {", ".join(Properties.areas.keys())}', tag='Main')
 
 for area, center in zip(Properties.areas.keys(), Properties.areas.values()):
     center.to_srs(Properties.default_srs)
 
-    n = 0
-    content = []
+    frames = []
+
     for typename in typenames:
+        bbox = Filter.bbox(center=center, width=Properties.radius, height=Properties.radius)
+
         features = wfs.get_features(
             srs=Properties.default_srs, 
             typename=typename, 
-            filter=Filter.radius(center, radius=100))
+            bbox=bbox)
 
-        geometries = [';'.join([feature.tag] + [','.join([str(x), str(y)]) for x, y in zip(feature.x(enforce_list=True), feature.y(enforce_list=True))]) for feature in features]
+        features = features.filter(lambda feature: feature.dist(center) <= Properties.radius)
         
-        content += [{'#': n + i, 
-            'id': feature['id.lokalId'], 
-            'name': typename,
-            'description': typename, 
-            'geometry': f'"{geometry}"'} 
-            for i, (feature, geometry) in enumerate(zip(features, geometries))]
+        rows = {}    
+        for feature in features:
+            data = {}
+            data['id'] = feature['id.lokalId']
+            data['label'] = Properties.feature_properties[typename]['label']
+            data['geometry'] = f'{feature.tag};{list(feature.x(enforce_list=True))},{list(feature.y(enforce_list=True))}'
 
-        n += len(features)
+            optionals = {
+                'actor': 'registreringsaktoer',
+                'date': 'registreringFra',
+                'horizontal_precision': 'planNoejagtighed',
+                'vertical_precision': 'vertikalNoejagtighed'}
 
-    CSV.create_file(f'files/area_data/{area}_geodanmark.csv', delimiter=',', header=['#', 'id', 'name', 'description', 'geometry'], content=content, types=['int', 'int', 'str', 'str', 'str'])
+            for key, val in zip(optionals.keys(), optionals.values()):
+                if val in feature.attributes:
+                    data[key] = feature[val]
+
+            for key, value in zip(data.keys(), data.values()):
+                rows.setdefault(key, []).append(value)
+
+        frames.append(pd.DataFrame(rows))
+
+    dataframe = pd.concat(frames, ignore_index=True)
+    dataframe.to_csv(f'files/area_data/{servicename}_{area}.csv')
+    prints(f'Found {len(dataframe)} features for area {area}.', tag='Main')

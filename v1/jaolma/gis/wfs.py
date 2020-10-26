@@ -86,6 +86,14 @@ class Feature(object):
             
         return y
 
+    def z(self, srs=None, enforce_list: bool = False):
+        z = self.pos(srs)[2]
+
+        if enforce_list and not isinstance(z, (list, tuple)):
+            z = [z]
+            
+        return z
+
     def to_srs(self, srs, transform: callable = None):
         self.points[srs] = self.pos(srs, transform)
         self.default_srs = srs
@@ -210,7 +218,6 @@ class WebService(object):
             self.username = username
             self.password = password
             self.use_login = True
-        
 
         self.version = version
 
@@ -267,11 +274,6 @@ class WFS(WebService):
             wfsCapabilities = self._query_url(url)
             with open(getCapabilitiesFilename, 'wb') as f:
                 f.write(etree.tostring(wfsCapabilities, pretty_print=True))
-
-
-        # TODO: Expand with more services
-        #capabilities = self.get_capabilities()
-        pass
 
     def _get_geometry(self, element, reverse_x_y: bool = False):
 

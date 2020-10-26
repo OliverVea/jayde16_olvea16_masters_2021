@@ -1,5 +1,0 @@
-#,id,name,description,geometry,diameter_cm,shape,n_caps,rotation,owner,last_update
-int,str,str,str,str,int,int,int,float,int,int
-0,{E49B4868-6DFE-45DB-8C5F-2CC7CF72232D},heating_cover,Cover from Fjernvarme Fyn,"Point;587774.7209000001,6137570.308800001,0",80,2,1,329.05621,2,1480328837000
-1,{4F5126EF-F031-4DE2-9BE3-0B370A5FEBCB},heating_cover,Cover from Fjernvarme Fyn,"Point;587835.4596999995,6137492.3664,0",80,1,1,7.98883,2,1480328838000
-2,{2815E3AF-FADE-49B9-A5F8-7F5ADBCF45ED},heating_cover,Cover from Fjernvarme Fyn,"Point;587810.5274999999,6137510.8114,0",60,2,1,6.55775,2,1480328838000

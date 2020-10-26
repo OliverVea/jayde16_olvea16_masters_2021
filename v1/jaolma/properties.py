@@ -6,7 +6,7 @@ class Properties:
         'harbor': (55.4083756, 10.3787729), 
         'park': (55.3916561, 10.3828329),
         'suburb': (55.3761308, 10.3860752), 
-        'university_parking': (55.3685818, 10.4317584)
+        'sdu': (55.3685818, 10.4317584)
     }
 
     areas = {key: Feature(geometry, 'EPSG:4326', key) for key, geometry in zip(areas.keys(), areas.values())}
@@ -42,8 +42,19 @@ class Properties:
 
     services = {
         'wfs': {
-            'energifyn': {'url': 'https://services.drift.kortinfo.net/kortinfo/services/Wfs.ashx?Site=Odense&Page=Lyssignalanlaeg', 'version': '1.0.0'},
-            'kortopslag': {'url': 'https://services.drift.kortinfo.net/kortinfo/services/Wfs.ashx?Site=Odense&Page=Kortopslag', 'version': '1.0.0'},
+            'geodanmark': {
+                'url': 'https://services.datafordeler.dk/GeoDanmarkVektor/GeoDanmark60_NOHIST_GML3/1.0.0/WFS?', 
+                'version': '1.1.0', 
+                'username': 'VCSWRCSUKZ', 
+                'password': 'hrN9aTirUg5c!np'},
+
+            'energifyn': {
+                'url': 'https://services.drift.kortinfo.net/kortinfo/services/Wfs.ashx?Site=Odense&Page=Lyssignalanlaeg', 
+                'version': '1.0.0'},
+
+            'kortopslag': {
+                'url': 'https://services.drift.kortinfo.net/kortinfo/services/Wfs.ashx?Site=Odense&Page=Kortopslag', 
+                'version': '1.0.0'},
         }
     }
 

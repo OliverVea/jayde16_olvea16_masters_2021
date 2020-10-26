@@ -1,49 +1,56 @@
 from jaolma.gis.wfs import WFS, Filter
 from jaolma.properties import Properties
-from jaolma.utility.csv import CSV
+from jaolma.utility.utility import prints, set_verbose
+
+import pandas as pd
+
+set_verbose(tag_blacklist=['WFS'])
 
 servicename = 'energifyn'
 service = Properties.services['wfs'][servicename]
 
-wfs = WFS(service['url'], 
-    version=service['version'])
+wfs = WFS(service['url'], version=service['version'])
 
 typenames = [typename for typename in Properties.feature_properties if 'origin' in Properties.feature_properties[typename] and Properties.feature_properties[typename]['origin'] == servicename]
+
+prints(f'Retrieving features: {", ".join([Properties.feature_properties[typename]["label"] + " (" + typename + ")" for typename in typenames])}', tag='Main')
+prints(f'In areas: {", ".join(Properties.areas.keys())}', tag='Main')
 
 for area, center in zip(Properties.areas.keys(), Properties.areas.values()):
     center.to_srs(Properties.default_srs)
 
-    n = 0
-    content = []
+    frames = []
+
     for typename in typenames:
-        center.to_srs('EPSG:4326')
-        bbox = Filter.bbox(center=center, width=110, height=110)
         features = wfs.get_features(
             srs='EPSG:4326', 
             typename=typename,
             reverse_x_y=True)
 
         features.to_srs(Properties.default_srs)
-        center.to_srs(Properties.default_srs)
-        features = features.filter(lambda feature: feature.dist(center) <= 100)
 
-        geometries = [';'.join([feature.tag] + [','.join([str(x), str(y)]) for x, y in zip(feature.x(enforce_list=True), feature.y(enforce_list=True))]) for feature in features]
+        features = features.filter(lambda feature: feature.dist(center) <= Properties.radius)
         
-        descriptions = {
-            'TL740798': (lambda feature: f'{Properties.feature_properties["TL740798"]["label"]} h:{feature["lyspunktshoejde"]}'),
-            'TL740800': (lambda feature: Properties.feature_properties['TL740800']['label']),
-        }
-
+        rows = {}    
         for feature in features:
-            print(feature.attributes.keys())
+            data = {}
+            data['id'] = feature['fid'].split(';')[-1]
+            data['label'] = Properties.feature_properties[typename]['label']
+            data['geometry'] = f'{feature.tag};{list(feature.x(enforce_list=True))},{list(feature.y(enforce_list=True))}'
 
-        content += [{'#': n + i, 
-            'id': feature['fid'].split(';')[-1], 
-            'name': typename,
-            'description': descriptions[typename](feature), 
-            'geometry': f'"{geometry}"'} 
-            for i, (feature, geometry) in enumerate(zip(features, geometries))]
+            optionals = {
+                'height': 'lyspunktshoejde',
+                'date': 'lastedited'}
 
-        n += len(features)
+            for key, val in zip(optionals.keys(), optionals.values()):
+                if val in feature.attributes:
+                    data[key] = feature[val]
 
-    CSV.create_file(f'files/area_data/{area}_{servicename}.csv', delimiter=',', header=['#', 'id', 'name', 'description', 'geometry'], content=content, types=['int', 'int', 'str', 'str', 'str'])
+            for key, value in zip(data.keys(), data.values()):
+                rows.setdefault(key, []).append(value)
+
+        frames.append(pd.DataFrame(rows))
+
+    dataframe = pd.concat(frames, ignore_index=True)
+    dataframe.to_csv(f'files/area_data/{servicename}_{area}.csv')
+    prints(f'Found {len(dataframe)} features for area {area}.', tag='Main')
