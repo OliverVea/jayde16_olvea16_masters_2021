@@ -1,64 +1,66 @@
-from jaolma.utility.csv import *
+from jaolma.gis.wfs import Feature
 from jaolma.properties import Properties
-from math import sqrt
+from jaolma.utility.utility import prints
+from jaolma.utility.csv import CSV
 
-radius = 100
+import pandas as pd
+
+servicename = 'samaqua'
+
+node_type_code = CSV('files/samaqua/node_type_code.csv', delimiter=';')
+d_knudekode_beskrivelse = {row['KnudeKode']: row['Beskrivelse'] for row in node_type_code.load()}
+
+origin_code = CSV('files/samaqua/origin_code.csv', delimiter=';')
+d_coordorigincode_beskrivelse = {row['CoordOriginCode']: row['Beskrivelse'] for row in origin_code.load()}
+
+owner_id = CSV('files/samaqua/owner_id.csv', delimiter=';')
+d_oid_ownershipname = {row['OwnerID']: row['OwnershipName'] for row in owner_id.load()}
+
+origin_journal = CSV('files/samaqua/origin_journal.csv', delimiter=';')
+d_oid_journal = {row['ObjectID']: row for row in origin_journal.load()}
+
+nodes = CSV('files/samaqua/node_cover.csv', delimiter=';').load()
 
 for area in Properties.areas:
+    center = Properties.areas[area].as_srs(srs='EPSG:25832')
 
-    center = Properties.areas[area].as_srs(srs='EPSG:25832').points['EPSG:25832']
+    rows = []    
+    for i, row in enumerate(nodes):
+        if 'NULL' in [row['X_Node'], row['Y_Node']]:
+            continue
 
-    def filter(row):
-        if row['X_Node'] != None:
-            return sqrt((row['X_Node'] - center[0])**2 + (row['Y_Node'] - center[1])**2) < radius
-        return False
+        geometry = (float(row['X_Node']), float(row['Y_Node']))
+        feature = Feature(geometry, Properties.default_srs, 'Point', {key: val for key, val in zip(row.keys(), row.values()) if not key in ['X_Node', 'Y_Node'] and val != 'NULL'})
+        
+        if feature.dist(center) > Properties.radius:
+            continue
 
-    #header_node_cover = CSV('input/Samaqua/HeaderNodeCover.csv', delimiter=';').load()
-    node_type_code = CSV('input/Samaqua/NodeTypeCode.csv', delimiter=';')
-    d_knudekode_beskrivelse = {row['KnudeKode']: row['Beskrivelse'] for row in node_type_code.load()}
+        data = {}
+        data['id'] = feature['FeatureGUID']
+        data['label'] = 'Water Node (sa)'
+        data['geometry'] = f'{feature.tag};{list(feature.x(enforce_list=True))},{list(feature.y(enforce_list=True))}'
+        data['service'] = servicename
 
-    origin_code = CSV('input/Samaqua/OriginCode.csv', delimiter=';')
-    d_coordorigincode_beskrivelse = {row['CoordOriginCode']: row['Beskrivelse'] for row in origin_code.load()}
+        if 'OwnerID' in feature.attributes and feature['OwnerID'] in d_oid_ownershipname:
+            data['actor'] = d_oid_ownershipname[feature['OwnerID']]
 
-    owner_id = CSV('input/Samaqua/OwnerID_wHeader.csv', delimiter=';')
-    d_oid_ownershipname = {row['ObjectID']: row[' OwnershipName'] for row in owner_id.load()}
-    
-    origin_journal = CSV('input/Samaqua/OriginJournal_wHeader.csv', delimiter=';')
-    d_oid_journal = {row['ObjectID']: row for row in origin_journal.load()}
+        if 'NodeType' in feature.attributes and feature['NodeType'] in d_knudekode_beskrivelse:
+            data['description'] = d_knudekode_beskrivelse[feature['NodeType']]
 
-    nodes = CSV('input/Samaqua/Node_Cover_wHeader.csv', delimiter=';').load()
+        optionals = {
+            'date': 'Node_DateModified', 
+            'name': 'NodeName', 
+            'cover_level': 'CoverLevel'}
 
-    for row in nodes:
-        update = {}
-        object_id = row['OID_Node']
-        update['Ownership'] = d_oid_ownershipname.setdefault(object_id, 'None')
+        for key, val in zip(optionals.keys(), optionals.values()):
+            if val in feature.attributes:
+                data[key] = feature[val]
+                
+        rows.append(pd.DataFrame([data.values()], columns=data.keys()))
 
-        if object_id in d_oid_journal:
-            journal = d_oid_journal[object_id]
-        else:
-            journal = {key: None for key in origin_journal.get_header()}
+    dataframe = pd.DataFrame()
+    if len(rows) > 0:
+        dataframe = pd.concat(rows, ignore_index=True)
 
-        a = list(d_oid_journal.keys())[960:970]
-
-        row.setdefault('KnudeKode', 'None')
-        update['KnudeBeskrivelse'] = objectid_ownershipname.setdefault(row['KnudeKode'], 'None')
-
-        if any([val != 'None' for val in [update['Ownership'], update['KnudeBeskrivelse']]]):
-            print(update)
-
-        origin_journal[i].update(update)
-
-
-    pass
-    for i, row in enumerate(input_data):
-        if row['FeatureGUID'] not in [data['id'] for data in output_data]:
-            output_data.append({})
-            output_data[i]['#'] = i
-            output_data[i]['id'] = row['FeatureGUID']
-            output_data[i]['name'] = 'water_node'
-            output_data[i]['description'] = 'Water node'
-            output_data[i]['geometry'] = f'"Point;{row["X_Node"]},{row["Y_Node"]}"'
-
-    if len(output_data) > 0:
-        types = [type(typ).__name__ for typ in output_data[0].values()]
-        CSV.create_file('files/area_data/' + area + '_samaqua.csv', delimiter=',', header=output_data[0].keys(), content=output_data, types=types)
+    dataframe.to_csv(f'files/areas/{servicename}_{area}_{len(dataframe)}.csv')
+    prints(f'Found {len(dataframe)} features for area {area}.', tag='Main')

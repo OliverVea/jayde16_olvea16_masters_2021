@@ -37,6 +37,7 @@ for area, center in zip(Properties.areas.keys(), Properties.areas.values()):
             data['id'] = feature['id.lokalId']
             data['label'] = Properties.feature_properties[typename]['label']
             data['geometry'] = f'{feature.tag};{list(feature.x(enforce_list=True))},{list(feature.y(enforce_list=True))}'
+            data['service'] = servicename
 
             optionals = {
                 'actor': 'registreringsaktoer',
@@ -54,5 +55,5 @@ for area, center in zip(Properties.areas.keys(), Properties.areas.values()):
         frames.append(pd.DataFrame(rows))
 
     dataframe = pd.concat(frames, ignore_index=True)
-    dataframe.to_csv(f'files/area_data/{servicename}_{area}.csv')
+    dataframe.to_csv(f'files/areas/{servicename}_{area}_{len(dataframe)}.csv')
     prints(f'Found {len(dataframe)} features for area {area}.', tag='Main')

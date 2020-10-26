@@ -16,20 +16,24 @@ typenames = [typename for typename in Properties.feature_properties if 'origin' 
 prints(f'Retrieving features: {", ".join([Properties.feature_properties[typename]["label"] + " (" + typename + ")" for typename in typenames])}', tag='Main')
 prints(f'In areas: {", ".join(Properties.areas.keys())}', tag='Main')
 
+all_features = {}
+for typename in typenames:
+    features = wfs.get_features(
+        srs='EPSG:4326', 
+        typename=typename,
+        reverse_x_y=True)
+
+    features.to_srs(Properties.default_srs)
+
+    all_features[typename] = features
+
 for area, center in zip(Properties.areas.keys(), Properties.areas.values()):
     center.to_srs(Properties.default_srs)
 
     frames = []
 
     for typename in typenames:
-        features = wfs.get_features(
-            srs='EPSG:4326', 
-            typename=typename,
-            reverse_x_y=True)
-
-        features.to_srs(Properties.default_srs)
-
-        features = features.filter(lambda feature: feature.dist(center) <= Properties.radius)
+        features = all_features[typename].filter(lambda feature: feature.dist(center) <= Properties.radius)
         
         rows = {}    
         for feature in features:
@@ -37,8 +41,10 @@ for area, center in zip(Properties.areas.keys(), Properties.areas.values()):
             data['id'] = feature['fid'].split(';')[-1]
             data['label'] = Properties.feature_properties[typename]['label']
             data['geometry'] = f'{feature.tag};{list(feature.x(enforce_list=True))},{list(feature.y(enforce_list=True))}'
+            data['service'] = servicename
 
             optionals = {
+                'description': 'mastetype',
                 'height': 'lyspunktshoejde',
                 'date': 'lastedited'}
 
@@ -52,5 +58,5 @@ for area, center in zip(Properties.areas.keys(), Properties.areas.values()):
         frames.append(pd.DataFrame(rows))
 
     dataframe = pd.concat(frames, ignore_index=True)
-    dataframe.to_csv(f'files/area_data/{servicename}_{area}.csv')
+    dataframe.to_csv(f'files/areas/{servicename}_{area}_{len(dataframe)}.csv')
     prints(f'Found {len(dataframe)} features for area {area}.', tag='Main')
