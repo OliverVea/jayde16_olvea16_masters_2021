@@ -13,6 +13,7 @@ class Properties:
 
     default_srs = 'EPSG:25832'
 
+    outer_radius = 200
     radius = 100
 
     feature_properties = {
@@ -37,6 +38,7 @@ class Properties:
         'water_node': {'origin': 'samaqua', 'label': 'Water Node (sa)', 'color': '#5b45a3'},
         'TL740798': {'origin': 'energifyn', 'label': 'Base Data (ef)', 'color': '#4a3d07'},
         'TL740800': {'origin': 'energifyn', 'label': 'Fuse Boxes (ef)', 'color': '#303030'},
+        'heating_cover': {'origin': 'fjernvarme', 'label': 'Heating Cover (fv)', 'color': '#808080'}
         #'': {'origin': '', 'label': '', 'color': '#'},
     }
 

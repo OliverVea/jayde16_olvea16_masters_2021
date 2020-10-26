@@ -53,10 +53,10 @@ class Map:
         plt.tight_layout()
 
         if save_pdf:
-            plt.savefig(f'output/{self.figname}.pdf', dpi=self.dpi)
+            plt.savefig(f'{self.figname}.pdf', dpi=self.dpi)
 
         if save_png:
-            plt.savefig(f'output/{self.figname}.png', dpi=self.dpi)
+            plt.savefig(f'{self.figname}.png', dpi=self.dpi)
 
         if show:
             plt.show(block=block)
@@ -155,6 +155,10 @@ class Map:
 
             if feature.tag == 'Polygon':
                 if not isinstance(x, list):
+                    x = [x]
+                    print('error')
+                if not isinstance(y, list):
+                    y = [y]
                     print('error')
                 x.append(x[0])
                 y.append(y[0])

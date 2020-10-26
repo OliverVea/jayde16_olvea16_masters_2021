@@ -6,6 +6,7 @@ from jaolma.utility.csv import CSV
 import pandas as pd
 
 servicename = 'samaqua'
+typename = 'water_node'
 
 node_type_code = CSV('files/samaqua/node_type_code.csv', delimiter=';')
 d_knudekode_beskrivelse = {row['KnudeKode']: row['Beskrivelse'] for row in node_type_code.load()}
@@ -36,8 +37,9 @@ for area in Properties.areas:
             continue
 
         data = {}
+        data['typename'] = typename
         data['id'] = feature['FeatureGUID']
-        data['label'] = 'Water Node (sa)'
+        data['label'] = Properties.feature_properties[typename]['label']
         data['geometry'] = f'{feature.tag};{list(feature.x(enforce_list=True))},{list(feature.y(enforce_list=True))}'
         data['service'] = servicename
 

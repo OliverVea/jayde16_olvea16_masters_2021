@@ -34,6 +34,7 @@ for area, center in zip(Properties.areas.keys(), Properties.areas.values()):
         rows = {}    
         for feature in features:
             data = {}
+            data['typename'] = typename
             data['id'] = feature['id.lokalId']
             data['label'] = Properties.feature_properties[typename]['label']
             data['geometry'] = f'{feature.tag};{list(feature.x(enforce_list=True))},{list(feature.y(enforce_list=True))}'

@@ -7,6 +7,7 @@ import json
 from datetime import datetime
 
 servicename = 'fjernvarme'
+typename = 'heating_cover'
 
 prints(f'Retrieving features from fjernvarme.', tag='Main')
 prints(f'In areas: {", ".join(Properties.areas.keys())}', tag='Main')
@@ -26,8 +27,9 @@ for area in Properties.areas:
     rows = {}
     for feature in features:
         data = {}
+        data['typename'] = typename
         data['id'] = feature['GlobalID']
-        data['label'] = 'Heating Cover (fv)'
+        data['label'] = Properties.feature_properties[typename]['label']
         data['geometry'] = f'{feature.tag};{list(feature.x(enforce_list=True))},{list(feature.y(enforce_list=True))},{list(feature.z(enforce_list=True))}'
         data['service'] = servicename
         data['diameter_cm'] = feature['CAPCODE']
