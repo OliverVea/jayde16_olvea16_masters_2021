@@ -126,15 +126,21 @@ class SpiderPlot:
             size = self.figsize[0]*2
             textsize = self.figsize[0]
 
-        plt.title(self.title, size=size)
+        plt.title(self.title, size=size, y=1.08)
 
         self.angles = [n / float(self.N) * 2 * pi for n in range(self.N)]
         self.angles += self.angles[:1]
 
-        #locs, labels = plt.xticks(self.angles[:-1], self.category_labels, color='black', size=self.figsize[0])
-        plt.xticks(self.angles[:-1], '', color='black', size=size)
-        for angle, category in zip(self.angles, self.category_labels):
-            plt.text(angle-0.03, 1.05, category, color="black", size=textsize, horizontalalignment='center', verticalalignment='center')
+        locs, labels = plt.xticks(self.angles[:-1], '')
+        for label, angle, text in zip(labels, self.angles, self.category_labels):
+            x, y = label.get_position()
+            temptxt = plt.text(x,y, text, transform=label.get_transform(), ha=label.get_ha(), 
+            va=label.get_va(), rotation=angle*180/pi-90, size=self.figsize[0], color='black')
+        
+        #plt.xticks(self.angles[:-1], '', color='black', size=size)
+        
+        #for angle, category in zip(self.angles, self.category_labels):
+            #txt = plt.text(angle-0.03, 50, category, color="black", size=textsize, horizontalalignment='center', verticalalignment='center')
 
         self.figlines.clear()
         
