@@ -42,7 +42,7 @@ area_features
 
 spider(area_features.', "Spider Plot Areas", [], all_features,{'Harbor' 'Park' 'SDU' 'Suburb'});
 
-
+% For at illustrere hvordan github virker
 
 % create a spider plot for ranking the data
 % function [f, ca, o] = spider(data,tle,rng,lbl,leg,f)
