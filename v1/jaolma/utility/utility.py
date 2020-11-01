@@ -7,6 +7,8 @@ _utility_verbose_options_tag_blacklist=[]
 import datetime
 from colorsys import hsv_to_rgb
 
+from colormap import hex2rgb, rgb2hls, hls2rgb, rgb2hex
+
 # status, error, tag_whitelist, tag_blacklist, timestamp
 def set_verbose(**args):
     global _utility_verbose_options_status, _utility_verbose_options_error, _utility_verbose_options_timestamp, _utility_verbose_options_tag_whitelist, _utility_verbose_options_tag_blacklist
@@ -66,3 +68,23 @@ with open('log.txt', 'a+') as f:
 
 def linspace(min, max, N):
     return [n/(N - 1) * (max - min) + min for n in range(N)]
+
+class Color:
+    def __init__(self, color):
+        r, g, b = hex2rgb(color)
+        h, l, s = rgb2hls(r/255, g/255, b/255)
+
+        self.rgb = (r, g, b)
+        self.hls = (h, l, s)
+
+    def get_l(self):
+        h, l, s = self.hls
+        return l
+
+    def with_l(self, l):
+        h, _, s = self.hls
+        r, g, b = hls2rgb(h, l, s)
+        return rgb2hex(int(r*255), int(g*255), int(b*255))
+
+    def __mul__(self, val):
+        return self.with_l(max(min(self.get_l() * val, 1), 0))

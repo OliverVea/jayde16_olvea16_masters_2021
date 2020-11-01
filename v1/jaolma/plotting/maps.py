@@ -127,21 +127,15 @@ class Map:
             'marker': marker
         })
 
-    # Function to add points to the map.
     def add_feature(self, features: list, annotations: list = None, label: str = None, color: str = None, marker: str = None, add_to_history: bool = True):
         if add_to_history:
             self._add_to_history('Point', features, annotations, label, color, marker)
 
         plt.figure(self.figname)
-
-        # If single point is given.
-        #features = features if type(features) is list else [features]
         
-        # A - B is just A with the geometry corresponding to A - B. It keeps tag, attributes & SRS from A.
         features.to_srs(self.srs)
         features = [feature.as_srs(self.srs) - self.center.as_srs(self.srs) for feature in features]
 
-        # This could be done in one go but annotating is probably slightly easier this way.
         for i, feature in enumerate(features):
             _marker = marker
             if color == None and label in self.colors:

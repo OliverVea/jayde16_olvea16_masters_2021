@@ -45,7 +45,11 @@ class Feature(object):
         else:
             geometry = (self.x() - x, self.y() - y)
 
-        return Feature(tag=self.tag, geometry=geometry, srs=self.default_srs, attributes={})
+        attributes = {}
+        attributes.update(self.attributes)
+        attributes.update(pt.attributes)
+
+        return Feature(tag=self.tag, geometry=geometry, srs=self.default_srs, attributes=attributes)
 
     def dist(self, pt):
         if self.is_list:

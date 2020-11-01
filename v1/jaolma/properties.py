@@ -9,6 +9,9 @@ class Properties:
         'sdu': (55.3685818, 10.4317584)
     }
 
+    # Has to only differ from areas in capitalization of letters.
+    areas_pretty = ['Downtown', 'Harbor', 'Park', 'Suburb', 'SDU']
+
     areas = {key: Feature(geometry, 'EPSG:4326', key) for key, geometry in zip(areas.keys(), areas.values())}
 
     default_srs = 'EPSG:25832'
@@ -36,9 +39,9 @@ class Properties:
         'Jernbane': {'origin': 'geodanmark', 'label': 'Railroad (gd)', 'color': '#75756a'},
         'Bassin': {'origin': 'geodanmark', 'label': 'Pool (gd)', 'color': '#00a2ff'},
         'water_node': {'origin': 'samaqua', 'label': 'Water Node (sa)', 'color': '#5b45a3'},
-        'TL740798': {'origin': 'energifyn', 'label': 'Base Data (ef)', 'color': '#4a3d07'},
-        'TL740800': {'origin': 'energifyn', 'label': 'Fuse Boxes (ef)', 'color': '#303030'},
-        'heating_cover': {'origin': 'fjernvarme', 'label': 'Heating Cover (fv)', 'color': '#808080'}
+        'TL740798': {'origin': 'energifyn', 'label': 'Base Data (ef)', 'color': '#751e1a'},
+        'TL740800': {'origin': 'energifyn', 'label': 'Fuse Boxes (ef)', 'color': '#5e4a49'},
+        'heating_cover': {'origin': 'fjernvarme', 'label': 'Heating Cover (fv)', 'color': '#47657d'}
         #'': {'origin': '', 'label': '', 'color': '#'},
     }
 
