@@ -1,12 +1,12 @@
 clc; clear;
-opts = detectImportOptions('files/Harbor_Data_Analysis.csv');
+opts = detectImportOptions('data/Harbor_Data_Analysis.csv');
 opts.ExtraColumnsRule = 'ignore';
 opts.VariableNamingRule = 'preserve';
 opts.SelectedVariableNames = opts.SelectedVariableNames([1:6,8:12]);
-harbor = readtable('files/Harbor_Data_Analysis.csv', opts);
-park = readtable('files/Park_Data_Analysis.csv', opts);
-sdu = readtable('files/SDU_Data_Analysis.csv', opts);
-suburb = readtable('files/Suburb_Data_Analysis.csv', opts);
+harbor = readtable('data/Harbor_Data_Analysis.csv', opts);
+park = readtable('data/Park_Data_Analysis.csv', opts);
+sdu = readtable('data/SDU_Data_Analysis.csv', opts);
+suburb = readtable('data/Suburb_Data_Analysis.csv', opts);
 %% Initialize arrays and find all features
 areas = ["harbor", "park", "sdu", "suburb"];
 
@@ -20,11 +20,10 @@ for i = 1:height(all_areas)
     end
 end
 
-all_features=["Chimney","Manhole Cover","Mast (light fixture)","Downspout Grille","Tree","Building","Fence","Bushes","Lake","Edge of stream","Chicane"]
+area_features = zeros(length(areas), length(all_features));
+
 
 %% Count number of existing features in all areas
-
-area_features = zeros(length(areas), length(all_features));
 
 for i = 1:length(areas)
     j = 1;
