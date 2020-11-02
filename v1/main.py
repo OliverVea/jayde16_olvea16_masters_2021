@@ -9,6 +9,8 @@ import os
 
 from PIL import Image, ImageDraw
 
+from random import choice
+
 sg.theme('DarkGrey2')
 
 class Plot_Image:
@@ -63,9 +65,11 @@ class Plot_Image:
 
         pass
 
-    def get_image(self, types: list, draw_circle: bool = True):
+    def get_image(self, types: list, show_circle: bool = True, show_annotations: bool = True):
         with Image.open(self.backgound_path) as im:
             draw = ImageDraw.Draw(im)
+
+            i = 0
 
             for source in self.data:
                 for typename in self.data[source]:
@@ -80,10 +84,13 @@ class Plot_Image:
                             xy = [(f['plot_x'] - 3, f['plot_y'] - 3), (f['plot_x'] + 3, f['plot_y'] + 3)]
                             draw.ellipse(xy=xy, fill=fill, outline=outline)
 
+                            draw.text(xy=[f['plot_x'] + 3, f['plot_y'] + 3], text=f'{i}')
+                            i += 1
+
                             # TODO: Annotate points.
                             pass
 
-            if draw_circle:
+            if show_circle:
                 x0 = (self.size[0] / 2 - Properties.radius * self.dpm, self.size[1] / 2 - Properties.radius * self.dpm)
                 x1 = (self.size[0] / 2 + Properties.radius * self.dpm, self.size[1] / 2 + Properties.radius * self.dpm)
 
@@ -93,6 +100,34 @@ class Plot_Image:
 
         return self.image_path
 
+class PropertiesBox:
+    def __init__(self):
+        self.prop_text = sg.Text('Properties', font=('Any', 11, 'bold'))
+        self.init_text = sg.Text('Press a feature to show it in this window.')
+
+        self.id = '23211512'
+
+        self.attributes = [[sg.Text('', visible=False, key=f'{self.id}_att_{i}', font=('Any', 10), size=(400, None), auto_size_text=False)] for i in range(50)]
+
+        self.properties = sg.Column([[self.prop_text]] + self.attributes + [[self.init_text]], size=(400, None), vertical_alignment='top')
+        
+        self.visible = True
+
+
+    def get_properties(self):
+        return self.properties
+
+    def set_attributes(self, window, attributes):
+        self.init_text.update(visible=False)
+
+        for i, attribute in enumerate(attributes):
+            attribute_name = window.find(f'{self.id}_att_{i}')
+            attribute_name.update(value=f'{attribute}: {attributes[attribute]}', visible=True)
+
+        for i in range(50 - len(attributes)):
+            i += len(attributes)
+            attribute_name = window.find(f'{self.id}_att_{i}')
+            attribute_name.update(visible=False)
 
 def simple_dropdown(title: str, values: list):
     dd = sg.DropDown(values, default_value=values[0])
@@ -159,18 +194,22 @@ def get_area_data(area: str):
 def plot(area):
     inputs = {}
 
-    title = sg.Text(f'Plot: {area}')
+    pretty_area = list(Properties.areas).index(area)
+    pretty_area = Properties.areas_pretty[pretty_area]
+
+    title = f'{pretty_area}'
+    export = sg.Button('Export')
     back = sg.Button('Back')
     draw = sg.Button('Draw')
 
     data = get_area_data(area)
     sources = [source for source in data]
 
-    col = []
+    col = [[draw, export, back]]
 
     fp = Properties.feature_properties
     for source in sources:
-        col.append([sg.Text(source)])
+        col.append([sg.Text(source.capitalize())])
 
         for feature in list(data[source]):
             if fp[feature]['origin'] != source:
@@ -182,7 +221,7 @@ def plot(area):
             col.append([sg.Checkbox(label, text_color = color)])
             inputs[len(inputs)] = {'type': 'checkbox', 'source': source, 'typename': feature}
 
-    checkboxes = sg.Column(col)
+    checkboxes = sg.Column(col, vertical_alignment='top')
 
     size = (1000,1000)
 
@@ -190,9 +229,10 @@ def plot(area):
 
     graph = sg.Graph(canvas_size=size, graph_bottom_left=(0,0), graph_top_right=size, key='Click', enable_events=True)
 
+    properties = PropertiesBox()
+
     layout = [
-        [title, draw, back],
-        [checkboxes, graph]
+        [checkboxes, graph, properties.get_properties()]
     ]
 
     window = sg.Window(title, layout)
@@ -213,8 +253,20 @@ def plot(area):
             graph.DrawImage(image_object.get_image(types=types), location=(0, size[1]))
 
         if event == 'Click':
-            # TODO: Identify clostest point and write some information in panel.
-            pass
+            source = choice(sources)
+            typename = choice(list(data[source]))
+            feature = choice(data[source][typename])
+
+            attributes = {}
+            for key, val in zip(feature.attributes.keys(), feature.attributes.values()):
+                t = type(val)
+
+                if not t in (int, str, float) or key == 'Unnamed: 0' or str(val) in ('nan', 'None'):
+                    continue
+                
+                attributes[key] = val
+
+            properties.set_attributes(window, attributes)
 
     window.close()
 
