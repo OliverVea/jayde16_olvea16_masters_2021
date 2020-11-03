@@ -10,6 +10,7 @@ import os
 from PIL import Image, ImageDraw
 
 from random import choice
+from math import sqrt
 
 sg.theme('DarkGrey2')
 
@@ -23,7 +24,6 @@ class Plot_Image:
             tile_matrix_set='KortforsyningTilingDK')
 
         self.size = size
-
         self.area = area
 
         self.c = Properties.areas[area]
@@ -65,34 +65,73 @@ class Plot_Image:
 
         pass
 
-    def get_image(self, types: list, show_circle: bool = True, selected: str = None, show_annotations: bool = True):
+    def get_image(self, types: list, show_circle: bool = True, selected: str = None, show_annotations: bool = True, r: float = 3):
         with Image.open(self.backgound_path) as im:
             draw = ImageDraw.Draw(im)
 
-            i = 0
-
+            features = []
             for source in self.data:
                 for typename in self.data[source]:
                     if typename in types:
                         c = Properties.feature_properties[typename]['color']
-                        color = Color(c)
-
-                        outline = color * 0.75
-                        fill = c
-
                         for f in self.data[source][typename]:
-                            xy = [(f['plot_x'] - 3, f['plot_y'] - 3), (f['plot_x'] + 3, f['plot_y'] + 3)]
+                            x, y = f['plot_x'], f['plot_y']
+
+                            features.append({'start': (x, y), 'annotation': (x + 3, y + 3), 'feature': f, 'color': c})
+
+            n, m = 20, 0.5
+
+            for _ in range(n):
+                for ft1 in features:
+                    x1, y1 = ft1['annotation']
+
+                    x, y = 0, 0
+
+                    i = 0
+
+                    for ft2 in features:
+                        x2, y2 = ft2['annotation']
+                        for x2, y2 in zip((x2, ft2['start'][0]), (y2, ft2['start'][1])):
+                            if ft1['feature']['id'] == ft2['feature']['id']:
+                                continue
+
+                            x2, y2 = ft2['annotation']
+
+                            dx, dy = x2 - x1, y2 - y1
+                            d = sqrt(dx**2 + dy**2)
+
+                            if d > 10:
+                                continue
+
                             i += 1
 
-                            if selected == f['id']:
-                                draw.ellipse(xy=xy, fill=fill, outline='red')
-                                draw.text(xy=[f['plot_x'] + 3, f['plot_y'] + 3], text=f'{i}')
-                            else:
-                                draw.ellipse(xy=xy, fill=fill, outline=outline)
+                            x, y = x + dx, y + dy
 
+                    if i > 0:
+                        x1 -= 1/n * 1/m * (x / i)
+                        y1 -= 1/n * 1/m * (y / i)
 
-                            # TODO: Annotate points better.
-                            pass
+                    ft1['annotation'] = (x1, y1)
+
+            for ft in features:
+                color = Color(ft['color'])
+
+                outline = color * 0.75
+                fill = ft['color']
+
+                x, y = ft['start']
+                xy = [(x - r, y - r), (x + r, y + r)]
+
+                if selected == ft['feature']['id']:
+                    outline = 'red'
+
+                draw.ellipse(xy=xy, fill=fill, outline=outline)
+
+            for ft in features: 
+                if selected == ft['feature']['id']:
+                    draw.text(xy=[ft['annotation'][0], ft['annotation'][1]], text=f'{ft["feature"]["n"]}', text_color='red')
+                else:
+                    draw.text(xy=[ft['annotation'][0], ft['annotation'][1]], text=f'{ft["feature"]["n"]}')
 
             if show_circle:
                 x0 = (self.size[0] / 2 - Properties.radius * self.dpm, self.size[1] / 2 - Properties.radius * self.dpm)
@@ -111,9 +150,11 @@ class PropertiesBox:
 
         self.id = '23211512'
 
-        self.attributes = [[sg.Text('', visible=False, key=f'{self.id}_att_{i}', font=('Any', 10), size=(400, None), auto_size_text=False)] for i in range(50)]
+        cw, ch = 400, 1000
 
-        self.properties = sg.Column([[self.prop_text]] + self.attributes + [[self.init_text]], size=(400, None), vertical_alignment='top')
+        self.attributes = [[sg.Text('', visible=False, key=f'{self.id}_att_{i}', font=('Any', 10), size=(cw, None), auto_size_text=False)] for i in range(50)]
+
+        self.properties = sg.Column([[self.prop_text]] + self.attributes + [[self.init_text]], size=(cw, ch), vertical_alignment='top')
         
         self.visible = True
 
@@ -209,11 +250,11 @@ def plot(area):
     data = get_area_data(area)
     sources = [source for source in data]
 
-    col = [[draw, export, back]]
+    col = [[export, back]]
 
     fp = Properties.feature_properties
     for source in sources:
-        col.append([sg.Text(source.capitalize())])
+        col.append([sg.Text(source.capitalize(), enable_events=True)])
 
         for feature in list(data[source]):
             if fp[feature]['origin'] != source:
@@ -222,7 +263,7 @@ def plot(area):
             color = fp[feature]['color']
             label = fp[feature]['label']
 
-            col.append([sg.Checkbox(label, text_color = color)])
+            col.append([sg.Checkbox(label, text_color = color, key=feature, enable_events=True)])
             inputs[len(inputs)] = {'type': 'checkbox', 'source': source, 'typename': feature}
 
     checkboxes = sg.Column(col, vertical_alignment='top')
@@ -255,17 +296,30 @@ def plot(area):
         if event == sg.WIN_CLOSED or event == 'Back':
             break
 
+        types = set([inputs[i]['typename'] for i in inputs if values[inputs[i]['typename']]])
 
-        if event == 'Draw':
-            types = [inputs[i]['typename'] for i in inputs if values[i]]
-            drawn_types = types
+        if type(event) == str and event.lower() in sources:
+            source = event.lower()
 
+
+            source_types = list(data[source])
+
+            if all(typename in types for typename in source_types):
+                for typename in source_types:
+                    cb = window.find(typename)
+                    cb.update(value=False)
+                    types.remove(typename)
+            else:
+                for typename in source_types:
+                    cb = window.find(typename)
+                    cb.update(value=True)
+                    types.add(typename)
 
         if event == 'Click':
             features = []
             for source in sources:
                 for typename in image_object.data[source]:
-                    if typename in drawn_types:
+                    if typename in types:
                         features.extend(image_object.data[source][typename])
 
             x, y = values['Click']
