@@ -82,16 +82,16 @@ class Plot_Image:
 
                         for f in self.data[source][typename]:
                             xy = [(f['plot_x'] - 3, f['plot_y'] - 3), (f['plot_x'] + 3, f['plot_y'] + 3)]
+                            i += 1
 
                             if selected == f['id']:
                                 draw.ellipse(xy=xy, fill=fill, outline='red')
+                                draw.text(xy=[f['plot_x'] + 3, f['plot_y'] + 3], text=f'{i}')
                             else:
                                 draw.ellipse(xy=xy, fill=fill, outline=outline)
 
-                            draw.text(xy=[f['plot_x'] + 3, f['plot_y'] + 3], text=f'{i}')
-                            i += 1
 
-                            # TODO: Annotate points.
+                            # TODO: Annotate points better.
                             pass
 
             if show_circle:
