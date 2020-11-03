@@ -1,12 +1,12 @@
 clc; clear;
-opts = detectImportOptions('files/Harbor_Data_Analysis.csv');
+opts = detectImportOptions('data/Harbor_Data_Analysis.csv');
 opts.ExtraColumnsRule = 'ignore';
 opts.VariableNamingRule = 'preserve';
 opts.SelectedVariableNames = opts.SelectedVariableNames([1:6,8:12]);
-harbor = readtable('files/Harbor_Data_Analysis.csv', opts);
-park = readtable('files/Park_Data_Analysis.csv', opts);
-sdu = readtable('files/SDU_Data_Analysis.csv', opts);
-suburb = readtable('files/Suburb_Data_Analysis.csv', opts);
+harbor = readtable('data/Harbor_Data_Analysis.csv', opts);
+park = readtable('data/Park_Data_Analysis.csv', opts);
+sdu = readtable('data/SDU_Data_Analysis.csv', opts);
+suburb = readtable('data/Suburb_Data_Analysis.csv', opts);
 %% Initialize arrays and find all features
 areas = ["harbor", "park", "sdu", "suburb"];
 
@@ -42,3 +42,5 @@ area_features
 %% Create Spiderplot
 
 spider(area_features.', "Spider Plot Areas", [], all_features,{'Harbor' 'Park' 'SDU' 'Suburb'});
+
+%%
