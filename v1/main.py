@@ -9,6 +9,9 @@ import os
 
 from PIL import Image, ImageDraw
 
+from random import choice
+from math import sqrt
+
 sg.theme('DarkGrey2')
 
 class Plot_Image:
@@ -21,7 +24,6 @@ class Plot_Image:
             tile_matrix_set='KortforsyningTilingDK')
 
         self.size = size
-
         self.area = area
 
         self.c = Properties.areas[area]
@@ -63,27 +65,75 @@ class Plot_Image:
 
         pass
 
-    def get_image(self, types: list, draw_circle: bool = True):
+    def get_image(self, types: list, show_circle: bool = True, selected: str = None, show_annotations: bool = True, r: float = 3):
         with Image.open(self.backgound_path) as im:
             draw = ImageDraw.Draw(im)
 
+            features = []
             for source in self.data:
                 for typename in self.data[source]:
                     if typename in types:
                         c = Properties.feature_properties[typename]['color']
-                        color = Color(c)
-
-                        outline = color * 0.75
-                        fill = c
-
                         for f in self.data[source][typename]:
-                            xy = [(f['plot_x'] - 3, f['plot_y'] - 3), (f['plot_x'] + 3, f['plot_y'] + 3)]
-                            draw.ellipse(xy=xy, fill=fill, outline=outline)
+                            x, y = f['plot_x'], f['plot_y']
 
-                            # TODO: Annotate points.
-                            pass
+                            features.append({'start': (x, y), 'annotation': (x + 3, y + 3), 'feature': f, 'color': c})
 
-            if draw_circle:
+            n, m = 20, 0.5
+
+            for _ in range(n):
+                for ft1 in features:
+                    x1, y1 = ft1['annotation']
+
+                    x, y = 0, 0
+
+                    i = 0
+
+                    for ft2 in features:
+                        x2, y2 = ft2['annotation']
+                        for x2, y2 in zip((x2, ft2['start'][0]), (y2, ft2['start'][1])):
+                            if ft1['feature']['id'] == ft2['feature']['id']:
+                                continue
+
+                            x2, y2 = ft2['annotation']
+
+                            dx, dy = x2 - x1, y2 - y1
+                            d = sqrt(dx**2 + dy**2)
+
+                            if d > 10:
+                                continue
+
+                            i += 1
+
+                            x, y = x + dx, y + dy
+
+                    if i > 0:
+                        x1 -= 1/n * 1/m * (x / i)
+                        y1 -= 1/n * 1/m * (y / i)
+
+                    ft1['annotation'] = (x1, y1)
+
+            for ft in features:
+                color = Color(ft['color'])
+
+                outline = color * 0.75
+                fill = ft['color']
+
+                x, y = ft['start']
+                xy = [(x - r, y - r), (x + r, y + r)]
+
+                if selected == ft['feature']['id']:
+                    outline = 'red'
+
+                draw.ellipse(xy=xy, fill=fill, outline=outline)
+
+            for ft in features: 
+                if selected == ft['feature']['id']:
+                    draw.text(xy=[ft['annotation'][0], ft['annotation'][1]], text=f'{ft["feature"]["n"]}', text_color='red')
+                else:
+                    draw.text(xy=[ft['annotation'][0], ft['annotation'][1]], text=f'{ft["feature"]["n"]}')
+
+            if show_circle:
                 x0 = (self.size[0] / 2 - Properties.radius * self.dpm, self.size[1] / 2 - Properties.radius * self.dpm)
                 x1 = (self.size[0] / 2 + Properties.radius * self.dpm, self.size[1] / 2 + Properties.radius * self.dpm)
 
@@ -93,6 +143,36 @@ class Plot_Image:
 
         return self.image_path
 
+class PropertiesBox:
+    def __init__(self):
+        self.prop_text = sg.Text('Properties', font=('Any', 11, 'bold'))
+        self.init_text = sg.Text('Press a feature to show it in this window.')
+
+        self.id = '23211512'
+
+        cw, ch = 400, 1000
+
+        self.attributes = [[sg.Text('', visible=False, key=f'{self.id}_att_{i}', font=('Any', 10), size=(cw, None), auto_size_text=False)] for i in range(50)]
+
+        self.properties = sg.Column([[self.prop_text]] + self.attributes + [[self.init_text]], size=(cw, ch), vertical_alignment='top')
+        
+        self.visible = True
+
+
+    def get_properties(self):
+        return self.properties
+
+    def set_attributes(self, window, attributes):
+        self.init_text.update(visible=False)
+
+        for i, attribute in enumerate(attributes):
+            attribute_name = window.find(f'{self.id}_att_{i}')
+            attribute_name.update(value=f'{attribute}: {attributes[attribute]}', visible=True)
+
+        for i in range(50 - len(attributes)):
+            i += len(attributes)
+            attribute_name = window.find(f'{self.id}_att_{i}')
+            attribute_name.update(visible=False)
 
 def simple_dropdown(title: str, values: list):
     dd = sg.DropDown(values, default_value=values[0])
@@ -159,18 +239,22 @@ def get_area_data(area: str):
 def plot(area):
     inputs = {}
 
-    title = sg.Text(f'Plot: {area}')
+    pretty_area = list(Properties.areas).index(area)
+    pretty_area = Properties.areas_pretty[pretty_area]
+
+    title = f'{pretty_area}'
+    export = sg.Button('Export')
     back = sg.Button('Back')
     draw = sg.Button('Draw')
 
     data = get_area_data(area)
     sources = [source for source in data]
 
-    col = []
+    col = [[export, back]]
 
     fp = Properties.feature_properties
     for source in sources:
-        col.append([sg.Text(source)])
+        col.append([sg.Text(source.capitalize(), enable_events=True)])
 
         for feature in list(data[source]):
             if fp[feature]['origin'] != source:
@@ -179,10 +263,10 @@ def plot(area):
             color = fp[feature]['color']
             label = fp[feature]['label']
 
-            col.append([sg.Checkbox(label, text_color = color)])
+            col.append([sg.Checkbox(label, text_color = color, key=feature, enable_events=True)])
             inputs[len(inputs)] = {'type': 'checkbox', 'source': source, 'typename': feature}
 
-    checkboxes = sg.Column(col)
+    checkboxes = sg.Column(col, vertical_alignment='top')
 
     size = (1000,1000)
 
@@ -190,9 +274,10 @@ def plot(area):
 
     graph = sg.Graph(canvas_size=size, graph_bottom_left=(0,0), graph_top_right=size, key='Click', enable_events=True)
 
+    properties = PropertiesBox()
+
     layout = [
-        [title, draw, back],
-        [checkboxes, graph]
+        [checkboxes, graph, properties.get_properties()]
     ]
 
     window = sg.Window(title, layout)
@@ -200,6 +285,9 @@ def plot(area):
 
     graph.DrawImage(image_object.get_image([]), location=(0, size[1]))
 
+    selected = None
+
+    drawn_types = []
     while True:
         event, values = window.read()
 
@@ -208,13 +296,56 @@ def plot(area):
         if event == sg.WIN_CLOSED or event == 'Back':
             break
 
-        if event == 'Draw':
-            types = [inputs[i]['typename'] for i in inputs if values[i]]
-            graph.DrawImage(image_object.get_image(types=types), location=(0, size[1]))
+        types = set([inputs[i]['typename'] for i in inputs if values[inputs[i]['typename']]])
+
+        if type(event) == str and event.lower() in sources:
+            source = event.lower()
+
+
+            source_types = list(data[source])
+
+            if all(typename in types for typename in source_types):
+                for typename in source_types:
+                    cb = window.find(typename)
+                    cb.update(value=False)
+                    types.remove(typename)
+            else:
+                for typename in source_types:
+                    cb = window.find(typename)
+                    cb.update(value=True)
+                    types.add(typename)
 
         if event == 'Click':
-            # TODO: Identify clostest point and write some information in panel.
-            pass
+            features = []
+            for source in sources:
+                for typename in image_object.data[source]:
+                    if typename in types:
+                        features.extend(image_object.data[source][typename])
+
+            x, y = values['Click']
+            y = size[1] - y
+
+            features = [{'d': ((ft['plot_x'] - x)**2 + (ft['plot_y'] - y)**2), 'feature': ft} for ft in features]
+
+            selected = None
+            if len(features) > 0:
+                ft = min(features, key=lambda ft: ft['d'])
+                feature = ft['feature']
+
+                attributes = {}
+                if ft['d'] < 7**2:
+                    selected = feature['id']
+                    for key, val in zip(feature.attributes.keys(), feature.attributes.values()):
+                        t = type(val)
+
+                        if not t in (int, str, float) or key == 'Unnamed: 0' or str(val) in ('nan', 'None'):
+                            continue
+                        
+                        attributes[key] = val
+
+                properties.set_attributes(window, attributes)
+
+        graph.DrawImage(image_object.get_image(types=types, selected=selected), location=(0, size[1]))
 
     window.close()
 
