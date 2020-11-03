@@ -65,7 +65,7 @@ class Plot_Image:
 
         pass
 
-    def get_image(self, types: list, show_circle: bool = True, show_annotations: bool = True):
+    def get_image(self, types: list, show_circle: bool = True, selected: str = None, show_annotations: bool = True):
         with Image.open(self.backgound_path) as im:
             draw = ImageDraw.Draw(im)
 
@@ -82,7 +82,11 @@ class Plot_Image:
 
                         for f in self.data[source][typename]:
                             xy = [(f['plot_x'] - 3, f['plot_y'] - 3), (f['plot_x'] + 3, f['plot_y'] + 3)]
-                            draw.ellipse(xy=xy, fill=fill, outline=outline)
+
+                            if selected == f['id']:
+                                draw.ellipse(xy=xy, fill=fill, outline='red')
+                            else:
+                                draw.ellipse(xy=xy, fill=fill, outline=outline)
 
                             draw.text(xy=[f['plot_x'] + 3, f['plot_y'] + 3], text=f'{i}')
                             i += 1
@@ -240,6 +244,9 @@ def plot(area):
 
     graph.DrawImage(image_object.get_image([]), location=(0, size[1]))
 
+    selected = None
+
+    drawn_types = []
     while True:
         event, values = window.read()
 
@@ -248,25 +255,43 @@ def plot(area):
         if event == sg.WIN_CLOSED or event == 'Back':
             break
 
+
         if event == 'Draw':
             types = [inputs[i]['typename'] for i in inputs if values[i]]
-            graph.DrawImage(image_object.get_image(types=types), location=(0, size[1]))
+            drawn_types = types
+
 
         if event == 'Click':
-            source = choice(sources)
-            typename = choice(list(data[source]))
-            feature = choice(data[source][typename])
+            features = []
+            for source in sources:
+                for typename in image_object.data[source]:
+                    if typename in drawn_types:
+                        features.extend(image_object.data[source][typename])
 
-            attributes = {}
-            for key, val in zip(feature.attributes.keys(), feature.attributes.values()):
-                t = type(val)
+            x, y = values['Click']
+            y = size[1] - y
 
-                if not t in (int, str, float) or key == 'Unnamed: 0' or str(val) in ('nan', 'None'):
-                    continue
-                
-                attributes[key] = val
+            features = [{'d': ((ft['plot_x'] - x)**2 + (ft['plot_y'] - y)**2), 'feature': ft} for ft in features]
 
-            properties.set_attributes(window, attributes)
+            selected = None
+            if len(features) > 0:
+                ft = min(features, key=lambda ft: ft['d'])
+                feature = ft['feature']
+
+                attributes = {}
+                if ft['d'] < 7**2:
+                    selected = feature['id']
+                    for key, val in zip(feature.attributes.keys(), feature.attributes.values()):
+                        t = type(val)
+
+                        if not t in (int, str, float) or key == 'Unnamed: 0' or str(val) in ('nan', 'None'):
+                            continue
+                        
+                        attributes[key] = val
+
+                properties.set_attributes(window, attributes)
+
+        graph.DrawImage(image_object.get_image(types=types, selected=selected), location=(0, size[1]))
 
     window.close()
 
