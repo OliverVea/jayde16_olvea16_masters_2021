@@ -275,7 +275,7 @@ def plot(area):
 
     checkboxes = sg.Column(col, vertical_alignment='top')
 
-    size = (1000,1000)
+    size = (1001,1001)
 
     image_object = Plot_Image(size=size, area=area, data=data)
 
