@@ -22,7 +22,7 @@ for area, center in zip(Properties.areas.keys(), Properties.areas.values()):
     frames = []
 
     for typename in typenames:
-        bbox = Filter.bbox(center=center, width=Properties.radius, height=Properties.radius)
+        bbox = Filter.bbox(center=center, width=Properties.radius*2.5, height=Properties.radius*2.5)
 
         features = wfs.get_features(
             srs=Properties.default_srs, 

@@ -20,16 +20,16 @@ class Properties:
     radius = 100
 
     feature_properties = {
-        'TL695099': {'origin': 'kortopslag', 'label': 'Buildings (ki)', 'color': '#700000'},
-        'TL965167': {'origin': 'kortopslag', 'label': 'Road Wells (ki)', 'color': '#ff00ff'},
-        'L418883_421469': {'origin': 'kortopslag', 'label': 'Park Trees (ki)', 'color': '#00851b'},
-        'L167365_421559': {'origin': 'kortopslag', 'label': 'Park Points (ki)', 'color': '#6e452f'},
+        'TL695099': {'origin': 'kortopslag', 'label': 'Building (ki)', 'color': '#700000'},
+        'TL965167': {'origin': 'kortopslag', 'label': 'Road Well (ki)', 'color': '#ff00ff'},
+        'L418883_421469': {'origin': 'kortopslag', 'label': 'Park Tree (ki)', 'color': '#00851b'},
+        'L167365_421559': {'origin': 'kortopslag', 'label': 'Park Point (ki)', 'color': '#6e452f'},
         'Bygning': {'origin': 'geodanmark', 'label': 'Building (gd)', 'color': '#ff0000'},
         'Broenddaeksel': {'origin': 'geodanmark', 'label': 'Manhole Cover (gd)', 'color': '#ac0fdb'},
         'Mast': {'origin': 'geodanmark', 'label': 'Light Fixture (gd)', 'color': '#e0de38'},
         'Hegn': {'origin': 'geodanmark', 'label': 'Fence (gd)', 'color': '#cf8b5b'},
         'Soe': {'origin': 'geodanmark', 'label': 'Lake (gd)', 'color': '#3051c7'},
-        'KratBevoksning': {'origin': 'geodanmark', 'label': 'Bushes (gd)', 'color': '#3b6e2f'},
+        'KratBevoksning': {'origin': 'geodanmark', 'label': 'Bush (gd)', 'color': '#3b6e2f'},
         'Trae': {'origin': 'geodanmark', 'label': 'Tree (gd)', 'color': '#30c74e'},
         'Nedloebsrist': {'origin': 'geodanmark', 'label': 'Downspout Grille (gd)', 'color': '#db0f64'},
         'Chikane': {'origin': 'geodanmark', 'label': 'Chicane (gd)', 'color': '#8db09b'},
@@ -40,8 +40,17 @@ class Properties:
         'Bassin': {'origin': 'geodanmark', 'label': 'Pool (gd)', 'color': '#00a2ff'},
         'water_node': {'origin': 'samaqua', 'label': 'Water Node (sa)', 'color': '#5b45a3'},
         'TL740798': {'origin': 'energifyn', 'label': 'Base Data (ef)', 'color': '#751e1a'},
-        'TL740800': {'origin': 'energifyn', 'label': 'Fuse Boxes (ef)', 'color': '#5e4a49'},
-        'heating_cover': {'origin': 'fjernvarme', 'label': 'Heating Cover (fv)', 'color': '#47657d'}
+        'TL740800': {'origin': 'energifyn', 'label': 'Fuse Box (ef)', 'color': '#5e4a49'},
+        'heating_cover': {'origin': 'fjernvarme', 'label': 'Heating Cover (fv)', 'color': '#47657d'},
+        'Tree': {'origin': 'gnss', 'label': 'Tree (gt)', 'color': '#118a0c'},
+        'Light Fixture': {'origin': 'gnss', 'label': 'Light Fixture (gt)', 'color': '#f2f55f'},
+        'Downspout Grille': {'origin': 'gnss', 'label': 'Downspout Grille (gt)', 'color': '#711f80'},
+        'Manhole Cover': {'origin': 'gnss', 'label': 'Manhole Cover (gt)', 'color': '#080d8a'},
+        'Fuse Box': {'origin': 'gnss', 'label': 'Fuse Box (gt)', 'color': '#5c4e1c'},
+        'Building Corner': {'origin': 'gnss', 'label': 'Building Corner (gt)', 'color': '#cc3618'},
+        'Bench': {'origin': 'gnss', 'label': 'Bench (gt)', 'color': '#6e5942'},
+        'Trash Can': {'origin': 'gnss', 'label': 'Trash Can (gt)', 'color': '#5c5b5b'},
+        'Tree Stump': {'origin': 'gnss', 'label': 'Tree Stump (gt)', 'color': '#6e491b'}
         #'': {'origin': '', 'label': '', 'color': '#'},
     }
 

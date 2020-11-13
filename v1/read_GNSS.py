@@ -7,7 +7,7 @@ from datetime import datetime
 
 import json
 
-servicename = 'GNSS'
+servicename = 'gnss'
 
 prints(f'Retrieving features from GNSS.', tag='Main')
 prints(f'In areas: {", ".join(Properties.areas.keys())}', tag='Main')
