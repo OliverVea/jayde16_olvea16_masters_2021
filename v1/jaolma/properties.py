@@ -42,6 +42,23 @@ class Properties:
         'TL740798': {'origin': 'energifyn', 'label': 'Base Data (ef)', 'color': '#751e1a'},
         'TL740800': {'origin': 'energifyn', 'label': 'Fuse Box (ef)', 'color': '#5e4a49'},
         'heating_cover': {'origin': 'fjernvarme', 'label': 'Heating Cover (fv)', 'color': '#47657d'},
+        'Tree': {'origin': 'gnss', 'label': 'Tree (gt)', 'color': '#000000'},
+        'Light Fixture': {'origin': 'gnss', 'label': 'Light Fixture (gt)', 'color': '#000000'},
+        'Downspout Grille': {'origin': 'gnss', 'label': 'Downspout Grille (gt)', 'color': '#000000'},
+        'Manhole Cover': {'origin': 'gnss', 'label': 'Manhole Cover (gt)', 'color': '#000000'},
+        'Fuse Box': {'origin': 'gnss', 'label': 'Fuse Box (gt)', 'color': '#000000'},
+        'Building Corner': {'origin': 'gnss', 'label': 'Building Corner (gt)', 'color': '#000000'},
+        'Bench': {'origin': 'gnss', 'label': 'Bench (gt)', 'color': '#000000'},
+        'Trash Can': {'origin': 'gnss', 'label': 'Trash Can (gt)', 'color': '#000000'},
+        'Tree Stump': {'origin': 'gnss', 'label': 'Tree Stump (gt)', 'color': '#000000'},
+        'Chimney': {'origin': 'gnss', 'label': 'Chimney (gt)', 'color': '#000000'},
+        'Rock': {'origin': 'gnss', 'label': 'Rock (gt)', 'color': '#000000'},
+        'Statue': {'origin': 'gnss', 'label': 'Statue (gt)', 'color': '#000000'},
+        'Misc': {'origin': 'gnss', 'label': 'Misc (gt)', 'color': '#000000'}
+        #'': {'origin': '', 'label': '', 'color': '#'},
+    }
+
+    '''
         'Tree': {'origin': 'gnss', 'label': 'Tree (gt)', 'color': '#118a0c'},
         'Light Fixture': {'origin': 'gnss', 'label': 'Light Fixture (gt)', 'color': '#f2f55f'},
         'Downspout Grille': {'origin': 'gnss', 'label': 'Downspout Grille (gt)', 'color': '#711f80'},
@@ -55,9 +72,7 @@ class Properties:
         'Rock': {'origin': 'gnss', 'label': 'Rock (gt)', 'color': '#636363'},
         'Statue': {'origin': 'gnss', 'label': 'Statue (gt)', 'color': '#b3b3b3'},
         'Misc': {'origin': 'gnss', 'label': 'Misc (gt)', 'color': '#72fcfa'}
-        #'': {'origin': '', 'label': '', 'color': '#'},
-    }
-
+    '''
     services = {
         'wfs': {
             'geodanmark': {
@@ -88,4 +103,11 @@ class Properties:
         if feature_name in Properties.feature_properties:
             if Properties.feature_properties[feature_name]['color'] != '':
                 return Properties.feature_properties[feature_name]['color']
+        return None
+
+    @staticmethod
+    def get_feature_source(feature_name):
+        if feature_name in Properties.feature_properties:
+            if Properties.feature_properties[feature_name]['source'] != '':
+                return Properties.feature_properties[feature_name]['source']
         return None

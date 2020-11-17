@@ -9,6 +9,7 @@ from matplotlib import use
 import matplotlib.pyplot as plt
 
 import numpy as np
+from time import sleep
 
 import pandas as pd
 import PySimpleGUI as sg
@@ -136,9 +137,12 @@ class Plot_Image:
 
             for ft in features: 
                 if selected == ft['feature']['id']:
-                    draw.text(xy=[ft['annotation'][0], ft['annotation'][1]], text=f'{ft["feature"]["n"]}', text_color='red')
+                    draw.text(xy=[ft['annotation'][0], ft['annotation'][1]], text=f'{ft["feature"]["n"]}', fill='red')
                 else:
-                    draw.text(xy=[ft['annotation'][0], ft['annotation'][1]], text=f'{ft["feature"]["n"]}')
+                    if Properties.feature_properties[ft['feature']['typename']]['origin'] == 'gnss':
+                        draw.text(xy=[ft['annotation'][0], ft['annotation'][1]], text=f'{ft["feature"]["n"]}', fill=ft['color'])
+                    else:
+                        draw.text(xy=[ft['annotation'][0], ft['annotation'][1]], text=f'{ft["feature"]["n"]}')
 
             if show_circle:
                 x0 = (self.size[0] / 2 - Properties.radius * self.dpm, self.size[1] / 2 - Properties.radius * self.dpm)
@@ -338,7 +342,7 @@ def plot(area):
             if len(features) > 0:
                 ft = min(features, key=lambda ft: ft['d'])
                 feature = ft['feature']
-
+                
                 attributes = {}
                 if ft['d'] < 7**2:
                     selected = feature['id']

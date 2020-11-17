@@ -19,19 +19,16 @@ for area in ['suburb', 'sdu', 'harbor', 'park']:#Properties.areas:
 
     features = []
     for i, row in input_data.iterrows():
-        if i == 0:
-            header = row
-        else:
-            row_as_dict = row.to_dict()
-            del row_as_dict['lat']
-            del row_as_dict['lon']
-            features.append(Feature((row.lat,row.lon), srs='EPSG:4326', tag='Point', attributes=row_as_dict))
+        row_as_dict = row.to_dict()
+        del row_as_dict['lat']
+        del row_as_dict['lon']
+        features.append(Feature((row.lat,row.lon), srs='EPSG:4326', tag='Point', attributes=row_as_dict))
 
     features = Collection(servicename, 'Point', features, 'EPSG:4326')
 
     features.to_srs(Properties.default_srs)
 
-    features = features.filter(lambda feature: feature.dist(center) <= Properties.radius)
+    #features = features.filter(lambda feature: feature.dist(center) <= Properties.radius)
 
     
     rows = {}
