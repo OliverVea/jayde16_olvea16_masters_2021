@@ -51,7 +51,10 @@ class Properties:
         'Bench': {'origin': 'gnss', 'label': 'Bench (gt)', 'color': '#6e5942'},
         'Trash Can': {'origin': 'gnss', 'label': 'Trash Can (gt)', 'color': '#5c5b5b'},
         'Tree Stump': {'origin': 'gnss', 'label': 'Tree Stump (gt)', 'color': '#6e491b'},
-        'Chimney': {'origin': 'gnss', 'label': 'Chimney (gt)', 'color': '#291937'}
+        'Chimney': {'origin': 'gnss', 'label': 'Chimney (gt)', 'color': '#291937'},
+        'Rock': {'origin': 'gnss', 'label': 'Rock (gt)', 'color': '#636363'},
+        'Statue': {'origin': 'gnss', 'label': 'Statue (gt)', 'color': '#b3b3b3'},
+        'Misc': {'origin': 'gnss', 'label': 'Misc (gt)', 'color': '#72fcfa'}
         #'': {'origin': '', 'label': '', 'color': '#'},
     }
 

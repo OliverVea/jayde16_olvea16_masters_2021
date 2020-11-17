@@ -12,7 +12,7 @@ servicename = 'gnss'
 prints(f'Retrieving features from GNSS.', tag='Main')
 prints(f'In areas: {", ".join(Properties.areas.keys())}', tag='Main')
 
-for area in ['suburb', 'sdu']:#Properties.areas:
+for area in ['suburb', 'sdu', 'harbor', 'park']:#Properties.areas:
     center = Properties.areas[area].as_srs(srs='EPSG:25832')
 
     input_data = pd.read_csv(f'files/GNSS/GNSS_{area}.csv')
