@@ -66,7 +66,7 @@ class Plot_Image:
 
                 if any([abs(feature.x()) > 110 or abs(feature.y()) > 110 for feature in features]):
                     printe(f'Features from source \'{source}\' with label \'{Properties.feature_properties[typename]["label"]}\' not loaded correctly. Omitting them.', tag='Warning')
-                    self.data[source][typename] = []
+                    self.data[source][typename] = [feature for feature in features if (abs(feature.x()) <= 110 or abs(feature.y()) <= 110)]
 
                 else:
                     self.data[source][typename] = features
@@ -85,7 +85,7 @@ class Plot_Image:
                         for f in self.data[source][typename]:
                             x, y = f['plot_x'], f['plot_y']
 
-                            features.append({'start': (x, y), 'annotation': (x + 3, y + 3), 'feature': f, 'color': c})
+                            features.append({'start': (x, y), 'annotation': (x + 3, y + 3), 'feature': f, 'color': c, 'type': typename})
 
             n, m = 20, 0.5
 
@@ -256,7 +256,6 @@ def plot(area):
     title = f'{pretty_area}'
     export = sg.Button('Export')
     back = sg.Button('Back')
-    draw = sg.Button('Draw')
 
     data = get_area_data(area)
     sources = [source for source in data]
@@ -298,7 +297,6 @@ def plot(area):
 
     selected = None
 
-    drawn_types = []
     while True:
         event, values = window.read()
 
@@ -387,18 +385,12 @@ def plot_radar(area):
     ax.plot(angles, values, linewidth=1, linestyle='solid', label='Interval linearisation')
     ax.fill(angles, values, 'b', alpha=0.1)
 
-
-    #axs[1,1].plot(t, 2 * np.sin(2 * np.pi * t))
-
-    inputs = {}
-
     pretty_area = list(Properties.areas).index(area)
     pretty_area = Properties.areas_pretty[pretty_area]
 
     title = f'{pretty_area}'
     export = sg.Button('Export')
     back = sg.Button('Back')
-    draw = sg.Button('Draw')
 
     col = [[export, back]]
 
