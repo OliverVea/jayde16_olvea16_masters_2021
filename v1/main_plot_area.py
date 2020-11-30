@@ -13,22 +13,42 @@ import os
 
 class Plot_Image:
     class Layer:
-        def __init__(self, features: list, typename: str, size: tuple, cache: bool = True, r: float = 3):
+        def __init__(self, features: list, typename: str, size: tuple, cache: bool = True, r: float = 3, fill = None, outline = None, text_color = None):
             self.cache = cache
             self.typename = typename
 
             self.layer = Image.new('RGBA', size)
             draw = ImageDraw.Draw(self.layer)
 
-            fill = Properties.feature_properties[typename]['color']
-            outline = Color(fill) * 0.75
+            self.is_gnss = typename in [typename for typename in Properties.feature_properties if Properties.feature_properties[typename]['origin'] == 'gnss']
+
+            if fill == None: 
+                if self.is_gnss:
+                    fill = '#444444'
+                else:
+                    fill = Properties.feature_properties[typename]['color']
+
+            if outline == None:
+                outline = Color(fill) * 0.75
+
+            if text_color == None:
+                if self.is_gnss:
+                    text_color = '#000000'
+                else:
+                    text_color = '#FFFFFF'
+                
 
             for ft in features:
                 x, y = ft['plot_x'], ft['plot_y']
                 xy = [(x - r, y - r), (x + r, y + r)]
 
                 draw.ellipse(xy=xy, fill=fill, outline=outline)
-                draw.text(xy=[x + r, y + r], text=f'{ft["n"]}')
+
+                if self.is_gnss:
+                    draw.text(xy=[x + r, y + r], text=f'{ft["id"]}', fill=text_color)
+                    
+                else:
+                    draw.text(xy=[x + r, y + r], text=f'{ft["n"]}', fill=text_color)
 
             if not cache:
                 self.layer.save(f'files/gui/layers/{typename}.png')
@@ -284,4 +304,4 @@ def plot(area):
 
 if __name__ == '__main__':
     sg.theme('DarkGrey2')
-    plot('downtown')
+    plot('suburb')

@@ -40,12 +40,12 @@ while True:
     area = pick_area()
 
     if area == None:
-        exit()
+        break
 
     action = pick_action()
 
     if action in (None, ''):
-        exit()
+        break
 
     event = actions[action](area)
 
