@@ -137,12 +137,12 @@ class Plot_Image:
 
             for ft in features: 
                 if selected == ft['feature']['id']:
-                    draw.text(xy=[ft['annotation'][0], ft['annotation'][1]], text=f'{ft["feature"]["n"]}', fill='red')
+                    draw.text(xy=[ft['annotation'][0], ft['annotation'][1]], text=f'{ft["feature"]["id"]}', fill='red')
                 else:
                     if Properties.feature_properties[ft['feature']['typename']]['origin'] == 'gnss':
-                        draw.text(xy=[ft['annotation'][0], ft['annotation'][1]], text=f'{ft["feature"]["n"]}', fill=ft['color'])
+                        draw.text(xy=[ft['annotation'][0], ft['annotation'][1]], text=f'{ft["feature"]["id"]}', fill=ft['color'])
                     else:
-                        draw.text(xy=[ft['annotation'][0], ft['annotation'][1]], text=f'{ft["feature"]["n"]}')
+                        draw.text(xy=[ft['annotation'][0], ft['annotation'][1]], text=f'{ft["feature"]["id"]}')
 
             if show_circle:
                 x0 = (self.size[0] / 2 - Properties.radius * self.dpm, self.size[1] / 2 - Properties.radius * self.dpm)
