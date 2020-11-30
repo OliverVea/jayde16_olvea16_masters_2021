@@ -1,6 +1,8 @@
 from jaolma.properties import Properties
-from jaolma.utility.utility import transpose, Color
+from jaolma.utility.utility import transpose, Color, printe, prints
 from jaolma.gis.wfs import Feature
+from jaolma.gis.wmts import WMTS
+from jaolma.gui.properties_box import PropertiesBox
 
 from PIL import Image, ImageDraw
 
@@ -199,7 +201,7 @@ def plot(area):
 
     graph = sg.Graph(canvas_size=size, graph_bottom_left=(0,0), graph_top_right=size, key='Click', enable_events=True)
 
-    properties = PropertiesBox()
+    properties = PropertiesBox(width=300, height=1001, initial_text='Click a feature.')
 
     layout = [
         [checkboxes, graph, properties.get_properties()]
@@ -279,3 +281,7 @@ def plot(area):
     window.close()
 
     return event
+
+if __name__ == '__main__':
+    sg.theme('DarkGrey2')
+    plot('downtown')
