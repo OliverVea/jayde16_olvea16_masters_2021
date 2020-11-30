@@ -1,0 +1,5 @@
+
+---
+
+17:02:55;status;Main;Retrieving features from GNSS.
+17:02:55;status;Main;In areas: downtown, harbor, park, suburb, sdu

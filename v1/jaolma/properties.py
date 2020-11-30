@@ -24,6 +24,7 @@ class Properties:
         'TL965167': {'origin': 'kortopslag', 'label': 'Road Well (ki)', 'color': '#ff00ff'},
         'L418883_421469': {'origin': 'kortopslag', 'label': 'Park Tree (ki)', 'color': '#00851b'},
         'L167365_421559': {'origin': 'kortopslag', 'label': 'Park Point (ki)', 'color': '#6e452f'},
+
         'Bygning': {'origin': 'geodanmark', 'label': 'Building (gd)', 'color': '#ff0000'},
         'Broenddaeksel': {'origin': 'geodanmark', 'label': 'Manhole Cover (gd)', 'color': '#ac0fdb'},
         'Mast': {'origin': 'geodanmark', 'label': 'Light Fixture (gd)', 'color': '#e0de38'},
@@ -38,23 +39,42 @@ class Properties:
         'Skorsten': {'origin': 'geodanmark', 'label': 'Chimney (gd)', 'color': '#292927'},
         'Jernbane': {'origin': 'geodanmark', 'label': 'Railroad (gd)', 'color': '#75756a'},
         'Bassin': {'origin': 'geodanmark', 'label': 'Pool (gd)', 'color': '#00a2ff'},
+
         'water_node': {'origin': 'samaqua', 'label': 'Water Node (sa)', 'color': '#5b45a3'},
+
         'TL740798': {'origin': 'energifyn', 'label': 'Base Data (ef)', 'color': '#751e1a'},
         'TL740800': {'origin': 'energifyn', 'label': 'Fuse Box (ef)', 'color': '#5e4a49'},
+
         'heating_cover': {'origin': 'fjernvarme', 'label': 'Heating Cover (fv)', 'color': '#47657d'},
-        'Tree': {'origin': 'gnss', 'label': 'Tree (gt)', 'color': '#000000'},
-        'Light Fixture': {'origin': 'gnss', 'label': 'Light Fixture (gt)', 'color': '#000000'},
-        'Downspout Grille': {'origin': 'gnss', 'label': 'Downspout Grille (gt)', 'color': '#000000'},
-        'Manhole Cover': {'origin': 'gnss', 'label': 'Manhole Cover (gt)', 'color': '#000000'},
-        'Fuse Box': {'origin': 'gnss', 'label': 'Fuse Box (gt)', 'color': '#000000'},
-        'Building Corner': {'origin': 'gnss', 'label': 'Building Corner (gt)', 'color': '#000000'},
-        'Bench': {'origin': 'gnss', 'label': 'Bench (gt)', 'color': '#000000'},
-        'Trash Can': {'origin': 'gnss', 'label': 'Trash Can (gt)', 'color': '#000000'},
-        'Tree Stump': {'origin': 'gnss', 'label': 'Tree Stump (gt)', 'color': '#000000'},
-        'Chimney': {'origin': 'gnss', 'label': 'Chimney (gt)', 'color': '#000000'},
-        'Rock': {'origin': 'gnss', 'label': 'Rock (gt)', 'color': '#000000'},
-        'Statue': {'origin': 'gnss', 'label': 'Statue (gt)', 'color': '#000000'},
-        'Misc': {'origin': 'gnss', 'label': 'Misc (gt)', 'color': '#000000'}
+
+        'Tree': {'origin': 'gnss', 'label': 'Tree (gt)', 'color': '#118a0c'},
+        'Light Fixture': {'origin': 'gnss', 'label': 'Light Fixture (gt)', 'color': '#f2f55f'},
+        'Downspout Grille': {'origin': 'gnss', 'label': 'Downspout Grille (gt)', 'color': '#711f80'},
+        'Manhole Cover': {'origin': 'gnss', 'label': 'Manhole Cover (gt)', 'color': '#080d8a'},
+        'Fuse Box': {'origin': 'gnss', 'label': 'Fuse Box (gt)', 'color': '#5c4e1c'},
+        'Building Corner': {'origin': 'gnss', 'label': 'Building Corner (gt)', 'color': '#cc3618'},
+        'Bench': {'origin': 'gnss', 'label': 'Bench (gt)', 'color': '#6e5942'},
+        'Trash Can': {'origin': 'gnss', 'label': 'Trash Can (gt)', 'color': '#5c5b5b'},
+        'Tree Stump': {'origin': 'gnss', 'label': 'Tree Stump (gt)', 'color': '#6e491b'},
+        'Chimney': {'origin': 'gnss', 'label': 'Chimney (gt)', 'color': '#291937'},
+        'Rock': {'origin': 'gnss', 'label': 'Rock (gt)', 'color': '#636363'},
+        'Statue': {'origin': 'gnss', 'label': 'Statue (gt)', 'color': '#b3b3b3'},
+        'Misc': {'origin': 'gnss', 'label': 'Misc (gt)', 'color': '#72fcfa'},
+
+        'new_Tree': {'origin': 'gnss', 'label': 'new_Tree (gt)', 'color': '#000000'},
+        'new_Light Fixture': {'origin': 'gnss', 'label': 'new_Light Fixture (gt)', 'color': '#000000'},
+        'new_Downspout Grille': {'origin': 'gnss', 'label': 'new_Downspout Grille (gt)', 'color': '#000000'},
+        'new_Manhole Cover': {'origin': 'gnss', 'label': 'new_Manhole Cover (gt)', 'color': '#000000'},
+        'new_Fuse Box': {'origin': 'gnss', 'label': 'new_Fuse Box (gt)', 'color': '#000000'},
+        'new_Building Corner': {'origin': 'gnss', 'label': 'new_Building Corner (gt)', 'color': '#000000'},
+        'new_Bench': {'origin': 'gnss', 'label': 'new_Bench (gt)', 'color': '#000000'},
+        'new_Trash Can': {'origin': 'gnss', 'label': 'new_Trash Can (gt)', 'color': '#000000'},
+        'new_Tree Stump': {'origin': 'gnss', 'label': 'new_Tree Stump (gt)', 'color': '#000000'},
+        'new_Chimney': {'origin': 'gnss', 'label': 'new_Chimney (gt)', 'color': '#000000'},
+        'new_Rock': {'origin': 'gnss', 'label': 'new_Rock (gt)', 'color': '#000000'},
+        'new_Statue': {'origin': 'gnss', 'label': 'new_Statue (gt)', 'color': '#000000'},
+        'new_Unknown': {'origin': 'gnss', 'label': 'new_Unknown (gt)', 'color': '#000000'},
+        'new_Misc': {'origin': 'gnss', 'label': 'new_Misc (gt)', 'color': '#000000'}
         #'': {'origin': '', 'label': '', 'color': '#'},
     }
 
