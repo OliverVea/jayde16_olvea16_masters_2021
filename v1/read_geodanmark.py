@@ -29,7 +29,7 @@ for area, center in zip(Properties.areas.keys(), Properties.areas.values()):
             typename=typename, 
             bbox=bbox)
 
-        features = features.filter(lambda feature: feature.dist(center) <= Properties.radius)
+        features = features.filter(lambda feature: feature.dist(center) <= Properties.outer_radius)
         
         rows = {}    
         for feature in features:

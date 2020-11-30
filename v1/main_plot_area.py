@@ -11,7 +11,7 @@ import pandas as pd
 
 import os
 
-class Plot_Image:
+class PlotImage:
     class Layer:
         def __init__(self, features: list, typename: str, size: tuple, cache: bool = True, r: float = 3, fill = None, outline = None, text_color = None):
             self.cache = cache
@@ -48,7 +48,7 @@ class Plot_Image:
                     draw.text(xy=[x + r, y + r], text=f'{ft["id"]}', fill=text_color)
                     
                 else:
-                    draw.text(xy=[x + r, y + r], text=f'{ft["n"]}', fill=text_color)
+                    draw.text(xy=[x + r, y + r], text=f'{ft["id"]}', fill=text_color)
 
             if not cache:
                 self.layer.save(f'files/gui/layers/{typename}.png')
@@ -72,7 +72,8 @@ class Plot_Image:
             layer='orto_foraar_wmts',
             tile_matrix_set='KortforsyningTilingDK')
 
-        self.size = size
+        self.size = (size[0] * self.wmts.dpm(tile_matrix) + 1, size[1] * self.wmts.dpm(tile_matrix) + 1)
+        self.size = tuple(int(s) for s in self.size)
         self.area = area
 
         self.c = Properties.areas[area]
@@ -83,7 +84,7 @@ class Plot_Image:
         self.backgound_path = background_path
         self.image_path = image_path
 
-        self.background = self.wmts.get_map(style='default', tile_matrix=tile_matrix, center=self.c, screen_width=size[0], screen_height=size[1])
+        self.background = self.wmts.get_map(style='default', tile_matrix=tile_matrix, center=self.c, screen_width=self.size[0], screen_height=self.size[1])
         self.background.save(self.backgound_path)
 
         self.dpm = self.wmts.dpm(self.tile_matrix)
@@ -106,8 +107,8 @@ class Plot_Image:
                 features = [feature - self.c for feature in features]
 
                 for feature in features:
-                    feature['plot_x'] = feature.x() * self.dpm + size[0] / 2
-                    feature['plot_y'] = -feature.y() * self.dpm + size[1] / 2
+                    feature['plot_x'] = feature.x() * self.dpm + self.size[0] / 2
+                    feature['plot_y'] = -feature.y() * self.dpm + self.size[1] / 2
                     pass
 
                 if any([abs(feature.x()) > 110 or abs(feature.y()) > 110 for feature in features]):
@@ -140,7 +141,7 @@ class Plot_Image:
                                 xy = [(x - r, y - r), (x + r, y + r)]
                                 
                                 draw.ellipse(xy=xy, fill=fill, outline='red')
-                                draw.text(xy=[x + r, y + r], text=f'{ft["n"]}', fill='red')
+                                draw.text(xy=[x + r, y + r], text=f'{ft["id"]}', fill='red')
 
             if show_circle:
                 x0 = (self.size[0] / 2 - Properties.radius * self.dpm, self.size[1] / 2 - Properties.radius * self.dpm)
@@ -215,9 +216,11 @@ def plot(area):
 
     checkboxes = sg.Column(col, vertical_alignment='top')
 
-    size = (1001,1001)
+    size = (Properties.outer_radius*2,Properties.outer_radius*2)
 
-    image_object = Plot_Image(size=size, area=area, data=data)
+    image_object = PlotImage(size=size, area=area, data=data)
+
+    size = image_object.size
 
     graph = sg.Graph(canvas_size=size, graph_bottom_left=(0,0), graph_top_right=size, key='Click', enable_events=True)
 
