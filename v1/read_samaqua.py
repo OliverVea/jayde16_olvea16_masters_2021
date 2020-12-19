@@ -4,9 +4,15 @@ from jaolma.utility.utility import prints
 from jaolma.utility.csv import CSV
 
 import pandas as pd
+import os
 
 servicename = 'samaqua'
 typename = 'water_node'
+
+files = os.listdir('files/areas/')
+for file in files:
+    if servicename in file:
+        os.remove('files/areas/' + file)
 
 node_type_code = CSV('files/samaqua/node_type_code.csv', delimiter=';')
 d_knudekode_beskrivelse = {row['KnudeKode']: row['Beskrivelse'] for row in node_type_code.load()}
@@ -33,7 +39,7 @@ for area in Properties.areas:
         geometry = (float(row['X_Node']), float(row['Y_Node']))
         feature = Feature(geometry, Properties.default_srs, 'Point', {key: val for key, val in zip(row.keys(), row.values()) if not key in ['X_Node', 'Y_Node'] and val != 'NULL'})
         
-        if feature.dist(center) > Properties.radius:
+        if feature.dist(center) > Properties.outer_radius:
             continue
 
         data = {}

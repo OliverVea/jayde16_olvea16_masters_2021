@@ -5,9 +5,15 @@ from jaolma.utility.utility import prints
 import pandas as pd
 import json
 from datetime import datetime
+import os
 
 servicename = 'fjernvarme'
 typename = 'heating_cover'
+
+files = os.listdir('files/areas/')
+for file in files:
+    if servicename in file:
+        os.remove('files/areas/' + file)
 
 prints(f'Retrieving features from fjernvarme.', tag='Main')
 prints(f'In areas: {", ".join(Properties.areas.keys())}', tag='Main')
@@ -22,7 +28,7 @@ for area in Properties.areas:
 
     features = Collection(servicename, 'Point', features, Properties.default_srs)
 
-    features = features.filter(lambda feature: feature.dist(center) <= Properties.radius)
+    features = features.filter(lambda feature: feature.dist(center) <= Properties.outer_radius)
 
     rows = {}
     for feature in features:

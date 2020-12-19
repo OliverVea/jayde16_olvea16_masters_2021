@@ -23,19 +23,13 @@ class PlotImage:
             self.is_gnss = typename in [typename for typename in Properties.feature_properties if Properties.feature_properties[typename]['origin'] == 'gnss']
 
             if fill == None: 
-                if self.is_gnss:
-                    fill = '#444444'
-                else:
-                    fill = Properties.feature_properties[typename]['color']
+                fill = Properties.feature_properties[typename]['color']
 
             if outline == None:
                 outline = Color(fill) * 0.75
 
             if text_color == None:
-                if self.is_gnss:
-                    text_color = '#000000'
-                else:
-                    text_color = '#FFFFFF'
+                text_color = '#FFFFFF'
                 
 
             for ft in features:
@@ -63,7 +57,7 @@ class PlotImage:
             if not self.cache:
                 self.layer.close()
 
-    def __init__(self, size: tuple, area: str, data: dict, tile_matrix: int = 13, background_path: str = 'files/gui/background.png', image_path: str = 'files/gui/image.png', r: float = 3, cache: bool = True):
+    def __init__(self, size: tuple, area: str, data: dict, tile_matrix: int = 14, background_path: str = 'files/gui/background.png', image_path: str = 'files/gui/image.png', r: float = 3, cache: bool = True):
         self.wmts = WMTS(
             use_login=True,
             url='https://services.datafordeler.dk/GeoDanmarkOrto/orto_foraar_wmts/1.0.0/WMTS?',
@@ -224,7 +218,7 @@ def plot(area):
 
     graph = sg.Graph(canvas_size=size, graph_bottom_left=(0,0), graph_top_right=size, key='Click', enable_events=True)
 
-    properties = PropertiesBox(width=300, height=1001, initial_text='Click a feature.')
+    properties = PropertiesBox(width=300, height=size[1], initial_text='Click a feature.')
 
     layout = [
         [checkboxes, graph, properties.get_properties()]

@@ -3,11 +3,17 @@ from jaolma.properties import Properties
 from jaolma.utility.utility import prints, set_verbose
 
 import pandas as pd
+import os
 
 set_verbose(tag_blacklist=['WFS'])
 
 servicename = 'geodanmark'
 service = Properties.services['wfs'][servicename]
+
+files = os.listdir('files/areas/')
+for file in files:
+    if servicename in file:
+        os.remove('files/areas/' + file)
 
 wfs = WFS(service['url'], version=service['version'], username=service['username'], password=service['password'])
 

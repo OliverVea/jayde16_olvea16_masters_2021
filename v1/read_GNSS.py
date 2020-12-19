@@ -6,8 +6,14 @@ import pandas as pd
 from datetime import datetime
 
 import json
+import os
 
 servicename = 'gnss'
+
+files = os.listdir('files/areas/')
+for file in files:
+    if servicename in file:
+        os.remove('files/areas/' + file)
 
 prints(f'Retrieving features from GNSS.', tag='Main')
 prints(f'In areas: {", ".join(Properties.areas.keys())}', tag='Main')
@@ -15,21 +21,20 @@ prints(f'In areas: {", ".join(Properties.areas.keys())}', tag='Main')
 for area in ['suburb', 'sdu', 'harbor', 'park']:#Properties.areas:
     center = Properties.areas[area].as_srs(srs='EPSG:25832')
 
-    input_data = pd.read_csv(f'files/GNSS/GNSS_{area}.csv')
+    input_data = pd.read_csv(f'files/GNSS/GNSS_{area}.csv', dtype=str)
 
     features = []
     for i, row in input_data.iterrows():
         row_as_dict = row.to_dict()
         del row_as_dict['lat']
         del row_as_dict['lon']
-        features.append(Feature((row.lat,row.lon), srs='EPSG:4326', tag='Point', attributes=row_as_dict))
+        features.append(Feature((float(row.lat),float(row.lon)), srs='EPSG:4326', tag='Point', attributes=row_as_dict))
 
     features = Collection(servicename, 'Point', features, 'EPSG:4326')
 
     features.to_srs(Properties.default_srs)
 
-    #features = features.filter(lambda feature: feature.dist(center) <= Properties.radius)
-
+    features = features.filter(lambda feature: feature.dist(center) <= Properties.radius)
     
     rows = {}
     for feature in features:
