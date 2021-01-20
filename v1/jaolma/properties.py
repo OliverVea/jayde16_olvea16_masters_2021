@@ -74,7 +74,19 @@ class Properties:
         'new_Rock': {'origin': 'gnss', 'label': 'new_Rock (gt)', 'color': '#000000'},
         'new_Statue': {'origin': 'gnss', 'label': 'new_Statue (gt)', 'color': '#000000'},
         'new_Unknown': {'origin': 'gnss', 'label': 'new_Unknown (gt)', 'color': '#000000'},
-        'new_Misc': {'origin': 'gnss', 'label': 'new_Misc (gt)', 'color': '#000000'}
+        'new_Misc': {'origin': 'gnss', 'label': 'new_Misc (gt)', 'color': '#000000'},
+
+        'Tree_ts': {'origin': 'totalstation', 'label': 'Tree (ts)', 'color': '#118a2c'},
+        'Light Fixture_ts': {'origin': 'totalstation', 'label': 'Light Fixture (ts)', 'color': '#f2f53f'},
+        'Downspout Grille_ts': {'origin': 'totalstation', 'label': 'Downspout Grille (ts)', 'color': '#711f50'},
+        'Manhole Cover_ts': {'origin': 'totalstation', 'label': 'Manhole Cover (ts)', 'color': '#050d8a'},
+        'Building Corner_ts': {'origin': 'totalstation', 'label': 'Building Corner (ts)', 'color': '#cc3518'},
+        'Bench_ts': {'origin': 'totalstation', 'label': 'Bench (ts)', 'color': '#6e5945'},
+        'Trash Can_ts': {'origin': 'totalstation', 'label': 'Trash Can (ts)', 'color': '#5c5b5e'},
+        'Statue_ts': {'origin': 'totalstation', 'label': 'Statue (ts)', 'color': '#b3b4b4'},
+        'Greenery_ts': {'origin': 'totalstation', 'label': 'Greenery (ts)', 'color': '#128b0c'},
+        'Misc_ts': {'origin': 'totalstation', 'label': 'Misc (ts)', 'color': '#74fcfb'},
+        'unknown': {'origin': 'totalstation', 'label': 'unknown', 'color': '#000000'},
         #'': {'origin': '', 'label': '', 'color': '#'},
     }
 
