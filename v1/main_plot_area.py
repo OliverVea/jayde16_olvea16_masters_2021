@@ -57,7 +57,7 @@ class PlotImage:
             if not self.cache:
                 self.layer.close()
 
-    def __init__(self, size: tuple, area: str, data: dict, tile_matrix: int = 14, background_path: str = 'files/gui/background.png', image_path: str = 'files/gui/image.png', r: float = 3, cache: bool = True):
+    def __init__(self, size: tuple, area: str, data: dict, tile_matrix: int = 13, background_path: str = 'files/gui/background.png', image_path: str = 'files/gui/image.png', r: float = 3, cache: bool = True):
         self.wmts = WMTS(
             use_login=True,
             url='https://services.datafordeler.dk/GeoDanmarkOrto/orto_foraar_wmts/1.0.0/WMTS?',
