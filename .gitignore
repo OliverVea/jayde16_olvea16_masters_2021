@@ -147,4 +147,5 @@ v0/.vscode/settings.json
 !v1/files/*/*
 !v1/files/*/*/*
 *.png
-v1/files/gui/*.png
+v1/files/gui/background.png
+v1/files/gui/image.png
