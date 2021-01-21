@@ -18,7 +18,7 @@ for file in files:
 prints(f'Retrieving features from ground truth.', tag='Main')
 prints(f'In areas: {", ".join(Properties.areas.keys())}', tag='Main')
 
-for area in ['suburb', 'park']:#'sdu', 'harbor', 'park']:#Properties.areas:
+for area in ['suburb', 'downtown', 'sdu', 'park', 'harbor']:
     center = Properties.areas[area].as_srs(srs='EPSG:25832')
 
     input_data = pd.read_csv(f'files/ground_truth/epsg_25832/gt_{area}.csv', dtype=str)

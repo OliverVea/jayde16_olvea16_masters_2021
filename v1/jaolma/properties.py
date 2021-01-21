@@ -60,6 +60,7 @@ class Properties:
         'Rock': {'origin': 'gt', 'label': 'Rock (gt)', 'color': '#636363'},
         'Statue': {'origin': 'gt', 'label': 'Statue (gt)', 'color': '#b3b3b3'},
         'Misc': {'origin': 'gt', 'label': 'Misc (gt)', 'color': '#72fcfa'},
+        'Greenery': {'origin': 'gt', 'label': 'Greenery (gt)', 'color': '#118b0b'},
 
         'new_Tree': {'origin': 'gnss', 'label': 'new_Tree (gt)', 'color': '#000000'},
         'new_Light Fixture': {'origin': 'gnss', 'label': 'new_Light Fixture (gt)', 'color': '#000000'},
@@ -87,7 +88,7 @@ class Properties:
         'Greenery_ts': {'origin': 'totalstation', 'label': 'Greenery (ts)', 'color': '#128b0c'},
         'Fire Hydrant_ts': {'origin': 'totalstation', 'label': 'Fire Hydrant (ts)', 'color': '#cf4327'},
         'Misc_ts': {'origin': 'totalstation', 'label': 'Misc (ts)', 'color': '#74fcfb'},
-        'unknown': {'origin': 'totalstation', 'label': 'unknown', 'color': '#000000'},
+        'unknown': {'origin': 'totalstation', 'label': 'unknown', 'color': '#000000'}
         #'': {'origin': '', 'label': '', 'color': '#'},
     }
 
