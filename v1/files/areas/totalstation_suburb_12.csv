@@ -6,7 +6,7 @@
 4,67,0.0164,12/12/2020,MEAS,unknown,suburb,,"Point;[587818.2239999999],[6137500.471]",unknown,106
 5,70,-0.1161,12/12/2020,MEAS,Light Fixture_ts,suburb,,"Point;[587840.3962],[6137507.482999999]",Light Fixture_ts,107
 6,71,-0.3528,12/12/2020,MEAS,Downspout Grille_ts,suburb,,"Point;[587837.921],[6137505.851]",Downspout Grille_ts,108
-7,72,0.1136,12/12/2020,MEAS,Fire_Hydrant_ts,suburb,,"Point;[587826.1306],[6137528.039]",Fire_Hydrant_ts,109
+7,72,0.1136,12/12/2020,MEAS,Fire Hydrant_ts,suburb,,"Point;[587826.1306],[6137528.039]",Fire Hydrant_ts,109
 8,73,0.2939,12/12/2020,MEAS,Building Corner_ts,suburb,,"Point;[587855.8143],[6137538.864]",Building Corner_ts,110
 9,74,0.2387,12/12/2020,MEAS,Building Corner_ts,suburb,,"Point;[587863.6983],[6137537.863]",Building Corner_ts,111
 10,75,0.3882,12/12/2020,MEAS,Building Corner_ts,suburb,,"Point;[587849.3656],[6137539.671]",Building Corner_ts,112
