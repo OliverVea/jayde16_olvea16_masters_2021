@@ -85,6 +85,7 @@ class Properties:
         'Trash Can_ts': {'origin': 'totalstation', 'label': 'Trash Can (ts)', 'color': '#5c5b5e'},
         'Statue_ts': {'origin': 'totalstation', 'label': 'Statue (ts)', 'color': '#b3b4b4'},
         'Greenery_ts': {'origin': 'totalstation', 'label': 'Greenery (ts)', 'color': '#128b0c'},
+        'Fire Hydrant_ts': {'origin': 'totalstation', 'label': 'Fire Hydrant (ts)', 'color': '#cf4327'},
         'Misc_ts': {'origin': 'totalstation', 'label': 'Misc (ts)', 'color': '#74fcfb'},
         'unknown': {'origin': 'totalstation', 'label': 'unknown', 'color': '#000000'},
         #'': {'origin': '', 'label': '', 'color': '#'},
