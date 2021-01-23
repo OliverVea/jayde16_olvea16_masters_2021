@@ -3,6 +3,7 @@ from jaolma.utility.utility import transpose, Color, printe, prints
 from jaolma.gis.wfs import Feature
 from jaolma.gis.wmts import WMTS
 from jaolma.gui.properties_box import PropertiesBox
+from jaolma.gui import simple_dropdown
 
 from PIL import Image, ImageDraw
 
@@ -180,6 +181,8 @@ def get_area_data(area: str):
     return result
 
 def plot(area):
+    tile_matrix = simple_dropdown('Select tile_matrix', [14, 13, 12, 11, 10])
+
     inputs = {}
 
     pretty_area = list(Properties.areas).index(area)
@@ -212,7 +215,7 @@ def plot(area):
 
     size = (Properties.outer_radius*2,Properties.outer_radius*2)
 
-    image_object = PlotImage(size=size, area=area, data=data)
+    image_object = PlotImage(size=size, area=area, data=data, tile_matrix=tile_matrix)
 
     size = image_object.size
 
