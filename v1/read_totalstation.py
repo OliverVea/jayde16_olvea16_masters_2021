@@ -13,7 +13,7 @@ prints(f'Retrieving features from Totalstation.', tag='Main')
 prints(f'In areas: {", ".join(Properties.areas.keys())}', tag='Main')
 
 
-input_data = pd.read_csv(f'files/Totalstation/Totalstation_all.csv')
+input_data = pd.read_csv(f'files/totalstation/totalstation_all.csv')
 
 
 for area in ['park', 'suburb', 'downtown']:#Properties.areas:
