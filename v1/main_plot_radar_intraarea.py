@@ -1,11 +1,11 @@
 from numpy.core.numeric import array_equal
 from jaolma.properties import Properties
 from jaolma.utility.read_csv import CSV
-from jaolma.utility.utility import uniform_colors, linspace
+from jaolma.utility.utility import uniform_colors#, linspace
 
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib import use
-from math import pi
+from math import pi, ceil
 import matplotlib.pyplot as plt
 
 import pandas as pd
@@ -74,25 +74,44 @@ def _plot_precision(precision_sources, area):
     #Precision_sources has to contain all features for all sources
     if len(precision_sources) != 0:
         N = len(precision_sources[0])
-    angles = [n / float(N) * 2 * pi for n in range(N)]
-    #angles = [0,45,90,135,180, 225, 270]    
-    locs, labels = plt.xticks(angles[:-1], '')
 
-    #angles = [y/180*np.pi for x in [np.arange(x, x+45,0.1) for x in angles[:-1]] for y in x]
+    angles = [n / float(N) * 2 * pi for n in range(N)]   
+
+    #Vi skal enten bruge det her
+    locs, labels = plt.xticks(angles, precision_sources[0].keys())
     
-    angles = [y for x in [np.arange(x, x+45,0.1) for x in angles[:-1]] for y in x]
+    #Eller det her...
+    for label, angle, text in zip(labels, angles, precision_sources[0].keys()):
+            x, y = label.get_position()
+            temptxt = plt.text(x,y, text, transform=label.get_transform(), ha=label.get_ha(), 
+            va=label.get_va(), rotation=angle*180/pi-90, size=8, color='black')
+
+
+    curved_angles = []
+    curved_values = []
+
+    for an in angles:
+        curved_angles.extend(np.arange(an, an + 2*np.pi/N, 0.01))
+
     angles += angles[:1]
-
-    
-    
-
+    curved_angles += angles[:1]
+ 
     for precision_source in precision_sources:
         values = list(precision_source.values())
-        values = [y for x in [np.linspace(x, values[i+1], 451)[:-1] for i, x in enumerate(values[:-1])] for y in x]
         values += values[:1]
-        ax.plot(angles, values, linewidth=1, linestyle='solid', label='Interval linearisation')
-        ax.fill(angles, values, 'b', alpha=0.1)
-    
+
+        #Add numbers to plots
+        for idx, an in enumerate(angles[:-1]):
+            plt.text(an, values[idx], str(values[idx]), color="black", size=8)
+
+        #Create curved value intervals
+        for i, val in enumerate(values[:-1]):
+            curved_values.extend(np.linspace(val, values[i+1], ceil(2*np.pi/N/0.01+1))[:-1])
+        curved_values += values[:1]
+
+        ax.plot(curved_angles, curved_values, linewidth=1, linestyle='solid', label='Interval linearisation')
+        ax.fill(curved_angles, curved_values, 'b', alpha=0.1)
+        
     return fig
     
 
