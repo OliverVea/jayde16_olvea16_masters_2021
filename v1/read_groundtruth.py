@@ -8,7 +8,7 @@ from datetime import datetime
 import json
 import os
 
-servicename = 'gt'
+servicename = 'groundtruth'
 
 files = os.listdir('files/areas/')
 for file in files:
@@ -21,7 +21,7 @@ prints(f'In areas: {", ".join(Properties.areas.keys())}', tag='Main')
 for area in ['suburb', 'downtown', 'sdu', 'park', 'harbor']:
     center = Properties.areas[area].as_srs(srs='EPSG:25832')
 
-    input_data = pd.read_csv(f'files/ground_truth/epsg_25832/gt_{area}.csv', dtype=str)
+    input_data = pd.read_csv(f'files/ground_truth/groundtruth_{area}.csv', dtype=str)
 
     features = []
     for i, row in input_data.iterrows():
