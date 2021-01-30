@@ -45,7 +45,7 @@ class Axis:
 #   'axis_both': scales axes to the min and max values of that one axis.
 #   'set': uses the axis_max and axis_min values (or lists) to set max and min.
 
-def spider_plot(title: str, labels: list, silhouettes: dict, axis_min: float = None, axis_max: float = None, axis_value_decimals: int = 3, axis_value_labels: bool = True, circle_n: int = None, circle_label: bool = True, circle_label_decimals: int = None, circle_label_size: int = 8, scale_type: str = 'total_max', label_origin: bool = True, silhouette_line_color: str = None, silhouette_line_style: str = 'solid', silhouette_line_size: float = 1, silhouette_fill_color: str = None, silhouette_fill_alpha: float = 0.1):
+def spider_plot(title: str, labels: list, silhouettes: dict, axis_min: float = None, axis_max: float = None, axis_value_decimals: int = 3, axis_value_labels: bool = True, circle_n: int = None, circle_label: bool = True, circle_label_decimals: int = None, circle_label_size: int = 8, scale_type: str = 'total_max', label_origin: bool = True, silhouette_line_color: str = None, silhouette_line_style: str = 'solid', silhouette_line_size: float = 1, silhouette_fill_color: str = None, silhouette_fill_alpha: float = 0.1, silhouette_value_labels: list = None):
     fig = plt.figure(figsize=(10,10), dpi=100)
     ax = plt.axes(projection='polar')
     ax.set_ylim(0, 1)
@@ -181,8 +181,6 @@ def spider_plot(title: str, labels: list, silhouettes: dict, axis_min: float = N
 
     angles += angles[:1]
     curved_angles += angles[:1]
-
-    # TODO: Legend code
  
     for i in range(n_silhouettes):
         values = [ax.norm[i] for ax in axes]
@@ -191,15 +189,20 @@ def spider_plot(title: str, labels: list, silhouettes: dict, axis_min: float = N
         labels = [str(ax.values[i]) for ax in axes]
         labels += labels[:1]
 
-        if axis_value_labels:
-            for idx, an in enumerate(angles[:-1]):
-                plt.text(an, values[idx], labels[idx], color="black", size=8)
-            
+        if axis_value_labels == True:
+            for j in range(n_values):
+                plt.text(angles[j], values[j], labels[j], color="black", size=8)
+        
+        elif axis_value_labels != False:
+            for j in range(n_values):
+                label = axis_value_labels[i][j]
+                if label != None:
+                    plt.text(angles[j], values[j], label, color="black", size=8)
+   
         curved_values = []
         for a, b in zip(values[:-1], values[1:]):
             curved_values.extend(np.linspace(a, b, ceil(2*np.pi/n_values/0.01+1))[:-1])
         curved_values += values[:1]
-
 
         if silhouette_line_color == None:
             line_color = None
