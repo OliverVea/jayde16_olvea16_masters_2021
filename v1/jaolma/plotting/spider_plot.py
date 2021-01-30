@@ -1,220 +1,198 @@
 import matplotlib.pyplot as plt
-import uuid
-from math import pi
-from jaolma.utility.utility import transpose, linspace
 
-class SpiderPlot:
-    class Shape:
-        def __init__(self, line=None, fill=None, legline=None):
-            self.line = line
-            self.fill = fill
-            self.legline = legline
-            self.set_state('transparent')
+import numpy as np
 
-        def set_line(self, line):
-            self.line = line
+from math import pi, ceil
 
-        def set_fill(self, fill):
-            self.fill = fill
+import PySimpleGUI as sg
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
-        def set_legline(self, legline, pick_radius):
-            self.legline = legline
-            self.legline.set_picker(True)
-            self.legline.set_pickradius(pick_radius)
-        
-        def set_state(self, state: str = None):
-            if None not in [self.line, self.fill, self.legline]:
-                if state == 'visible':
-                    self.line.set_alpha(1)
-                    self.fill.set_alpha(0.8)
-                    self.legline.set_alpha(1)
-                elif state == 'transparent':
-                    self.line.set_alpha(1)
-                    self.fill.set_alpha(0.1)
-                    self.legline.set_alpha(0.75)
-                elif state == 'invisible':
-                    self.line.set_alpha(0)
-                    self.fill.set_alpha(0)
-                    self.legline.set_alpha(0.1)
+from jaolma.utility.utility import prints
 
-            if state != None:
-                if state in ['visible', 'transparent', 'invisible']:
-                    self.state = state
-                else:
-                    print(f'{state} is not a valid state')
-
-    def __init__(self, title: str, figname: str = None, autodraw: bool = True, scale_plot: bool = False, figsize: tuple = None):
-        self.N = 0
-        self.figsize = figsize
-        self.category_labels = []
-        self.data = []
-        self.color = []
-        self.autodraw = autodraw
-        self.feature_types = []
-        self.figlines = []
-        self.line_dict = {}
-        self.shapes = []
-        self.tick_values = {}
-        self.tick_labels = {}
-        self.scale_plot = scale_plot
-
-        self.id = figname
-        if figname == None:
-            self.id = uuid.uuid1()
-            
-        self.title = title
-
-        self.fig = plt.figure(self.id, figsize=figsize)
-
-        
-
-        #Code partly from https://matplotlib.org/3.1.1/gallery/event_handling/legend_picking.html
-        def _on_pick(event):
-            for shape in self.shapes:
-                if shape.legline == event.artist:
-                    if event.mouseevent.button in ['up', 'down']:
-                        if shape.state == 'invisible':
-                            shape.set_state('transparent')
-                        else:
-                            shape.set_state('invisible')
-                    elif shape.state == 'visible':
-                        shape.set_state('transparent')
-                    elif shape.state in ['transparent', 'invisible']:
-                        shape.set_state('visible')
-                else:
-                    if shape.state != 'invisible':
-                        shape.set_state('transparent')
-                     
-            plt.draw()
-
-        self.fig.canvas.mpl_connect('pick_event', _on_pick)
-        
-    def add_category(self, label, tick_values: list, tick_labels: list):
-        plt.figure(self.id)
-
-        self.category_labels.append(label)
-
-        self.tick_labels[label] = tick_labels
-        self.tick_values[label] = tick_values
-
-        self.N += 1
-
-        if self.autodraw:
-            self.draw()
-
-    def add_data(self, feature_type, data, color = None):
-        self.data.append(data)
-        self.color.append(color)
-
-        self.feature_types.append(feature_type)
-
-        if self.autodraw:
-            self.draw()
-
-    def draw(self, n_ticks: int = 5):
-        plt.figure(self.id)
-        plt.clf()
-
-        self.ax = plt.axes(polar=True)     
-        self.ax.set_rlabel_position(0)
-
-        plt.ylim(0, 1)
-        
-
-        size = textsize = None
-        if self.figsize != None:
-            size = self.figsize[0]*2
-            textsize = self.figsize[0]
-
-        plt.title(self.title, size=size, y=1.08)
-
-        self.angles = [n / float(self.N) * 2 * pi for n in range(self.N)]
-        self.angles += self.angles[:1]
-
-        locs, labels = plt.xticks(self.angles[:-1], '')
-        for label, angle, text in zip(labels, self.angles, self.category_labels):
-            x, y = label.get_position()
-            temptxt = plt.text(x,y, text, transform=label.get_transform(), ha=label.get_ha(), 
-            va=label.get_va(), rotation=angle*180/pi-90, size=self.figsize[0], color='black')
-        
-        #plt.xticks(self.angles[:-1], '', color='black', size=size)
-        
-        #for angle, category in zip(self.angles, self.category_labels):
-            #txt = plt.text(angle-0.03, 50, category, color="black", size=textsize, horizontalalignment='center', verticalalignment='center')
-
-        self.figlines.clear()
-        
-        self.shapes.clear()
-
-        data = [[e for e in row] for row in self.data]
-
-        for i, (label, angle, d) in enumerate(zip(self.tick_values, self.angles[:-1], transpose(data))):
-            if self.tick_values[label] == None:
-                if self.scale_plot:
-                    mi, ma = min(d), max(d)
-                else:
-                    mi, ma = 0, 1
-
-                if mi == ma: 
-                    mi = min(mi, 0)
-                    ma = max(ma, 1) 
-
-                tick_values = linspace(mi, ma, n_ticks)
+class Axis:
+    def __init__(self, values, label: str = '', axis_min: float = None, axis_max: float = None):
+        if axis_min == None:
+            if len(values) == 0:
+                self.min = 0
             else:
-                tick_values = self.tick_values[label].copy()
+                self.min = min(values)
+        else:
+            self.min = axis_min
 
-            if self.scale_plot:
-                scale = lambda val, mi, ma: (val - mi) / (ma - mi)
-
-                mi = min(d + tick_values)
-                ma = max(d + tick_values)
-                if mi == ma: 
-                    mi = min(mi,0)
-                    ma = max(ma,1)
-
-                tick_values = [scale(tick_value, mi, ma) for tick_value in tick_values]
-                    
-                for j, e in enumerate(d):
-                    data[j][i] = scale(e, mi, ma)
-
-            if self.tick_labels[label] == None:
-                tick_labels = [f'{tick_value * (ma - mi) + mi:.3g}' for tick_value in tick_values]
+        if axis_max == None:
+            if len(values) == 0:
+                self.max = 1
             else:
-                tick_labels = self.tick_labels[label].copy()
+                self.max = max(values)
+        else:
+            self.max = axis_max
 
-            plt.yticks(tick_values)
-            for tick_value, tick_label in zip(tick_values, tick_labels):
-                plt.text(angle, tick_value, tick_label, color="black", size=textsize)
+        self.label = label
+        self.scaled = (min != 0 or max != 1)
+        self.values = values
+        self.norm = [self.normalize(v) for v in values]
 
-            plt.tick_params(axis='y', labelleft=False)
+    def normalize(self, value):
+        return (value - self.min) / (self.max - self.min)
 
-        for i, (d, color) in enumerate(zip(data, self.color)):
-            current_shape = self.Shape()
-            lin = self.ax.plot(self.angles, d + d[:1], color=color, linewidth=1, linestyle='solid', label=self.feature_types[i])
-            current_shape.set_line(lin[0])
+# title
+# labels: list of labels for each axis. e.g. ['strength', 'dexterity', 'intelligence']
+# silhouettes: dictionary containing list of values with silhouette label as key. e.g. {'warrior': [15, 13, 9], 'thief': [9, 17, 13], 'mage': [3, 8, 18]}
+# scale_type: 
+#   'total_max': scales all axes to the total max value. 
+#   'total_both': scales both min and max to the total min and max values.
+#   'axis_max': scales axes to the max value of that axis. 
+#   'axis_both': scales axes to the min and max values of that one axis.
+#   'set': uses the axis_max and axis_min values (or lists) to set max and min.
 
-            if color == None:
-                color = lin[0].get_color()
+def _plot(title: str, labels: list, silhouettes: dict, axis_min: float = None, axis_max: float = None, axis_value_decimals: int = 3, axis_value_labels: bool = True, circle_n: int = None, circle_label: bool = True, circle_label_decimals: int = 1, scale_type: str = 'total_max'):
+    fig = plt.figure(figsize=(10,10), dpi=100)
+    ax = plt.axes(projection='polar')
+    ax.set_ylim(0, 1)
+    fig.suptitle(title)
 
-            fill = self.ax.fill(self.angles, d + d[:1], 'b', color=color, alpha=0.2)
-            current_shape.set_fill(fill[0])
-            self.shapes.append(current_shape)
+    if len(silhouettes) == 0:
+        raise Exception('Length of silhouettes should be one or above.')
+
+    n_silhouettes = len(silhouettes)
+    n_values = len(list(silhouettes.values())[0])
+
+    if n_values < 1:
+        raise Exception('There should be at least one axis.')
+
+    for silhouette in silhouettes.values():
+        if len(silhouette) != n_values:
+            raise Exception('All silhouettes must have the same amount of axes.')
+
+    # Making axes - primarily code for scaling data along them.
+    axes = []
+    angles = []
+    for i in range(n_values):
+        values = [list(silhouettes.values())[j][i] for j in range(n_silhouettes)]
+
+        axis_min = None
+        axis_max = None
+
+        if scale_type == 'axis_max':
+            axis_min = 0
+            pass
+
+        elif scale_type == 'total_max':
+            axis_min = 0
+            axis_max = max([max(vals) for vals in silhouettes.values()])
+            pass
+
+        elif scale_type == 'axis_both':
+            # Default in Axis __init__.
+            prints('WARNING: Different minimum values - be careful.', tag='spider_plot')
+            pass
+
+        elif scale_type == 'total_both':
+            axis_min = min([min(vals) for vals in silhouettes.values()])
+            axis_max = max([max(vals) for vals in silhouettes.values()])
+            pass
+
+        elif scale_type == 'set':
+            pass
+
+        else:
+            raise Exception('scale_type not understood.')
+
+        axis = Axis(values=values, label=labels[i], axis_min=axis_min, axis_max=axis_max)
+        angle = 2 * pi * i / float(n_values)
+
+        axes.append(axis)
+        angles.append(angle)
+
+    # Draws circles.
+    if circle_n != 0 and (scale_type in ['total_max', 'total_both'] or circle_n != None):
+        if circle_n == None:
+            circle_n = 4
+
+        axis = axes[0]
+        values = np.linspace(axis.min, axis.max, circle_n + 2)
+
+        ax.set_yticks([axis.normalize(val) for val in values])
+
+        if circle_label == True:
+            yticklabels = [f'{{:.{circle_label_decimals}f}}'.format(val) for val in values]
+            ax.set_yticklabels(yticklabels)
+        else:
+            ax.set_yticklabels([])
+
+    else:
+        ax.set_yticks([])
+
+    _, tick_labels = plt.xticks(angles, ['' for _ in angles])
+    
+    for label, angle, text in zip(tick_labels, angles, labels):
+        rotation = angle*180/pi-90
+
+        # Rotates text so it can be read when its supposed to be upside down.
+        if rotation < -90 or rotation > 90:
+            rotation += 180
+
+        plt.text(angle, 0, text, 
+            transform=label.get_transform(), 
+            ha=label.get_ha(), 
+            va=label.get_va(),
+            rotation=rotation, 
+            size=12, 
+            color='black')
+
+    curved_angles = []
+
+    for angle in angles:
+        curved_angles.extend(np.arange(angle, angle + 2 * pi / n_values, 0.01))
+
+    angles += angles[:1]
+    curved_angles += angles[:1]
+
+    # TODO: Legend code
+ 
+    for i in range(n_silhouettes):
+        values = [ax.norm[i] for ax in axes]
+        values += values[:1]
+
+        labels = [str(ax.values[i]) for ax in axes]
+        labels += labels[:1]
+
+        if axis_value_labels:
+            for idx, an in enumerate(angles[:-1]):
+                plt.text(an, values[idx], labels[idx], color="black", size=8)
             
-        for shape, legline in zip(self.shapes, plt.legend(loc='lower left', bbox_to_anchor=(0, -0.1)).get_lines()):
-            legline.set_alpha(0.5)
-            shape.set_legline(legline, pick_radius=8) 
+        curved_values = []
+        for i, val in enumerate(values[:-1]):
+            curved_values.extend(np.linspace(val, values[i+1], ceil(2*np.pi/n_values/0.01+1))[:-1])
+        curved_values += values[:1]
 
-    def show(self, dpi: int = 300, show: bool = True, save_png: bool = False, save_pdf: bool = False, block=True):
-        if self.autodraw:
-            self.draw()
+        ax.plot(curved_angles, curved_values, linewidth=1, linestyle='solid', label='Interval linearisation')
+        ax.fill(curved_angles, curved_values, 'b', alpha=0.1)
 
-        plt.figure(self.id)
+    return fig
 
-        if save_pdf:
-            plt.savefig(f'output/{self.id}.pdf', dpi=dpi)
+fig = _plot(
+    'DND Class Stats',
+    labels=['Strength', 'Dexterity', 'Intelligence', 'Speed', 'Luck'],
+    silhouettes={'warrior': [15, 13, 9, 11, 10], 'thief': [9, 17, 13, 14, 15], 'mage': [3, 8, 18, 7, 12]},
+    circle_label=True,
+    circle_label_decimals=0,
+    scale_type='total_both',
+    axis_value_labels=False
+)
 
-        if save_png:
-            plt.savefig(f'output/{self.id}.png', dpi=dpi)
+size = (1000,1000)
 
-        if show:
-            plt.show(block=block)
+graph = sg.Graph(canvas_size=size, graph_bottom_left=(0,0), graph_top_right=size, key='Radar', enable_events=True)
+
+layout = [
+    [graph]
+]
+
+window = sg.Window('fisk', layout, finalize=True)
+
+figure_canvas_agg = FigureCanvasTkAgg(fig, window["Radar"].TKCanvas)
+figure_canvas_agg.draw()
+figure_canvas_agg.get_tk_widget().pack(side="top", fill="both", expand=1)
+
+event, values = window.read()
