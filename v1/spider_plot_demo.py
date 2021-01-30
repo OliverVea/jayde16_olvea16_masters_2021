@@ -8,6 +8,7 @@ axis_max = [19, 19, 19, 19, 19]
 silhouettes = {'Warrior': [15, 13, 9, 11, 10], 'Thief': [9, 17, 13, 14, 15], 'Mage': [3, 8, 18, 7, 12]}
 
 axis_value_labels = [['se', 'man', 'kan', 'også', 'skrive'], ['vilkårlige', 'labels', 'hvis', 'man', 'har'], ['lyst', '.', ':D', None, None]]
+axis_value_labels = True
 
 if True:
     silhouettes['Warrior'].append(350)
@@ -17,9 +18,10 @@ if True:
     axis_min.append(0)
     axis_max.append(1000)
 
-    axis_value_labels[0].append(None)
-    axis_value_labels[1].append(None)
-    axis_value_labels[2].append(None)
+    if isinstance(axis_value_labels, list):
+        axis_value_labels[0].append(None)
+        axis_value_labels[1].append(None)
+        axis_value_labels[2].append(None)
 
 fig = spider_plot(
     'DND Class Stats',

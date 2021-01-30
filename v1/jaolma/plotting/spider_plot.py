@@ -185,17 +185,14 @@ def spider_plot(title: str, labels: list, silhouettes: dict, axis_min: float = N
     for i in range(n_silhouettes):
         values = [ax.norm[i] for ax in axes]
         values += values[:1]
-
-        labels = [str(ax.values[i]) for ax in axes]
-        labels += labels[:1]
-
-        if axis_value_labels == True:
-            for j in range(n_values):
-                plt.text(angles[j], values[j], labels[j], color="black", size=8)
         
-        elif axis_value_labels != False:
+        if axis_value_labels != False:
             for j in range(n_values):
-                label = axis_value_labels[i][j]
+                if axis_value_labels == True:
+                    label = str(axes[j].values[i])
+                else:
+                    label = axis_value_labels[i][j]
+
                 if label != None:
                     plt.text(angles[j], values[j], label, color="black", size=8)
    
