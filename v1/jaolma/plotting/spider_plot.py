@@ -45,7 +45,7 @@ class Axis:
 #   'axis_both': scales axes to the min and max values of that one axis.
 #   'set': uses the axis_max and axis_min values (or lists) to set max and min.
 
-def _plot(title: str, labels: list, silhouettes: dict, axis_min: float = None, axis_max: float = None, axis_value_decimals: int = 3, axis_value_labels: bool = True, circle_n: int = None, circle_label: bool = True, circle_label_decimals: int = 1, scale_type: str = 'total_max'):
+def spider_plot(title: str, labels: list, silhouettes: dict, axis_min: float = None, axis_max: float = None, axis_value_decimals: int = 3, axis_value_labels: bool = True, circle_n: int = None, circle_label: bool = True, circle_label_decimals: int = 1, scale_type: str = 'total_max'):
     fig = plt.figure(figsize=(10,10), dpi=100)
     ax = plt.axes(projection='polar')
     ax.set_ylim(0, 1)
@@ -170,29 +170,3 @@ def _plot(title: str, labels: list, silhouettes: dict, axis_min: float = None, a
         ax.fill(curved_angles, curved_values, 'b', alpha=0.1)
 
     return fig
-
-fig = _plot(
-    'DND Class Stats',
-    labels=['Strength', 'Dexterity', 'Intelligence', 'Speed', 'Luck'],
-    silhouettes={'warrior': [15, 13, 9, 11, 10], 'thief': [9, 17, 13, 14, 15], 'mage': [3, 8, 18, 7, 12]},
-    circle_label=True,
-    circle_label_decimals=0,
-    scale_type='total_both',
-    axis_value_labels=False
-)
-
-size = (1000,1000)
-
-graph = sg.Graph(canvas_size=size, graph_bottom_left=(0,0), graph_top_right=size, key='Radar', enable_events=True)
-
-layout = [
-    [graph]
-]
-
-window = sg.Window('fisk', layout, finalize=True)
-
-figure_canvas_agg = FigureCanvasTkAgg(fig, window["Radar"].TKCanvas)
-figure_canvas_agg.draw()
-figure_canvas_agg.get_tk_widget().pack(side="top", fill="both", expand=1)
-
-event, values = window.read()
