@@ -45,7 +45,7 @@ class Axis:
 #   'axis_both': scales axes to the min and max values of that one axis.
 #   'set': uses the axis_max and axis_min values (or lists) to set max and min.
 
-def spider_plot(title: str, labels: list, silhouettes: dict, axis_min: float = None, axis_max: float = None, axis_value_decimals: int = 3, axis_value_labels: bool = True, circle_n: int = None, circle_label: bool = True, circle_label_decimals: int = 1, scale_type: str = 'total_max'):
+def spider_plot(title: str, labels: list, silhouettes: dict, axis_min: float = None, axis_max: float = None, axis_value_decimals: int = 3, axis_value_labels: bool = True, circle_n: int = None, circle_label: bool = True, circle_label_decimals: int = None, circle_label_size: int = 8, scale_type: str = 'total_max', label_origin: bool = True, silhouette_line_color: str = None, silhouette_line_style: str = 'solid', silhouette_line_size: float = 1, silhouette_fill_color: str = None, silhouette_fill_alpha: float = 0.1):
     fig = plt.figure(figsize=(10,10), dpi=100)
     ax = plt.axes(projection='polar')
     ax.set_ylim(0, 1)
@@ -70,16 +70,16 @@ def spider_plot(title: str, labels: list, silhouettes: dict, axis_min: float = N
     for i in range(n_values):
         values = [list(silhouettes.values())[j][i] for j in range(n_silhouettes)]
 
-        axis_min = None
-        axis_max = None
+        current_axis_min = None
+        current_axis_max = None
 
         if scale_type == 'axis_max':
-            axis_min = 0
+            current_axis_min = 0
             pass
 
         elif scale_type == 'total_max':
-            axis_min = 0
-            axis_max = max([max(vals) for vals in silhouettes.values()])
+            current_axis_min = 0
+            current_axis_max = max([max(vals) for vals in silhouettes.values()])
             pass
 
         elif scale_type == 'axis_both':
@@ -88,26 +88,51 @@ def spider_plot(title: str, labels: list, silhouettes: dict, axis_min: float = N
             pass
 
         elif scale_type == 'total_both':
-            axis_min = min([min(vals) for vals in silhouettes.values()])
-            axis_max = max([max(vals) for vals in silhouettes.values()])
+            current_axis_min = min([min(vals) for vals in silhouettes.values()])
+            current_axis_max = max([max(vals) for vals in silhouettes.values()])
             pass
 
         elif scale_type == 'set':
-            pass
+            if isinstance(axis_min, list):
+                if len(axis_min) != n_values:
+                    raise Exception('axis_min should be value or have one value for each axis.')
+                current_axis_min = axis_min[i]
+
+                if current_axis_min == None:
+                    current_axis_min = min(values)
+
+            if isinstance(axis_max, list):
+                if len(axis_max) != n_values:
+                    raise Exception('axis_max should be value or have one value for each axis.')
+                current_axis_max = axis_max[i]
+
+                if current_axis_max == None:
+                    current_axis_max = max(values)
 
         else:
             raise Exception('scale_type not understood.')
 
-        axis = Axis(values=values, label=labels[i], axis_min=axis_min, axis_max=axis_max)
+        if (current_axis_min != None and current_axis_max != None) and (current_axis_min >= current_axis_max):
+            raise Exception('Axis max-min is 0 or negative.')
+
+        axis = Axis(values=values, label=labels[i], axis_min=current_axis_min, axis_max=current_axis_max)
         angle = 2 * pi * i / float(n_values)
 
         axes.append(axis)
         angles.append(angle)
 
+    same_axes = all([ax.min == axes[0].min and ax.max == axes[0].max for ax in axes])
+
     # Draws circles.
-    if circle_n != 0 and (scale_type in ['total_max', 'total_both'] or circle_n != None):
+    if circle_n != 0 and (same_axes or circle_n != None):
         if circle_n == None:
             circle_n = 4
+            for i in [6, 5, 8, 4, 7, 9, 3]:
+                if int(axes[0].max - axes[0].min) % i == 0:
+                    circle_n = i - 1
+                    if circle_label_decimals == None:
+                        circle_label_decimals = 0
+                    break
 
         axis = axes[0]
         values = np.linspace(axis.min, axis.max, circle_n + 2)
@@ -115,13 +140,22 @@ def spider_plot(title: str, labels: list, silhouettes: dict, axis_min: float = N
         ax.set_yticks([axis.normalize(val) for val in values])
 
         if circle_label == True:
+            if circle_label_decimals == None:
+                circle_label_decimals = 1
             yticklabels = [f'{{:.{circle_label_decimals}f}}'.format(val) for val in values]
-            ax.set_yticklabels(yticklabels)
+            ax.set_yticklabels(yticklabels, size=circle_label_size)
         else:
             ax.set_yticklabels([])
 
     else:
-        ax.set_yticks([])
+        if all([ax.min == axes[0].min for ax in axes]) and label_origin:
+            ax.set_yticks([0])
+            if circle_label_decimals == None:
+                circle_label_decimals = 1
+            ax.set_yticklabels([f'{axes[0].min}'], size=circle_label_size)
+
+        else:
+            ax.set_yticks([])
 
     _, tick_labels = plt.xticks(angles, ['' for _ in angles])
     
@@ -162,11 +196,27 @@ def spider_plot(title: str, labels: list, silhouettes: dict, axis_min: float = N
                 plt.text(an, values[idx], labels[idx], color="black", size=8)
             
         curved_values = []
-        for i, val in enumerate(values[:-1]):
-            curved_values.extend(np.linspace(val, values[i+1], ceil(2*np.pi/n_values/0.01+1))[:-1])
+        for a, b in zip(values[:-1], values[1:]):
+            curved_values.extend(np.linspace(a, b, ceil(2*np.pi/n_values/0.01+1))[:-1])
         curved_values += values[:1]
 
-        ax.plot(curved_angles, curved_values, linewidth=1, linestyle='solid', label='Interval linearisation')
-        ax.fill(curved_angles, curved_values, 'b', alpha=0.1)
 
+        if silhouette_line_color == None:
+            line_color = None
+        elif isinstance(silhouette_line_color, list):
+            line_color = silhouette_line_color[i]
+        else:
+            line_color = silhouette_line_color
+
+        if silhouette_fill_color == None:
+            fill_color = line.get_color()
+        elif isinstance(silhouette_fill_color, list):
+            fill_color = silhouette_fill_color[i]
+        else:
+            fill_color = silhouette_fill_color
+
+        line = ax.plot(curved_angles, curved_values, color=line_color, linewidth=silhouette_line_size, linestyle=silhouette_line_style, label=list(silhouettes.keys())[i])[0]
+        ax.fill(curved_angles, curved_values, color=fill_color, alpha=silhouette_fill_alpha)
+
+    plt.legend()
     return fig
