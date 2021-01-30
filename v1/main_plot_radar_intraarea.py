@@ -65,7 +65,7 @@ def format_data(features, fill_when_zero: bool = False):
 
     return res_dict
 
-def _plot_precision(precision_sources, area):
+def _plot_precision(precision_sources, area, decimals: int = 3):
     fig, axs = plt.subplots(2,2, figsize=(10,10), dpi=100)
     ax = plt.subplot(111, projection='polar')
     fig.suptitle(f'Precision for {area} for all features')
@@ -78,13 +78,13 @@ def _plot_precision(precision_sources, area):
     angles = [n / float(N) * 2 * pi for n in range(N)]   
 
     #Vi skal enten bruge det her
-    locs, labels = plt.xticks(angles, precision_sources[0].keys())
+    locs, labels = plt.xticks(angles, ['' for _ in angles])
     
     #Eller det her...
     for label, angle, text in zip(labels, angles, precision_sources[0].keys()):
             x, y = label.get_position()
             temptxt = plt.text(x,y, text, transform=label.get_transform(), ha=label.get_ha(), 
-            va=label.get_va(), rotation=angle*180/pi-90, size=8, color='black')
+            va=label.get_va(), rotation=angle*180/pi-90, size=12, color='black')
 
 
     curved_angles = []
@@ -98,6 +98,7 @@ def _plot_precision(precision_sources, area):
  
     for precision_source in precision_sources:
         values = list(precision_source.values())
+        values = [round(v, ndigits=decimals) for v in values]
         values += values[:1]
 
         #Add numbers to plots
@@ -244,4 +245,4 @@ def plot(area):
 
 if __name__ == '__main__':
     sg.theme('DarkGrey2')
-    plot('downtown')
+    plot('park')
