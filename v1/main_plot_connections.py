@@ -115,9 +115,9 @@ class Plot_Image:
         with Image.open(self.backgound_path) as im:
             draw = ImageDraw.Draw(im)
 
-            for typename in self.data['gt']:
-                for feature in self.data['gt'][typename]:
-                    for source in [source for source in self.data if source != 'gt']:
+            for typename in self.data['groundtruth']:
+                for feature in self.data['groundtruth'][typename]:
+                    for source in [source for source in self.data if source != 'groundtruth']:
                         if pd.notna(feature[source]):
                             id = feature[source]
                             for typename in self.data[source]:
