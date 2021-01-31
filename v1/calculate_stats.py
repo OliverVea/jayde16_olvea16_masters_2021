@@ -52,10 +52,10 @@ class GISData:
             return avg(self.visibilities)
 
         def get_precision(self):
-            return self._calc(self.true_positives, self.false_positives)
+            return self._calc(len(self.true_positives), len(self.false_positives))
 
         def get_recall(self):
-            return self._calc(self.true_positives, self.false_negatives)
+            return self._calc(len(self.true_positives), len(self.false_negatives))
 
         def get_f1(self):
             return 2 / (1 / self.get_recall() + 1 / self.get_precision())
