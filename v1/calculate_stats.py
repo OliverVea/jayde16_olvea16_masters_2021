@@ -63,7 +63,7 @@ class GISData:
         def get_accuracy(self):
             return avg(self.accuracies)
 
-    # Måske en klasse der håndterer n:1, 1:n og n:n matches?
+    # TODO: Måske en klasse der håndterer n:1, 1:n og n:n matches?
     # 'source' -> 'service' bedre navn. ground truth features vs. service features.
     class Match:
         def __init__(self, gt_ids, service_ids):
@@ -116,12 +116,16 @@ class GISData:
 
     # This function returns whether or not a ground truth feature should qualify as some source feature type.
     def _should_qualify(self, feature, typename):
-        # add radius
+        # TODO: add radius
 
         translation = {'heating_cover': 'Manhole Cover', 'TL740800': 'Fuse Box', 'TL740798': 'Light Fixture', 
             'L418883_421469': 'Downspout Grille', 'TL965167': 'Tree', 'TL695099': 'Bench',
             'water_node': 'Manhole Cover', 'Broenddaeksel': 'Manhole Cover',  'Mast': 'Light Fixture',  
             'Trae': 'Tree', 'Nedloebsrist': 'Downspout Grille', 'Skorsten': 'Chimney'}
+
+        for _typename in Properties.feature_properties:
+            if Properties.feature_properties[_typename]['origin'] != 'groundtruth' and not _typename in translation:
+                translation[_typename] = None
 
         return feature['typename'] == translation[typename]
 
@@ -179,7 +183,7 @@ class GISData:
 
         return
 
-d = GISData('suburb')
+d = GISData('harbor')
 
 def calculate_stats(area: str):    
     data = get_area_data(area)
