@@ -11,7 +11,7 @@ def flatten(dictionary):
     return [b for a in dictionary for b in dictionary[a]]
 
 class GISData:
-    all_sources = list(set(Properties.feature_properties[typename]['origin'] for typename in Properties.feature_properties))
+    all_sources = list(set(Properties.feature_properties[typename]['origin'] for typename in Properties.feature_properties if Properties.feature_properties[typename]['origin'] != 'groundtruth'))
     all_typenames = {source: {typename for typename in Properties.feature_properties if Properties.feature_properties[typename]['origin'] == source} for source in all_sources}
 
     class Stats:
@@ -151,6 +151,12 @@ class GISData:
         
         for source in self.data:
             matches = self._get_matches(source)
+
+            matched_features = [match.gt_ids[0] for match in matches]
+            for ft in flatten(self.ground_truth):
+                if ft['id'] in matched_features:
+                    matched_features[matched_features.index(ft['id'])] = ft
+
             accessibilities, visibilities = self._get_validation_results(source, matches)
 
             for typename in self.data[source]:
@@ -172,11 +178,10 @@ class GISData:
                 acc = [acc for ft, acc in zip(matched_features, accessibilities) if ft[source] in ids]
                 vis = [vis for ft, vis in zip(matched_features, visibilities) if ft[source] in ids]
 
-                # Get accuracy
+                # Get accuracy TODO
                 err = []
                 
                 stats[source][typename] = self.Stats(source, typename, gt_ids=[ft['id'] for ft in matched_features], source_ids=[ft[source] for ft in matched_features], amount=N, true_positives=tp, false_positives=fp, false_negatives=fn, accessibilities=acc, visibilities=vis, accuracies=err)
-                print()
 
         return stats
 
