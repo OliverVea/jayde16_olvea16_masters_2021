@@ -5,6 +5,11 @@ from jaolma.properties import Properties
 from jaolma.utility.utility import transpose
 from jaolma.gis.wfs import Feature
 
+class GISData:
+
+    def __init__(self):
+        pass
+
 def get_area_data(area: str):    
     path = 'files/areas'
     files = [file for file in os.listdir(path) if os.path.split(file)[-1][:-4].split('_')[1] == area and os.path.split(file)[-1][:-4].split('_')[2] != '0']
