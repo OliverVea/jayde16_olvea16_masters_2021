@@ -21,11 +21,12 @@ class GISData:
                 return None
             return a / (a + b)
 
-        def __init__(self, source, typename, gt_ids: list, source_ids: list,
+        def __init__(self, source, typename, gt_ids: list, service_ids: list,
                 amount: int = None, 
-                true_positives: int = None, 
-                false_positives: int = None, 
-                false_negatives: int = None, 
+                true_positives_gt: list = None,
+                true_positives: list = None, 
+                false_positives: list = None, 
+                false_negatives: list = None, 
                 accuracies: list = [],
                 accessibilities: list = [], 
                 visibilities: list = []):
@@ -33,10 +34,11 @@ class GISData:
             self.source = source 
             self.typename = typename
             self.gt_ids = gt_ids
-            self.source_ids = source_ids
+            self.service_ids = service_ids
             self.amount = amount
 
             self.true_positives = true_positives
+            self.true_positives_gt = true_positives_gt
             self.false_positives =false_positives
             self.false_negatives = false_negatives
 
@@ -63,8 +65,6 @@ class GISData:
         def get_accuracy(self):
             return avg(self.accuracies)
 
-    # TODO: Måske en klasse der håndterer n:1, 1:n og n:n matches?
-    # 'source' -> 'service' bedre navn. ground truth features vs. service features.
     class Match:
         def __init__(self, gt_ids, service_ids):
             self.gt_ids = gt_ids
@@ -131,7 +131,7 @@ class GISData:
         matches = [self.Match([ft['id']], [t.rstrip() for t in ft[source].split(',')]) for ft in flatten(self.ground_truth) if not pd.isna(ft[source])]
         return matches
 
-    # This function returns whether or not a ground truth feature should qualify as some source feature type.
+    # This function returns whether or not a ground truth feature should qualify as some service feature type.
     def _should_qualify(self, feature, typename):
         # TODO: add circle radius
 
@@ -167,12 +167,13 @@ class GISData:
 
                 # Count true positives
                 tp = [ft for ft in self.data[source][typename] if any(match.is_matched(service_id=ft['id']) for match in matches)]
+                tp_gt = [ft for ft in flatten(self.ground_truth) if self._should_qualify(ft, typename) and any(match.is_matched(gt_id=ft['id']) for match in matches)]
 
                 # Count false positives
                 fp = [ft for ft in self.data[source][typename] if not any(match.is_matched(service_id=ft['id']) for match in matches)]
 
                 # Count false negatives
-                fn = [ft for ft in flatten(self.ground_truth) if (not any(match.is_matched(gt_id=ft['id']) for match in matches)) and self._should_qualify(ft, typename)]
+                fn = [ft for ft in flatten(self.ground_truth) if self._should_qualify(ft, typename) and not any(match.is_matched(gt_id=ft['id']) for match in matches)]
 
                 # Get accessibility and visibility
                 acc = [acc for ft, acc in zip(matched_features, accessibilities) if ft[source] in ids]
@@ -181,7 +182,7 @@ class GISData:
                 # Get accuracy TODO
                 err = []
                 
-                stats[source][typename] = self.Stats(source, typename, gt_ids=[ft['id'] for ft in matched_features], source_ids=[ft[source] for ft in matched_features], amount=N, true_positives=tp, false_positives=fp, false_negatives=fn, accessibilities=acc, visibilities=vis, accuracies=err)
+                stats[source][typename] = self.Stats(source, typename, gt_ids=[ft['id'] for ft in matched_features], service_ids=[ft[source] for ft in matched_features], amount=N, true_positives=tp, true_positives_gt = tp_gt, false_positives=fp, false_negatives=fn, accessibilities=acc, visibilities=vis, accuracies=err)
 
         return stats
 
@@ -193,19 +194,16 @@ class GISData:
 
         self.stats = self._get_stats()
 
-        return
+    def get_stats(self):
+        return self.stats
 
-    # Get the service matches of ground truth point.
-    # Either give the ground truth feature or just the id.
-    def get_matches_gt(self, feature: Feature = None, id: str = None):
+    def get_data(self, separated_gt: bool = False):
+        if separated_gt:
+            return self.data, self.ground_truth
+        data = self.data
+        data.update({'groundtruth': self.ground_truth})
+        return data
+
+    def get_qualifying_gt(self, source, typename):
+        matches = self._get_matches(source)
         pass
-
-    # Get the ground truth matches of service point.
-    # Either give the service truth feature or the source and id.
-    def get_matches_service(self, feature: Feature = None, source: str = None, id: str = None):
-        pass
-
-areas = ['harbor', 'downtown', 'park', 'suburb', 'sdu']
-#areas = ['harbor']
-for area in areas:
-    GISData(area)
