@@ -122,8 +122,9 @@ class GISData:
         # TODO: Might cause problems.
         feature_ids = [match.gt_ids[0] for match in matches]
 
-        acc = [row['Accessibility'] for n, row in data.iterrows() if row['Feature ID'] in feature_ids]
-        ovis = [row['Obstructed Visibility'] for n, row in data.iterrows() if row['Feature ID'] in feature_ids]
+        acc = [row['Accessibility'] for n, row in data.iterrows() if str(row['Feature ID']) in feature_ids]
+        
+        ovis = [row['Obstructed Visibility'] for n, row in data.iterrows() if str(row['Feature ID']) in feature_ids]
         vis = [100 * (a/100 + (1 - a/100) * v/100) for a, v in zip(acc, ovis)]
 
         return acc, vis
@@ -205,7 +206,7 @@ class GISData:
                 err = []
                 for match in matches:
                     ft_gt = [self._get_feature(gt_id=id) for id in match.gt_ids]
-                    ft_gt = [ft for ft in ft_gt if ft['fix'] == '4']
+                    ft_gt = [ft for ft in ft_gt if ft['fix'] == '4' or ft['note'] == 'Totalstation']
 
                     if len(ft_gt) == 0:
                         continue
