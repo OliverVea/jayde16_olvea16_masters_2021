@@ -6,6 +6,7 @@ from jaolma.utility.utility import transpose
 from jaolma.gis.wfs import Feature
 
 from numpy import mean as avg
+from numpy import sqrt
 
 def flatten(dictionary):
     return [b for a in dictionary for b in dictionary[a]]
@@ -136,7 +137,7 @@ class GISData:
         # TODO: add circle radius
 
         translation = {'heating_cover': 'Manhole Cover', 'TL740800': 'Fuse Box', 'TL740798': 'Light Fixture', 
-            'L418883_421469': 'Downspout Grille', 'TL965167': 'Tree', 'TL695099': 'Bench',
+            'L418883_421469': 'Tree', 'TL965167': 'Downspout Grille', 'L167365_421559': 'Bench',
             'water_node': 'Manhole Cover', 'Broenddaeksel': 'Manhole Cover',  'Mast': 'Light Fixture',  
             'Trae': 'Tree', 'Nedloebsrist': 'Downspout Grille', 'Skorsten': 'Chimney'}
 
@@ -146,6 +147,27 @@ class GISData:
 
         return feature['typename'] == translation[typename]
 
+    def _get_feature(self, gt_id: str = None, service_id: str = None, source: str = None):
+        if gt_id == None and service_id == None:
+            raise Exception('Please specify an of either type.')
+    
+        if gt_id != None and service_id != None:
+            raise Exception('Please only specify one id.')
+
+        data, gt = self.get_data(separated_gt=True)
+
+        if gt_id != None:
+            for ft in flatten(gt):
+                if ft['id'] == gt_id:
+                    return ft
+            return None
+                    
+        for ft in flatten(data[source]):
+            if ft['id'] == service_id:
+                return ft
+        return None
+
+            
     def _get_stats(self):
         stats = {source: {typename: None for typename in self.all_typenames[source]} for source in self.all_sources} 
         
@@ -179,8 +201,25 @@ class GISData:
                 acc = [acc for ft, acc in zip(matched_features, accessibilities) if ft[source] in ids]
                 vis = [vis for ft, vis in zip(matched_features, visibilities) if ft[source] in ids]
 
-                # Get accuracy TODO
+                # Get accuracy
                 err = []
+                for match in matches:
+                    ft_gt = [self._get_feature(gt_id=id) for id in match.gt_ids]
+                    ft_gt = [ft for ft in ft_gt if ft['fix'] == '4']
+
+                    if len(ft_gt) == 0:
+                        continue
+
+                    for ft in ft_gt:
+                        ft.to_srs(Properties.default_srs)
+                    mean_gt = (sum(ft.x() for ft in ft_gt)/len(ft_gt), sum(ft.y() for ft in ft_gt)/len(ft_gt))
+
+                    ft_s = [self._get_feature(service_id=id, source=source) for id in match.service_ids]
+                    for ft in ft_s:
+                        ft.to_srs(Properties.default_srs)
+                    mean_s = (sum(ft.x() for ft in ft_s)/len(ft_s), sum(ft.y() for ft in ft_s)/len(ft_s))
+                    
+                    err.append(sqrt((mean_gt[0] - mean_s[0])**2 + (mean_gt[1] - mean_s[1])**2))
                 
                 stats[source][typename] = self.Stats(source, typename, gt_ids=[ft['id'] for ft in matched_features], service_ids=[ft[source] for ft in matched_features], amount=N, true_positives=tp, true_positives_gt = tp_gt, false_positives=fp, false_negatives=fn, accessibilities=acc, visibilities=vis, accuracies=err)
 
