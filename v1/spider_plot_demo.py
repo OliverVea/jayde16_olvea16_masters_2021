@@ -3,7 +3,7 @@ import PySimpleGUI as sg
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 axis_min = [0, 0, 0, 0, 0]
-axis_max = [19, 19, 19, 19, 19]
+axis_max = [20, 20, 20, 20, 20]
 
 silhouettes = {'Warrior': [15, 13, 9, 11, 10], 'Thief': [9, 17, 13, 14, 15], 'Mage': [3, 8, 18, 7, 12]}
 
@@ -27,11 +27,9 @@ fig = spider_plot(
     'DND Class Stats',
     labels=['Strength', 'Dexterity', 'Intelligence', 'Speed', 'Luck', 'Gold'],
     silhouettes=silhouettes,
-    #circle_label=False,
-    #circle_label_decimals=0,
-    axis_value_labels=axis_value_labels,
-    #circle_n=5,
-    scale_type='set',
+    axis_value_labels=False,
+    axis_value_decimals=3,
+    scale_type='axis_max',
     axis_min=axis_min,
     axis_max=axis_max,
     silhouette_line_color=['y', (1, 0.6, 0.6), 'teal'],
@@ -39,6 +37,7 @@ fig = spider_plot(
     silhouette_line_size=1.5,
     silhouette_line_style='-.',
     silhouette_fill_alpha=0.25,
+    #axis_ticks=10,
 )
 
 size = (1000,1000)

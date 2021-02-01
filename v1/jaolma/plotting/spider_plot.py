@@ -10,7 +10,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from jaolma.utility.utility import prints
 
 class Axis:
-    def __init__(self, values, label: str = '', axis_min: float = None, axis_max: float = None):
+    def __init__(self, values, label: str = '', axis_min: float = None, axis_max: float = None, reversed: bool = False):
         if axis_min == None:
             if len(values) == 0:
                 self.min = 0
@@ -28,12 +28,20 @@ class Axis:
             self.max = axis_max
 
         self.label = label
+        self.reversed = reversed
         self.scaled = (min != 0 or max != 1)
         self.values = values
         self.norm = [self.normalize(v) for v in values]
 
     def normalize(self, value):
+        if self.reversed:
+            return 1 - (value - self.min) / (self.max - self.min)
         return (value - self.min) / (self.max - self.min)
+    
+    def denormalize(self, normval):
+        if self.reversed:
+            return (1 - normval) * (self.max - self.min) + self.min
+        return normval * (self.max - self.min) + self.min
 
 # title
 # labels: list of labels for each axis. e.g. ['strength', 'dexterity', 'intelligence']
@@ -45,8 +53,34 @@ class Axis:
 #   'axis_both': scales axes to the min and max values of that one axis.
 #   'set': uses the axis_max and axis_min values (or lists) to set max and min.
 
-def spider_plot(title: str, labels: list, silhouettes: dict, axis_min: float = None, axis_max: float = None, axis_value_decimals: int = 3, axis_value_labels: bool = True, circle_n: int = None, circle_label: bool = True, circle_label_decimals: int = None, circle_label_size: int = 8, scale_type: str = 'total_max', label_origin: bool = True, silhouette_line_color: str = None, silhouette_line_style: str = 'solid', silhouette_line_size: float = 1, silhouette_fill_color: str = None, silhouette_fill_alpha: float = 0.1, silhouette_value_labels: list = None):
+class PolarAxes:
+    def __init__(self, fig, titles, labels, rect=None):
+        if rect is None:
+            rect = [0.05, 0.05, 0.95, 0.95]
+
+        self.n = len(titles)
+        self.angles = [a if a <=360. else a - 360. for a in np.arange(90, 90+360, 360.0/self.n)]
+        self.axes = [fig.add_axes(rect, projection="polar", label="axes%d" % i) 
+                        for i in range(self.n)]
+
+        self.ax = self.axes[0]
+        self.ax.set_thetagrids(self.angles, labels=titles, fontsize=12, weight="bold", color="black")
+
+        for ax in self.axes[1:]:
+            ax.patch.set_visible(False)
+            ax.grid("off")
+            ax.xaxis.set_visible(False)
+            self.ax.yaxis.grid(False)
+
+        for ax, angle, label in zip(self.axes, self.angles, labels):
+            ax.set_rgrids([0.5], labels=['fisk'], angle=angle, fontsize=12)
+            ax.spines["polar"].set_visible(False)
+            ax.set_ylim(0, 6)  
+            ax.xaxis.grid(True,color='black',linestyle='-')
+
+def spider_plot(title: str, labels: list, silhouettes: dict, axis_min: float = None, axis_max: float = None, axis_value_decimals: int = 3, axis_value_labels: bool = True, scale_type: str = 'total_max', label_origin: bool = True, silhouette_line_color: str = None, silhouette_line_style: str = 'solid', silhouette_line_size: float = 1, silhouette_fill_color: str = None, silhouette_fill_alpha: float = 0.1, silhouette_value_labels: list = None, reversed_axes: list = None, axis_ticks: int = 5):
     fig = plt.figure(figsize=(10,10), dpi=100)
+    #axes = PolarAxes(fig, labels, labels)
     ax = plt.axes(projection='polar')
     ax.set_ylim(0, 1)
     fig.suptitle(title)
@@ -114,48 +148,37 @@ def spider_plot(title: str, labels: list, silhouettes: dict, axis_min: float = N
 
         if (current_axis_min != None and current_axis_max != None) and (current_axis_min >= current_axis_max):
             raise Exception('Axis max-min is 0 or negative.')
+        
+        reversed = False
+        if reversed_axes != None:
+            reversed = reversed_axes[i] 
 
-        axis = Axis(values=values, label=labels[i], axis_min=current_axis_min, axis_max=current_axis_max)
+        axis = Axis(values=values, label=labels[i], axis_min=current_axis_min, axis_max=current_axis_max, reversed=reversed)
         angle = 2 * pi * i / float(n_values)
 
         axes.append(axis)
         angles.append(angle)
 
-    same_axes = all([ax.min == axes[0].min and ax.max == axes[0].max for ax in axes])
-
-    # Draws circles.
-    if circle_n != 0 and (same_axes or circle_n != None):
-        if circle_n == None:
-            circle_n = 4
-            for i in [6, 5, 8, 4, 7, 9, 3]:
-                if int(axes[0].max - axes[0].min) % i == 0:
-                    circle_n = i - 1
-                    if circle_label_decimals == None:
-                        circle_label_decimals = 0
-                    break
-
-        axis = axes[0]
-        values = np.linspace(axis.min, axis.max, circle_n + 2)
-
-        ax.set_yticks([axis.normalize(val) for val in values])
-
-        if circle_label == True:
-            if circle_label_decimals == None:
-                circle_label_decimals = 1
-            yticklabels = [f'{{:.{circle_label_decimals}f}}'.format(val) for val in values]
-            ax.set_yticklabels(yticklabels, size=circle_label_size)
+    def labelize(val, max_decimals: int):
+        if int(val) == val:
+            s = (int(val))
         else:
-            ax.set_yticklabels([])
+            s = str(round(val, max_decimals))
 
+        return s
+
+    if axis_ticks != None:
+        tick_values = [(i + 1) / axis_ticks for i in range(axis_ticks)]
+        tick_labels = [[labelize(axes[i].denormalize(v), axis_value_decimals) for v in tick_values] for i in range(n_values)]
+
+        ax.set_yticks(tick_values)
+        ax.set_yticklabels([])
+
+        for i in range(axis_ticks):
+            for j in range(n_values):
+                plt.text(angles[j], tick_values[i], tick_labels[j][i], color="black", size=8)
     else:
-        if all([ax.min == axes[0].min for ax in axes]) and label_origin:
-            ax.set_yticks([0])
-            if circle_label_decimals == None:
-                circle_label_decimals = 1
-            ax.set_yticklabels([f'{axes[0].min}'], size=circle_label_size)
-
-        else:
-            ax.set_yticks([])
+        ax.set_yticks([])
 
     _, tick_labels = plt.xticks(angles, ['' for _ in angles])
     
