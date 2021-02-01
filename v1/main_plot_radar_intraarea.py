@@ -16,6 +16,7 @@ def pick_plottype(plottypes) -> str:
 
 def _get_stats(area):
     
+    title = 'Feature Stats'
     labels=['Precision', 'Recall', 'Error', 'Visibility', 'Accessibility', 'True Positives']
 
     silhouettes = {}
@@ -35,12 +36,12 @@ def _get_stats(area):
             silhouettes[label] = []
             silhouettes[label].append(round(ft.get_precision()*100,1))
             silhouettes[label].append(round(ft.get_recall()*100,1))
-            silhouettes[label].append(round(1/ft.get_accuracy(),2))
+            silhouettes[label].append(round(ft.get_accuracy(),2))
             silhouettes[label].append(round(ft.get_visibility(),1))
             silhouettes[label].append(round(ft.get_accessibility(),1))
             silhouettes[label].append(len(ft.true_positives))
         
-    return silhouettes, labels, sources
+    return silhouettes, labels, sources, title
 
 def _plot_recall(recall_features, sources):
     fig, axs = plt.subplots(2,2, figsize=(10,10), dpi=100)
@@ -68,9 +69,9 @@ def plot(area):
         return plottype
 
     if plottypes[plottype] == 'plot_stats':
-        silhouettes, labels, sources = _get_stats(area)
+        silhouettes, labels, sources, title = _get_stats(area)
     else:
-        silhouettes, labels, sources = _get_stats(area)
+        silhouettes, labels, sources, title = _get_stats(area)
 
     colors = uniform_colors(len(silhouettes))
 
@@ -159,19 +160,25 @@ def plot(area):
         figure_canvas_agg.get_tk_widget().destroy()
 
         plot_silhouettes = dict((k, v) for k, v in zip(silhouettes.keys(), silhouettes.values()) if k in types)
+        
         if len(plot_silhouettes) > 0:
+
+            plot_colors = [colors[list(silhouettes.keys()).index(key)] for key in plot_silhouettes.keys()]
+
+            axis_min = [0,0,0,0,0,0]
+            axis_max = [100, 100, max(v[2] for v in plot_silhouettes.values()), 100, 100, max(v[5] for v in plot_silhouettes.values())]
+
             fig = spider_plot(
-            'DND Class Stats',
+            title,
             labels=labels,
             silhouettes=plot_silhouettes,
-            #circle_label=False,
-            #circle_label_decimals=0,
-            #axis_value_labels=axis_value_labels,
-            #circle_n=5,
-            scale_type='axis_max',
-            #axis_min=axis_min,
-            #axis_max=axis_max,
-            #silhouette_line_color=['y', (1, 0.6, 0.6), 'teal'],
+            scale_type='set',
+            axis_ticks=5,
+            axis_value_labels=False,
+            axis_min=axis_min,
+            axis_max=axis_max,
+            reversed_axes=[False, False, True, False, False, False],
+            silhouette_line_color=plot_colors,
             #silhouette_fill_color=[(1, 0.6, 0.6), 'teal', 'y'],
             silhouette_line_size=1.5,
             silhouette_line_style='-.',

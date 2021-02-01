@@ -224,12 +224,16 @@ def spider_plot(title: str, labels: list, silhouettes: dict, axis_min: float = N
             curved_values.extend(np.linspace(a, b, ceil(2*np.pi/n_values/0.01+1))[:-1])
         curved_values += values[:1]
 
+        
+
         if silhouette_line_color == None:
             line_color = None
         elif isinstance(silhouette_line_color, list):
             line_color = silhouette_line_color[i]
         else:
             line_color = silhouette_line_color
+
+        line = ax.plot(curved_angles, curved_values, color=line_color, linewidth=silhouette_line_size, linestyle=silhouette_line_style, label=list(silhouettes.keys())[i])[0]
 
         if silhouette_fill_color == None:
             fill_color = line.get_color()
@@ -238,7 +242,6 @@ def spider_plot(title: str, labels: list, silhouettes: dict, axis_min: float = N
         else:
             fill_color = silhouette_fill_color
 
-        line = ax.plot(curved_angles, curved_values, color=line_color, linewidth=silhouette_line_size, linestyle=silhouette_line_style, label=list(silhouettes.keys())[i])[0]
         ax.fill(curved_angles, curved_values, color=fill_color, alpha=silhouette_fill_alpha)
 
     plt.legend()
