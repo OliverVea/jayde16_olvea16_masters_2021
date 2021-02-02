@@ -138,7 +138,7 @@ class GISData:
         matches = []
         for ft in flatten(self.ground_truth):
             if not pd.isna(ft[source]):
-                service_ids = [t.rstrip() for t in ft[source].split(';')]
+                service_ids = [t.rstrip() for t in ft[source].split(',')]
                 match = self.Match(gt_ids=[ft['id']], service_ids=service_ids)
                 matches.append(match)
 
@@ -172,6 +172,10 @@ class GISData:
 
             elif sc == 'Large Square':
                 if not source in ['geodanmark', 'samaqua']:
+                    return False
+
+            elif sc == 'Stone':
+                if not source in ['geodanmark']:
                     return False
             
             else:
@@ -218,6 +222,9 @@ class GISData:
             
     def _get_stats(self):
         stats = {source: {typename: None for typename in self.all_typenames[source]} for source in self.all_sources} 
+    
+        center = Properties.areas[self.area]
+        center.to_srs(Properties.default_srs)
         
         for source in self.data:
             matches = self._get_matches(source)
@@ -229,7 +236,52 @@ class GISData:
 
             accessibilities, visibilities = self._get_validation_results(source, matches)
 
+            ground_truth = {key:value for key, value in zip(self.ground_truth.keys(), self.ground_truth.values())}
+
+            # Iterate through all ground truth features
+            for features in ground_truth.values():
+                for feature in features:
+
+                    # Test if the feature is outside the circle.
+                    if center.dist(feature) > Properties.radius:
+
+                        # IF it is - find potential matches with service features
+                        for match in matches:
+                            if match.is_matched(gt_id=feature['id']):
+
+                                # Match is matched with service features. 
+                                # These will have to be removed from the dataset.
+                                for typename in self.data[source]:
+                                    self.data[source][typename] = [ft for ft in self.data[source][typename] if not ft['id'] in match.service_ids]
+                        
+                        # Remove the mathes containing the feature
+                        matches = [match for match in matches if not match.is_matched(gt_id=feature['id'])]
+
+                        # Remove the feature from matched_features
+                        matched_features = [ft for ft in matched_features if not ft['id'] == feature['id']]
+
+                        ground_truth = {key:{ft for ft in features if not ft['id'] == feature['id']} for key, features in zip(ground_truth.keys(), ground_truth.values())}
+
+
+            # first remove GT features outside circle and their service matches (might be inside)
+            # then remove service matches outside
+
             for typename in self.data[source]:
+                features = []
+                for ft in self.data[source][typename]:
+
+                    if center.dist(ft) <= Properties.radius:
+                        features.append(ft)
+                        continue
+
+                    if any(match.is_matched(service_id=ft['id']) for match in matches):
+                        features.append(ft)
+                        continue
+
+                    # feature is outside and not matched to a ground truth feature.
+                    
+                self.data[source][typename] = features
+
                 ids = [ft['id'] for ft in self.data[source][typename]]
 
                 # Count features
@@ -237,7 +289,7 @@ class GISData:
 
                 # Count true positives
                 tp = [ft for ft in self.data[source][typename] if any(match.is_matched(service_id=ft['id']) for match in matches)]
-                tp_gt = [ft for ft in flatten(self.ground_truth) if self._should_qualify(ft, typename) and any(match.is_matched(gt_id=ft['id']) for match in matches)]
+                tp_gt = [ft for ft in flatten(ground_truth) if self._should_qualify(ft, typename) and any(match.is_matched(gt_id=ft['id']) for match in matches)]
 
                 for ft in tp_gt:
                     for match in matches:
@@ -248,7 +300,7 @@ class GISData:
                 fp = [ft for ft in self.data[source][typename] if not any(match.is_matched(service_id=ft['id']) for match in matches)]
 
                 # Count false negatives
-                fn = [ft for ft in flatten(self.ground_truth) if self._should_qualify(ft, typename) and not any(match.is_matched(gt_id=ft['id']) for match in matches)]
+                fn = [ft for ft in flatten(ground_truth) if self._should_qualify(ft, typename) and not any(match.is_matched(gt_id=ft['id']) for match in matches)]
 
                 # Get accessibility and visibility
                 acc = [acc for ft, acc in zip(matched_features, accessibilities) if ft[source] in ids]
@@ -275,6 +327,8 @@ class GISData:
                     err.append(sqrt((mean_gt[0] - mean_s[0])**2 + (mean_gt[1] - mean_s[1])**2))
 
                 stats[source][typename] = self.Stats(source, typename, gt_ids=[ft['id'] for ft in matched_features], service_ids=[ft[source] for ft in matched_features], amount=N, true_positives=tp, true_positives_gt = tp_gt, false_positives=fp, false_negatives=fn, accessibilities=acc, visibilities=vis, accuracies=err)
+
+        self.ground_truth = {key:{ft for ft in features if center.dist(ft) <= Properties.radius} for key, features in zip(self.ground_truth.keys(), self.ground_truth.values())}
 
         return stats
 

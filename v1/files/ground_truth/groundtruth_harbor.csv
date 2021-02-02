@@ -1,4 +1,4 @@
-ID,ID_img,timestamp,x,y,fix,nSat,hErr,alt,altU,h,hU,dgpsAge,checksum,date,typename,sub category,detail,Measurement,note,energifyn,fjernvarme,geodanmark,kortopslag,samaqua
+ID,ID_img,timestamp,x,y,fix,nSat,hErr,alt,altU,h,hU,dgpsAge,checksum,date,typename,subcategory,detail,Measurement,note,energifyn,fjernvarme,geodanmark,kortopslag,samaqua
 0,27,102212.85,587254.054,6141141.681,4,12,,4.018,M,39.447,M,0.9,0015*4F,13/11/2020,Bench,,,GNSS,,,,,,
 1,28,102253.25,587251.8687,6141142.589,4,12,,4.491,M,39.447,M,1.3,0015*4A,13/11/2020,Bench,,,GNSS,,,,,,
 2,29,102305,587253.9161,6141143.787,4,12,,4.544,M,39.447,M,1,0015*40,13/11/2020,Bench,,,GNSS,,,,,,

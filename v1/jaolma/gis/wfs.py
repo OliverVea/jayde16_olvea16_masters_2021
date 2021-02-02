@@ -38,7 +38,7 @@ class Feature(object):
         return Feature(tag=self.tag, geometry=geometry, srs=self.default_srs, attributes={})
 
     def __sub__(self, pt):
-        x, y = pt.pos(self.default_srs)
+        x, y, *_ = pt.pos(self.default_srs)
 
         if self.is_list:
             geometry =  [[sx - x for sx in self.x()], [sy - y for sy in self.y()]]

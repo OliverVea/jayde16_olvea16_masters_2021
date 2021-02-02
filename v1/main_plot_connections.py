@@ -209,7 +209,7 @@ def plot(area):
 
     title = f'{pretty_area}'
 
-    gis_data = GISData(area)
+    gis_data = GISData(area, use_exclude_property=True)
     data, ground_truth = gis_data.get_data(separated_gt=True)
 
     sources = [source for source in data]
@@ -317,13 +317,10 @@ def plot(area):
                 properties.set_attributes(window, attributes)
 
         graph.DrawImage(image_object.get_image(types=types, selected=selected), location=(0, size[1]))
-
-        if event == 'Run':
-            if eval(values['textbox']): print('yay!')
     window.close()
 
     return event
 
 if __name__ == '__main__':
     sg.theme('DarkGrey2')
-    plot('park')
+    plot('downtown')
