@@ -154,7 +154,7 @@ def plot(area):
 
             #Set minimum and maximum of all axes
             axis_min = [0,0,0,0,0,0]
-            axis_max = [100, 100, max(v[2] for v in plot_silhouettes.values()), 100, 100, max(v[5] for v in plot_silhouettes.values())]
+            axis_max = [100, 100, max(0.1, max(v[2] for v in plot_silhouettes.values())), 100, 100, max(0.1, max(v[5] for v in plot_silhouettes.values()))]
 
             fig = spider_plot(
             title,
@@ -176,11 +176,10 @@ def plot(area):
             figure_canvas_agg.draw()
             figure_canvas_agg.get_tk_widget().pack(side="top", fill="both", expand=1)
 
-
     window.close()
 
     return event
 
 if __name__ == '__main__':
     sg.theme('DarkGrey2')
-    plot('downtown')
+    plot('suburb')
