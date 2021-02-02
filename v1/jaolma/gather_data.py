@@ -138,7 +138,7 @@ class GISData:
         matches = []
         for ft in flatten(self.ground_truth):
             if not pd.isna(ft[source]):
-                service_ids = [t.rstrip() for t in ft[source].split(',')]
+                service_ids = [t.rstrip() for t in ft[source].split(';')]
                 match = self.Match(gt_ids=[ft['id']], service_ids=service_ids)
                 matches.append(match)
 
@@ -160,7 +160,7 @@ class GISData:
         if not feature['typename'] in translation[typename]:
             return False
 
-        source = Properties.feature_properties[typename]
+        source = Properties.feature_properties[typename]['origin']
 
         # Manhole covers: 
         # Kun brug Large (geodanmark, samaqua, kortopslag, fjernvarme) og Large Square (samaqua, geodanmark)

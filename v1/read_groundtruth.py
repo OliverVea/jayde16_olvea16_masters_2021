@@ -32,8 +32,6 @@ for area in ['suburb', 'downtown', 'sdu', 'park', 'harbor']:
 
     features = Collection(servicename, 'Point', features, 'EPSG:25832')
 
-    #features.to_srs(Properties.default_srs)
-
     features = features.filter(lambda feature: feature.dist(center) <= Properties.outer_radius)
     
     rows = {}

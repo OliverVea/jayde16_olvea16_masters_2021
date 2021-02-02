@@ -326,4 +326,4 @@ def plot(area):
 
 if __name__ == '__main__':
     sg.theme('DarkGrey2')
-    plot('sdu')
+    plot('park')
