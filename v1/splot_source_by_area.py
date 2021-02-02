@@ -68,7 +68,7 @@ def get_accuracy(stats, source, area):
 
 labels = ['Precision', 'Recall', 'F1']
 
-if False:
+if True:
     for stat, fn in zip(['Precision', 'Recall', 'F1'], [get_precision, get_recall, get_f1]):
         silhouettes = {source: [fn(d, source, area) for area, d in zip(Properties.areas_pretty, stats)] for source in GISData.all_sources}
 
@@ -82,7 +82,7 @@ if False:
             axis_max=[1 for _ in Properties.areas_pretty],
             axis_min=[0 for _ in Properties.areas_pretty],
             marker='o',
-            marker_size=3,
+            marker_size=2,
         )
 
         plt.show(block=False)
@@ -98,7 +98,7 @@ if True:
         axis_value_decimals=2,
         reversed_axes=[True for _ in Properties.areas_pretty],
         marker='o',
-        marker_size=3,
+        marker_size=2,
     )
 
     plt.show(block=True)
