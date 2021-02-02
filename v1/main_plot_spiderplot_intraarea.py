@@ -110,37 +110,21 @@ def plot(area):
     
     window = sg.Window(title, layout, finalize=True)
 
-    fig = spider_plot(
-        'DND Class Stats',
-        labels=labels,
-        silhouettes=silhouettes,
-        #circle_label=False,
-        #circle_label_decimals=0,
-        #axis_value_labels=axis_value_labels,
-        #circle_n=5,
-        scale_type='set',
-        #axis_min=axis_min,
-        #axis_max=axis_max,
-        #silhouette_line_color=['y', (1, 0.6, 0.6), 'teal'],
-        #silhouette_fill_color=[(1, 0.6, 0.6), 'teal', 'y'],
-        silhouette_line_size=1.5,
-        silhouette_line_style='-.',
-        silhouette_fill_alpha=0.25,
-    )
-
-    
+    #Instantiate figure_canvas_agg to allow for destruction in infinite loop.
+    fig = spider_plot('', labels=labels, silhouettes=silhouettes)
     figure_canvas_agg = FigureCanvasTkAgg(fig, window["Radar"].TKCanvas)
-    #figure_canvas_agg.draw()
-    #figure_canvas_agg.get_tk_widget().pack(side="top", fill="both", expand=1)
 
     while True:
         event, values = window.read()
         
+        #Check for close or back event
         if event == sg.WIN_CLOSED or event == 'Back':
             break
 
+        #Set types to all types that are checked on
         types = set([inputs[i]['typename'] for i in inputs if values[inputs[i]['typename']]])
 
+        #Check for click on a source
         if type(event) == str and event.lower() in sources:
             source = event.lower()
 
@@ -157,14 +141,18 @@ def plot(area):
                     cb.update(value=True)
                     types.add(typename)
 
+        #Destroy current canvas to allow for a new plot
         figure_canvas_agg.get_tk_widget().destroy()
 
+        #Filter which silhouettes to plot depending on the current checkboxes
         plot_silhouettes = dict((k, v) for k, v in zip(silhouettes.keys(), silhouettes.values()) if k in types)
         
         if len(plot_silhouettes) > 0:
 
+            #Filter colors to fit the checkboxes
             plot_colors = [colors[list(silhouettes.keys()).index(key)] for key in plot_silhouettes.keys()]
 
+            #Set minimum and maximum of all axes
             axis_min = [0,0,0,0,0,0]
             axis_max = [100, 100, max(v[2] for v in plot_silhouettes.values()), 100, 100, max(v[5] for v in plot_silhouettes.values())]
 
@@ -179,7 +167,6 @@ def plot(area):
             axis_max=axis_max,
             reversed_axes=[False, False, True, False, False, False],
             silhouette_line_color=plot_colors,
-            #silhouette_fill_color=[(1, 0.6, 0.6), 'teal', 'y'],
             silhouette_line_size=1.5,
             silhouette_line_style='-.',
             silhouette_fill_alpha=0.25,
