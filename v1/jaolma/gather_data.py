@@ -157,7 +157,43 @@ class GISData:
             if Properties.feature_properties[_typename]['origin'] != 'groundtruth' and not _typename in translation:
                 translation[_typename] = []
 
-        return (feature['typename'] in translation[typename])
+        if not feature['typename'] in translation[typename]:
+            return False
+
+        source = Properties.feature_properties[typename]
+
+        # Manhole covers: 
+        # Kun brug Large (geodanmark, samaqua, kortopslag, fjernvarme) og Large Square (samaqua, geodanmark)
+        if feature['typename'] == 'Manhole Cover':
+            sc = feature['subcategory']
+            if sc == 'Large': 
+                if not source in ['geodanmark', 'samaqua', 'kortopslag', 'fjernvarme']:
+                    return False
+
+            elif sc == 'Large Square':
+                if not source in ['geodanmark', 'samaqua']:
+                    return False
+            
+            else:
+                return False
+                
+        # Light fixture:
+        # Standing (geodanmark, energifyn) og Hanging + Ground (energifyn)
+        if feature['typename'] == 'Light Fixture':
+            sc = feature['subcategory']
+            if sc == 'Standing': 
+                if not source in ['geodanmark', 'energifyn']:
+                    return False
+
+            elif sc in ['Hanging', 'Ground']:
+                if source != 'energifyn':
+                    return False
+            
+            else:
+                return False
+
+        return True
+                
 
     def _get_feature(self, gt_id: str = None, service_id: str = None, source: str = None):
         if gt_id == None and service_id == None:
