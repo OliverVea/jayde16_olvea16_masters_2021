@@ -178,7 +178,7 @@ def spider_plot(title: str, labels: list, silhouettes: dict,
         angles.append(angle)
 
     def labelize(val, max_decimals: int):
-        if int(val) == val:
+        if int(val) == val or max_decimals == 0:
             s = (int(val))
         else:
             s = str(round(val, max_decimals))
@@ -195,6 +195,10 @@ def spider_plot(title: str, labels: list, silhouettes: dict,
         for i in range(axis_ticks):
             for j in range(n_values):
                 plt.text(angles[j], tick_values[i], tick_labels[j][i], color="black", size=8)
+
+                # skriver kun tekst på 1 akse.
+                if False and scale_type in ['total_max', 'total_both']:
+                    break
     else:
         ax.set_yticks([])
 
@@ -242,8 +246,6 @@ def spider_plot(title: str, labels: list, silhouettes: dict,
             curved_values.extend(np.linspace(a, b, ceil(2*np.pi/n_values/0.01+1))[:-2])
             curved_values.append(b)
         curved_values += values[:1]
-
-        
 
         if silhouette_line_color == None:
             line_color = None

@@ -83,7 +83,7 @@ class GISData:
                 return gt_id in self.gt_ids
             return service_id in self.service_ids
 
-    def _get_data(self, features_to_exclude: list = []):
+    def _get_data(self, features_to_exclude: list = [], use_exclude_property: bool = False):
         # TODO: Exclude features
         path = 'files/areas'
         files = [file for file in os.listdir(path) if os.path.split(file)[-1][:-4].split('_')[1] == self.area and os.path.split(file)[-1][:-4].split('_')[2] != '0']
@@ -94,6 +94,10 @@ class GISData:
             features = {}
             for n, row in data.iterrows():
                 row = dict(row)
+
+                typename = row['typename']
+                if use_exclude_property and Properties.feature_properties[typename]['exclude']:
+                    continue
 
                 row['n'] = n
 
@@ -238,9 +242,9 @@ class GISData:
 
         return stats
 
-    def __init__(self, area: str):
+    def __init__(self, area: str, use_exclude_property: bool = False):
         self.area = area
-        self.data = self._get_data()
+        self.data = self._get_data(use_exclude_property=use_exclude_property)
         self.ground_truth = self.data['groundtruth']
         del self.data['groundtruth']
 
