@@ -78,7 +78,25 @@ class PolarAxes:
             ax.set_ylim(0, 6)  
             ax.xaxis.grid(True,color='black',linestyle='-')
 
-def spider_plot(title: str, labels: list, silhouettes: dict, axis_min: float = None, axis_max: float = None, axis_value_decimals: int = 3, axis_value_labels: bool = True, scale_type: str = 'total_max', label_origin: bool = True, silhouette_line_color: str = None, silhouette_line_style: str = 'solid', silhouette_line_size: float = 1, silhouette_fill_color: str = None, silhouette_fill_alpha: float = 0.1, silhouette_value_labels: list = None, reversed_axes: list = None, axis_ticks: int = 5):
+def spider_plot(title: str, labels: list, silhouettes: dict, 
+        axis_min: float = None, 
+        axis_max: float = None, 
+        axis_value_decimals: int = 3, 
+        axis_value_labels: bool = True, 
+        scale_type: str = 'total_max', 
+        label_origin: bool = True, 
+        silhouette_line_color: str = None, 
+        silhouette_line_style: str = 'solid', 
+        silhouette_line_size: float = 1, 
+        silhouette_fill_color: str = None, 
+        silhouette_fill_alpha: float = 0.1, 
+        silhouette_value_labels: list = None, 
+        reversed_axes: list = None, 
+        axis_ticks: int = 5, 
+        marker: str = 'o', 
+        marker_size: int = 3,
+        fill_nan: bool = True):
+
     fig = plt.figure(figsize=(10,10), dpi=100)
     #axes = PolarAxes(fig, labels, labels)
     ax = plt.axes(projection='polar')
@@ -221,8 +239,12 @@ def spider_plot(title: str, labels: list, silhouettes: dict, axis_min: float = N
    
         curved_values = []
         for a, b in zip(values[:-1], values[1:]):
-            curved_values.extend(np.linspace(a, b, ceil(2*np.pi/n_values/0.01+1))[:-1])
+            curved_values.extend(np.linspace(a, b, ceil(2*np.pi/n_values/0.01+1))[:-2])
+            curved_values.append(b)
         curved_values += values[:1]
+
+        with open(f'curved_values_{list(silhouettes.keys())[i]}.txt', 'w') as f:
+            f.write('\n'.join(str(v) for v in curved_values))
 
         if silhouette_line_color == None:
             line_color = None
@@ -230,6 +252,12 @@ def spider_plot(title: str, labels: list, silhouettes: dict, axis_min: float = N
             line_color = silhouette_line_color[i]
         else:
             line_color = silhouette_line_color
+            
+        line = ax.plot(curved_angles, curved_values, color=line_color, linewidth=silhouette_line_size, linestyle=silhouette_line_style, label=list(silhouettes.keys())[i])[0]
+
+        if (not marker in ['', False, None]) and marker_size > 0:
+            for angle, value in zip(angles, values):
+                ax.plot(angle, value, marker, color=line.get_color(), markersize=marker_size)
 
         if silhouette_fill_color == None:
             fill_color = line.get_color()
@@ -238,8 +266,10 @@ def spider_plot(title: str, labels: list, silhouettes: dict, axis_min: float = N
         else:
             fill_color = silhouette_fill_color
 
-        line = ax.plot(curved_angles, curved_values, color=line_color, linewidth=silhouette_line_size, linestyle=silhouette_line_style, label=list(silhouettes.keys())[i])[0]
-        ax.fill(curved_angles, curved_values, color=fill_color, alpha=silhouette_fill_alpha)
+        if fill_nan:
+            xy = [(a, v) for a, v in zip(curved_angles, curved_values) if not np.isnan(v)] 
+
+        ax.fill([v[0] for v in xy], [v[1] for v in xy], color=fill_color, alpha=silhouette_fill_alpha)
 
     plt.legend()
     return fig

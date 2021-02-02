@@ -16,7 +16,7 @@ class Properties:
 
     default_srs = 'EPSG:25832'
 
-    outer_radius = 120
+    outer_radius = 105
     radius = 100
 
     feature_properties = {

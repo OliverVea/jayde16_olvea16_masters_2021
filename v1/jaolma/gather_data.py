@@ -30,7 +30,8 @@ class GISData:
                 false_negatives: list = None, 
                 accuracies: list = [],
                 accessibilities: list = [], 
-                visibilities: list = []):
+                visibilities: list = [],
+                matches: list = []):
 
             self.source = source 
             self.typename = typename
@@ -130,23 +131,29 @@ class GISData:
         return acc, vis
 
     def _get_matches(self, source):
-        matches = [self.Match([ft['id']], [t.rstrip() for t in ft[source].split(',')]) for ft in flatten(self.ground_truth) if not pd.isna(ft[source])]
+        matches = []
+        for ft in flatten(self.ground_truth):
+            if not pd.isna(ft[source]):
+                service_ids = [t.rstrip() for t in ft[source].split(',')]
+                match = self.Match(gt_ids=[ft['id']], service_ids=service_ids)
+                matches.append(match)
+
         return matches
 
     # This function returns whether or not a ground truth feature should qualify as some service feature type.
     def _should_qualify(self, feature, typename):
         # TODO: add circle radius
 
-        translation = {'heating_cover': 'Manhole Cover', 'TL740800': 'Fuse Box', 'TL740798': 'Light Fixture', 
-            'L418883_421469': 'Tree', 'TL965167': 'Downspout Grille', 'L167365_421559': 'Bench',
-            'water_node': 'Manhole Cover', 'Broenddaeksel': 'Manhole Cover',  'Mast': 'Light Fixture',  
-            'Trae': 'Tree', 'Nedloebsrist': 'Downspout Grille', 'Skorsten': 'Chimney'}
+        translation = {'heating_cover': ['Manhole Cover'], 'TL740800': ['Fuse Box'], 'TL740798': ['Light Fixture'], 
+            'L418883_421469': ['Tree'], 'TL965167': ['Downspout Grille', 'Manhole Cover'], 'L167365_421559': ['Bench', 'Trash Can', 'Statue', 'Misc', 'Rock'],
+            'water_node': ['Manhole Cover'], 'Broenddaeksel': ['Manhole Cover'],  'Mast': ['Light Fixture'],  
+            'Trae': ['Tree'], 'Nedloebsrist': ['Downspout Grille'], 'Skorsten': ['Chimney']}
 
         for _typename in Properties.feature_properties:
             if Properties.feature_properties[_typename]['origin'] != 'groundtruth' and not _typename in translation:
-                translation[_typename] = None
+                translation[_typename] = []
 
-        return feature['typename'] == translation[typename]
+        return (feature['typename'] in translation[typename])
 
     def _get_feature(self, gt_id: str = None, service_id: str = None, source: str = None):
         if gt_id == None and service_id == None:
@@ -192,6 +199,11 @@ class GISData:
                 tp = [ft for ft in self.data[source][typename] if any(match.is_matched(service_id=ft['id']) for match in matches)]
                 tp_gt = [ft for ft in flatten(self.ground_truth) if self._should_qualify(ft, typename) and any(match.is_matched(gt_id=ft['id']) for match in matches)]
 
+                for ft in tp_gt:
+                    for match in matches:
+                        if match.is_matched(gt_id=ft['id']):
+                            ft['matches'] = [self._get_feature(service_id=i, source=source) for i in match.service_ids]
+
                 # Count false positives
                 fp = [ft for ft in self.data[source][typename] if not any(match.is_matched(service_id=ft['id']) for match in matches)]
 
@@ -221,7 +233,7 @@ class GISData:
                     mean_s = (sum(ft.x() for ft in ft_s)/len(ft_s), sum(ft.y() for ft in ft_s)/len(ft_s))
                     
                     err.append(sqrt((mean_gt[0] - mean_s[0])**2 + (mean_gt[1] - mean_s[1])**2))
-                
+
                 stats[source][typename] = self.Stats(source, typename, gt_ids=[ft['id'] for ft in matched_features], service_ids=[ft[source] for ft in matched_features], amount=N, true_positives=tp, true_positives_gt = tp_gt, false_positives=fp, false_negatives=fn, accessibilities=acc, visibilities=vis, accuracies=err)
 
         return stats

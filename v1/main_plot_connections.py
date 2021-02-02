@@ -16,7 +16,7 @@ import os
 
 class PlotImage:
     class Layer:
-        def __init__(self, features: list, typename: str, size: tuple, cache: bool = True, r: float = 3, fill = None, outline = None, text_color = None):
+        def __init__(self, features: list, typename: str, size: tuple, cache: bool = True, r: float = 3, fill = None, outline = None, text_color = None, error_mode: bool = False):
             self.cache = cache
             self.typename = typename
 
@@ -40,14 +40,23 @@ class PlotImage:
 
                 if ft['existance'] == 'unknown': 
                     outline = '#0000FF'
+
                 if ft['existance'] == 'true_positive': 
+                    if error_mode:
+                        continue
+
                     outline = '#00FF00'
                 if ft['existance'] == 'false_positive': 
                     outline = '#FF0000'
+
                 if ft['existance'] == 'false_negative': 
                     outline = '#AA00AA'
 
                 if is_gt:
+                    if ft['existance'] == 'true_positive':
+                        for matched_feature in ft['matches']:
+                            draw.line((ft['plot_x'], ft['plot_y'], matched_feature['plot_x'], matched_feature['plot_y']), fill=outline, width=1)
+
                     draw.ellipse(xy=xy, fill=fill, outline=outline)
                 else:
                     draw.rectangle(xy=xy, fill=fill, outline=outline)
@@ -124,6 +133,14 @@ class PlotImage:
                 for feature in stats[source][typename].true_positives_gt:
                     feature['existance'] = 'true_positive'
                     feature['service'] = 'groundtruth'
+
+                    # This is a mess dont ask.
+                    for ft in feature['matches']:    
+                        ft.to_srs(Properties.default_srs)    
+                        #ft = ft - self.c              
+                        ft['plot_x'] = (ft.x() - self.c.x()) * self.dpm + self.size[0] / 2
+                        ft['plot_y'] = (self.c.y() - ft.y()) * self.dpm + self.size[1] / 2
+
                     features.append(feature)
 
                 for feature in stats[source][typename].false_negatives:
@@ -309,4 +326,4 @@ def plot(area):
 
 if __name__ == '__main__':
     sg.theme('DarkGrey2')
-    plot('downtown')
+    plot('park')

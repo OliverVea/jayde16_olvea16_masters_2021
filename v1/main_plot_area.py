@@ -222,15 +222,11 @@ def plot(area):
     graph = sg.Graph(canvas_size=size, graph_bottom_left=(0,0), graph_top_right=size, key='Click', enable_events=True)
 
     #Add textbox to gui
-    textbox = sg.Multiline(size=(160,1), key='textbox')
-    run_button = sg.Button('Run', bind_return_key=True)
-    text_graph = sg.Column([[textbox, run_button],[graph]], vertical_alignment='top')
 
     properties = PropertiesBox(width=300, height=size[1], initial_text='Click a feature.')
 
     layout = [
-        #[checkboxes, graph, properties.get_properties()],
-        [checkboxes, text_graph, properties.get_properties()]
+        [checkboxes, graph, properties.get_properties()],
     ]
 
     window = sg.Window(title, layout)
@@ -312,4 +308,4 @@ def plot(area):
 
 if __name__ == '__main__':
     sg.theme('DarkGrey2')
-    plot('downtown')
+    plot('park')
