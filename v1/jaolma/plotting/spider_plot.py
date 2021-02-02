@@ -243,8 +243,7 @@ def spider_plot(title: str, labels: list, silhouettes: dict,
             curved_values.append(b)
         curved_values += values[:1]
 
-        with open(f'curved_values_{list(silhouettes.keys())[i]}.txt', 'w') as f:
-            f.write('\n'.join(str(v) for v in curved_values))
+        
 
         if silhouette_line_color == None:
             line_color = None
@@ -258,6 +257,8 @@ def spider_plot(title: str, labels: list, silhouettes: dict,
         if (not marker in ['', False, None]) and marker_size > 0:
             for angle, value in zip(angles, values):
                 ax.plot(angle, value, marker, color=line.get_color(), markersize=marker_size)
+
+        line = ax.plot(curved_angles, curved_values, color=line_color, linewidth=silhouette_line_size, linestyle=silhouette_line_style, label=list(silhouettes.keys())[i])[0]
 
         if silhouette_fill_color == None:
             fill_color = line.get_color()
