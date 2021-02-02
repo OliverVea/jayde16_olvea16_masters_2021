@@ -258,8 +258,6 @@ def spider_plot(title: str, labels: list, silhouettes: dict,
             for angle, value in zip(angles, values):
                 ax.plot(angle, value, marker, color=line.get_color(), markersize=marker_size)
 
-        line = ax.plot(curved_angles, curved_values, color=line_color, linewidth=silhouette_line_size, linestyle=silhouette_line_style, label=list(silhouettes.keys())[i])[0]
-
         if silhouette_fill_color == None:
             fill_color = line.get_color()
         elif isinstance(silhouette_fill_color, list):
