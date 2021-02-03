@@ -1,7 +1,7 @@
 from jaolma.properties import Properties
 from jaolma.plotting.spider_plot import spider_plot
 from jaolma.gui import simple_dropdown
-from jaolma.gather_data import GISData
+from jaolma.data_treatment.data_treatment import GISData
 from jaolma.utility.utility import uniform_colors
 
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
@@ -17,7 +17,7 @@ def pick_plottype(plottypes) -> str:
 def _get_stats(area):
     
     title = 'Feature Stats'
-    labels=['Precision', 'Recall', 'Error', 'Visibility', 'Accessibility', 'True Positives']
+    axis_labels=['Precision', 'Recall', 'Error', 'Visibility', 'Accessibility', 'True Positives']
 
     silhouettes = {}
     sources = {}
@@ -41,7 +41,7 @@ def _get_stats(area):
             silhouettes[label].append(round(ft.get_accessibility(),1))
             silhouettes[label].append(len(ft.true_positives))
         
-    return silhouettes, labels, sources, title
+    return silhouettes, axis_labels, sources, title
 
 def _plot_recall(recall_features, sources):
     fig, axs = plt.subplots(2,2, figsize=(10,10), dpi=100)
@@ -182,4 +182,4 @@ def plot(area):
 
 if __name__ == '__main__':
     sg.theme('DarkGrey2')
-    plot('suburb')
+    plot('park')
