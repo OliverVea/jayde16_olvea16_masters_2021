@@ -5,7 +5,7 @@ from jaolma.gis.wmts import WMTS
 from jaolma.gui.properties_box import PropertiesBox
 from jaolma.gui import simple_dropdown
 
-from jaolma.gather_data import GISData
+from jaolma.data_treatment.data_treatment import GISData
 
 from PIL import Image, ImageDraw
 

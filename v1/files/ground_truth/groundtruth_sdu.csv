@@ -1,4 +1,4 @@
-ID,Unnamed: 0.1,ID_img,timestamp,x,y,fix,nSat,hErr,alt,altU,h,hU,dgpsAge,checksum,date,typename,sub category,detail,Measurement,note,energifyn,fjernvarme,geodanmark,kortopslag,samaqua
+ID,Unnamed: 0.1,ID_img,timestamp,x,y,fix,nSat,hErr,alt,altU,h,hU,dgpsAge,checksum,date,typename,subcategory,detail,Measurement,note,energifyn,fjernvarme,geodanmark,kortopslag,samaqua
 0,80,84,104857.15,590671.3696,6136686.314,4,9,,22.376,M,39.413,M,1.1,0008*7A,,Tree Stump,,,GNSS,,,,1103670638,,
 1,289,304,133825.75,590672.3786,6136776.85,5,7,,26.247,M,39.415,M,1.8,0024*73,,Tree,Collection of Trees,,GNSS,,,,,,
 2,287,301,133427.65,590772.1839,6136812.522,4,9,,23.442,M,39.415,M,1.6,0024*74,,Tree,,,GNSS,,,,1202734429,,

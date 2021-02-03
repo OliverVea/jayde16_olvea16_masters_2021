@@ -164,7 +164,7 @@ ID,ID_img,timestamp,x,y,fix,nSat,hErr,alt,altU,h,hU,dgpsAge,checksum,date,typena
 164,,,587619.1865,6139595.327,,,,,,,,,,18/12/2020,Manhole Cover,Large,Art,Totalstation,,,,,,
 165,,,587632.9554,6139596.171,,,,,,,,,,18/12/2020,Manhole Cover,Large,"Art,SquareFrame",Totalstation,,,{5D6F0AB1-93B4-4A23-AC40-EB0951261355},,,
 166,,,587692.7456,6139637.497,,,,,,,,,,18/12/2020,Manhole Cover,Large,"Ulefos,Art,SquareFrame",Totalstation,,,,,22986,
-167,,,587667.1474,6139622.887,,,,,,,,,,18/12/2020,Manhole Cover,Large,"Ulefos,Art,SquareFrame",Totalstation,,,,1034131733,,27f5f63c-5982-4518-bd9e-444258a6445b
+167,,,587667.1474,6139622.887,,,,,,,,,,18/12/2020,Manhole Cover,Large,"Ulefos,Art,SquareFrame",Totalstation,,,,1034131733,23128,27f5f63c-5982-4518-bd9e-444258a6445b
 168,,,587657.4866,6139616.306,,,,,,,,,,18/12/2020,Manhole Cover,Large,"Ulefos,Art,SquareFrame",Totalstation,,,,,,1e22459d-7ed1-4e51-9854-c40768c24524
 169,,,587613.7071,6139593.451,,,,,,,,,,18/12/2020,Manhole Cover,Large,Art,Totalstation,,,{F9B9138C-19FC-4263-A07F-1F4139608B27},,,
 170,,,587602.1779,6139588.65,,,,,,,,,,18/12/2020,Manhole Cover,Large,"Ulefos,SquareFrame",Totalstation,,,,,,

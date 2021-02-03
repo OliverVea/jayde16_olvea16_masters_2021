@@ -88,3 +88,6 @@ class Color:
 
     def __mul__(self, val):
         return self.with_l(max(min(self.get_l() * val, 1), 0))
+
+def flatten(dictionary):
+    return [b for a in dictionary for b in dictionary[a]]

@@ -4,7 +4,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.pyplot as plt
 import numpy as np
 
-from jaolma.gather_data import GISData
+from jaolma.data_treatment.data_treatment import GISData
 from jaolma.properties import Properties
 
 
