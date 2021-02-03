@@ -11,7 +11,7 @@ from jaolma.properties import Properties
 gis_data = [GISData(area, use_exclude_property=True) for area in Properties.areas]
 stats = [g.get_stats() for g in gis_data]
 
-plots = {'overview': False, 'perf': False, 'err': False, 'acc': False, 'vis': False, 'n': True, 'n_all': False}
+plots = {'overview': True, 'perf': False, 'err': False, 'acc': False, 'vis': False, 'n': True, 'n_all': False}
 
 def get_gt_count(data):
     features = []
@@ -130,7 +130,7 @@ def get_visibility(stats, source, area):
     return s / n
 
 if plots['overview']:
-    labels = ['Amount', 'Precision', 'Recall', 'Visibility', 'Accessibility', 'Error']
+    labels = ['True Positives', 'Precision', 'Recall', 'Visibility', 'Accessibility', 'Error']
 
     silhouettes = {}
     data = stats
@@ -174,7 +174,7 @@ if plots['overview']:
         labels=labels,
         silhouettes=silhouettes,
         axis_value_labels=False,
-        axis_value_decimals=2,
+        axis_value_decimals=0,
         marker='o',
         marker_size=3,
         reversed_axes=[label == 'Error' for label in labels],
