@@ -11,6 +11,8 @@ from jaolma.properties import Properties
 gis_data = [GISData(area, use_exclude_property=True) for area in Properties.areas]
 stats = [g.get_stats() for g in gis_data]
 
+plots = {'overview': True, 'n_gt': False, 'perf': False, 'err': False, 'acc': False, 'vis': False, 'n': False, 'n_all': False}
+
 def get_gt_count(data):
     features = []
     for fts in data.ground_truth.values():
@@ -45,7 +47,7 @@ def get_precision(stats, source, area):
 
     tps = sum([len(stat.true_positives) for stat in stats])
     fps = sum([len(stat.false_positives) for stat in stats])
-    return tps / (tps + fps)
+    return tps / (tps + fps) * 100
 
 def get_recall(stats, source, area):
     stats = stats[source]
@@ -62,7 +64,7 @@ def get_recall(stats, source, area):
         print(f'Could not find recall for source {source} in area {area}, as there were no features. Returning nan.')
         return np.nan
 
-    return tps / (tps + fns)
+    return tps / (tps + fns) * 100
 
 def get_f1(stats, source, area):
     recall = get_recall(stats, source, area)
@@ -127,7 +129,58 @@ def get_visibility(stats, source, area):
 
     return s / n
 
-plots = {'n_gt': True, 'perf': True, 'err': True, 'acc': True, 'vis': True, 'n': True, 'n_all': True}
+if plots['overview']:
+    labels = ['Amount', 'Precision', 'Recall', 'Visibility', 'Accessibility', 'Error']
+
+    silhouettes = {}
+    data = stats
+
+    for source in GISData.all_sources:
+        silhouettes[source] = [0 for _ in labels]
+
+        silhouettes[source][0] = sum(get_count(d, source, area) for area, d in zip(Properties.areas_pretty, stats))
+
+        # Precision
+        s = [len(stats.true_positives) for d in data for stats in d[source].values() if stats != None]
+        n = [len(stats.true_positives) + len(stats.false_positives) for d in data for stats in d[source].values() if stats != None]
+        silhouettes[source][1] = sum(s) / sum(n) * 100
+
+        # Recall
+        s = [len(stats.true_positives) for d in data for stats in d[source].values() if stats != None]
+        n = [len(stats.true_positives) + len(stats.false_negatives) for d in data for stats in d[source].values() if stats != None]
+        silhouettes[source][2] = sum(s) / sum(n) * 100
+
+        # Visibility
+        s = [stats.get_visibility() * len(stats.true_positives) for d in data for stats in d[source].values() if stats != None and not np.isnan(stats.get_visibility())]
+        n = [len(stats.true_positives) for d in data for stats in d[source].values() if stats != None and not np.isnan(stats.get_visibility())]
+        silhouettes[source][3] = sum(s) / sum(n)
+
+        # Accessibility
+        s = [stats.get_accessibility() * len(stats.true_positives) for d in data for stats in d[source].values() if stats != None and not np.isnan(stats.get_accessibility())]
+        n = [len(stats.true_positives) for d in data for stats in d[source].values() if stats != None and not np.isnan(stats.get_accessibility())]
+        silhouettes[source][4] = sum(s) / sum(n)
+
+        # Accuracy
+        s = [stats.get_accuracy() * len(stats.true_positives) for d in data for stats in d[source].values() if stats != None and not np.isnan(stats.get_accuracy())]
+        n = [len(stats.true_positives) for d in data for stats in d[source].values() if stats != None and not np.isnan(stats.get_accuracy())]
+        silhouettes[source][5] = sum(s) / sum(n)
+
+    axis_max = [max(silhouettes[source][0] for source in GISData.all_sources), 100, 100, 100, 100, max(silhouettes[source][5] for source in GISData.all_sources)]
+
+    fig = spider_plot(
+            f'Area Overview',
+            labels=labels,
+            silhouettes=silhouettes,
+            axis_value_labels=False,
+            axis_value_decimals=2,
+            marker='o',
+            marker_size=3,
+            reversed_axes=[label == 'Error' for label in labels],
+            scale_type='set',
+            axis_min=[0 for _ in labels],
+            axis_max=axis_max
+        )
+
 
 labels = ['Precision', 'Recall', 'F1']
 if plots['perf']:
@@ -141,7 +194,7 @@ if plots['perf']:
             axis_value_labels=False,
             axis_value_decimals=2,
             scale_type='set',
-            axis_max=[1 for _ in Properties.areas_pretty],
+            axis_max=[100 for _ in Properties.areas_pretty],
             axis_min=[0 for _ in Properties.areas_pretty],
             marker='o',
             marker_size=3,
@@ -228,3 +281,4 @@ if plots['n_all']:
     plt.savefig(f'sp_N_All.pdf')
 
 
+plt.show()

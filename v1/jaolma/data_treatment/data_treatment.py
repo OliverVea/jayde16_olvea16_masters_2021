@@ -149,8 +149,6 @@ class GISData:
             for typename in self.data[source]:
                 features = self.data[source][typename]
 
-                ids = [ft['id'] for ft in features]
-
                 # Count features
                 N = len(features)
 
@@ -178,6 +176,10 @@ class GISData:
                 err = []
                 for gt_id, service_ids in zip(self.matches.matches[source].keys(), self.matches.matches[source].values()):
                     ft = self._get_feature(gt_id=gt_id)
+
+                    if ft['Measurement'] != 'Totalstation' and ft['fix'] != '4':
+                        continue 
+
                     service_fts = [self._get_feature(service_id=id, source=source) for id in service_ids]
                     service_fts = [ft for ft in service_fts if ft != None]
 
@@ -282,7 +284,3 @@ class GISData:
         data = self.data
         data.update({'groundtruth': self.ground_truth})
         return data
-
-    def get_qualifying_gt(self, source, typename):
-        matches = self._get_matches(source)
-        pass
