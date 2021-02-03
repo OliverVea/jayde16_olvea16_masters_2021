@@ -17,7 +17,7 @@ def pick_plottype(plottypes) -> str:
 def _get_stats(area):
     
     title = 'Feature Stats'
-    labels=['Precision', 'Recall', 'Error', 'Visibility', 'Accessibility', 'True Positives']
+    axis_labels=['Precision', 'Recall', 'Error', 'Visibility', 'Accessibility', 'True Positives']
 
     silhouettes = {}
     sources = {}
@@ -41,77 +41,51 @@ def _get_stats(area):
             silhouettes[label].append(round(ft.get_accessibility(),1))
             silhouettes[label].append(len(ft.true_positives))
         
-    return silhouettes, labels, sources, title
+    return silhouettes, axis_labels, sources, title
 
-def _get_amount_gt():
+
+def plot(area):
+    print(f'Plotting Radar Charts for Area: {area}.')
+
+    use("TkAgg")
+
     
-    title = 'Feature count across areas'
-    #labels=['Precision', 'Recall', 'Error', 'Visibility', 'Accessibility', 'True Positives']
-    labels = ['Tree', 'Light Fixture', 'Downspout Grille', 'Manhole Cover', 'Bench', 'Trash Can']
+    plottypes = {'Plot Precision, Recall, Accuracy, Visibility, Accessibility and amount for all features.': 'plot_stats'}
 
-    silhouettes = {}
-    source = 'groundtruth'
+    plottype = pick_plottype(plottypes.keys())
 
-    for area in Properties.areas:
-        silhouettes[area] = [0] * len(labels)
-        gisdata = GISData(area)
-        data = gisdata.get_data()
-
-        for i, _ in enumerate(silhouettes[area]):
-            if labels[i] in data[source]:        
-                silhouettes[area][i] = len(data[source][labels[i]])
-        
-    return silhouettes, labels, title
-
-def _plot_recall(recall_features, sources):
-    fig, axs = plt.subplots(2,2, figsize=(10,10), dpi=100)
-    ax = plt.subplot(111, projection='polar')
-    fig.suptitle('Something')
-    #ax.plot(angles, values, linewidth=1, linestyle='solid', label='Interval linearisation')
-    #ax.fill(angles, values, 'b', alpha=0.1)
-
-def _plot_accuracy(avg_errors_features, sources):
-    pass
-
-
-
-def plot(plottype):
     if plottype in [None, '']:
         return plottype
 
-    if plottype == 'plot_stats_':
-        print('Plotting Radar Chart with stats for each source across areas.')
-        silhouettes, labels, sources, title = _get_stats()
-    elif plottype == 'plot_amount_gt':
-        silhouettes, labels, title = _get_amount_gt()
+    if plottypes[plottype] == 'plot_stats':
+        silhouettes, labels, sources, title = _get_stats(area)
     else:
-        pass
-        silhouettes, labels, sources, title = _get_stats()
-
-    use("TkAgg")
-    
-    #plottypes = {'Plot Precision, Recall, Accuracy, Visibility, Accessibility and amount for all features.': 'plot_stats'}
-
-    #plottype = pick_plottype(plottypes.keys())
+        silhouettes, labels, sources, title = _get_stats(area)
 
     colors = uniform_colors(len(silhouettes))
 
     inputs = {}
 
-    #title = f'{title}'
+    pretty_area = list(Properties.areas).index(area)
+    pretty_area = Properties.areas_pretty[pretty_area]
+
+    title = f'{pretty_area}'
     export = sg.Button('Export')
     back = sg.Button('Back')
 
     col = [[export, back]]
 
     i = 0
-    for area in list(Properties.areas):
-        color = colors[i]
-        label = list(silhouettes.keys())[i]
+    for source in sources.keys():
+        col.append([sg.Text(source.capitalize(), enable_events=True)])
 
-        col.append([sg.Checkbox(label, text_color = color, key=area, enable_events=True)])
-        inputs[len(inputs)] = {'type': 'checkbox', 'typename': area}
-        i += 1
+        for feature in list(sources[source]):
+            color = colors[i]
+            label = list(silhouettes.keys())[i]
+
+            col.append([sg.Checkbox(label, text_color = color, key=feature, enable_events=True)])
+            inputs[len(inputs)] = {'type': 'checkbox', 'source': source, 'typename': feature}
+            i += 1
     
     checkboxes = sg.Column(col, vertical_alignment='top')
 
@@ -139,6 +113,23 @@ def plot(plottype):
         #Set types to all types that are checked on
         types = set([inputs[i]['typename'] for i in inputs if values[inputs[i]['typename']]])
 
+        #Check for click on a source
+        if type(event) == str and event.lower() in sources:
+            source = event.lower()
+
+            source_types = list(sources[source])
+
+            if all(typename in types for typename in source_types):
+                for typename in source_types:
+                    cb = window.find(typename)
+                    cb.update(value=False)
+                    types.remove(typename)
+            else:
+                for typename in source_types:
+                    cb = window.find(typename)
+                    cb.update(value=True)
+                    types.add(typename)
+
         #Destroy current canvas to allow for a new plot
         figure_canvas_agg.get_tk_widget().destroy()
 
@@ -151,19 +142,19 @@ def plot(plottype):
             plot_colors = [colors[list(silhouettes.keys()).index(key)] for key in plot_silhouettes.keys()]
 
             #Set minimum and maximum of all axes
-            #axis_min = [0,0,0,0,0,0]
-            #axis_max = [100, 100, max(0.1, max(v[2] for v in plot_silhouettes.values())), 100, 100, max(0.1, max(v[5] for v in plot_silhouettes.values()))]
+            axis_min = [0,0,0,0,0,0]
+            axis_max = [100, 100, max(0.1, max(v[2] for v in plot_silhouettes.values())), 100, 100, max(0.1, max(v[5] for v in plot_silhouettes.values()))]
 
             fig = spider_plot(
             title,
             labels=labels,
             silhouettes=plot_silhouettes,
-            #scale_type='total_max',
+            scale_type='set',
             axis_ticks=5,
             axis_value_labels=False,
-            #axis_min=axis_min,
-            #axis_max=axis_max,
-            #reversed_axes=[False, False, True, False, False, False],
+            axis_min=axis_min,
+            axis_max=axis_max,
+            reversed_axes=[False, False, True, False, False, False],
             silhouette_line_color=plot_colors,
             silhouette_line_size=1.5,
             silhouette_line_style='-.',
@@ -180,4 +171,4 @@ def plot(plottype):
 
 if __name__ == '__main__':
     sg.theme('DarkGrey2')
-    plot('plot_amount_gt')
+    plot('park')

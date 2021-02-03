@@ -1,5 +1,6 @@
 import main_plot_area
-import main_plot_spiderplot_intraarea
+import main_plot_spiderplot_area
+import main_plot_spiderplot
 
 from jaolma.properties import Properties
 from jaolma.utility.utility import printe, prints
@@ -31,7 +32,7 @@ def analyse_feature(typename):
     pass
 
 actions['Plot Area'] = main_plot_area.plot
-actions['Plot Radar Charts for Area'] = main_plot_spiderplot_intraarea.plot
+actions['Plot Radar Charts for Area'] = main_plot_spiderplot_area.plot
 actions['Get Data for Area'] = get_data
 actions['Analyse an area'] = analyse_area
 actions['Analyse a feature type'] = analyse_feature
