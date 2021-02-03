@@ -79,6 +79,8 @@ class PolarAxes:
             ax.xaxis.grid(True,color='black',linestyle='-')
 
 def spider_plot(title: str, labels: list, silhouettes: dict, 
+        size: tuple = (5, 5),
+        dpi: int = 100,
         axis_min: float = None, 
         axis_max: float = None, 
         axis_value_decimals: int = 3, 
@@ -95,9 +97,12 @@ def spider_plot(title: str, labels: list, silhouettes: dict,
         axis_ticks: int = 5, 
         marker: str = 'o', 
         marker_size: int = 3,
-        fill_nan: bool = True):
+        fill_nan: bool = True,
+        legend_loc: str = 'lower left',
+        legend_bbox: tuple = (0,0)):
 
-    fig = plt.figure(figsize=(10,10), dpi=100)
+    fig = plt.figure(figsize=size, dpi=dpi)
+
     #axes = PolarAxes(fig, labels, labels)
     ax = plt.axes(projection='polar')
     ax.set_ylim(0, 1)
@@ -272,5 +277,5 @@ def spider_plot(title: str, labels: list, silhouettes: dict,
 
         ax.fill([v[0] for v in xy], [v[1] for v in xy], color=fill_color, alpha=silhouette_fill_alpha)
 
-    plt.legend()
+    plt.legend(loc=legend_loc, bbox_to_anchor=legend_bbox)
     return fig

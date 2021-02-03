@@ -99,6 +99,9 @@ class Properties:
         }
     }
 
+    source_colors = {'geodanmark': '#FF0000', 'kortopslag': '#00CC00', 'energifyn': '#FFA500', 'samaqua': '#1122CC', 'fjernvarme': '#A000A0', 'groundtruth': '#222222'}
+    source_labels = {'geodanmark': 'GeoDanmark', 'kortopslag': 'Municipal', 'energifyn': 'Energi Fyn', 'samaqua': 'Vancenter Syd', 'fjernvarme': 'Fjernvarme Fyn', 'groundtruth': 'Ground Truth'}
+
     @staticmethod
     def get_feature_label(feature_name):
         if feature_name in Properties.feature_properties:

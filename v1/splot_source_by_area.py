@@ -11,7 +11,7 @@ from jaolma.properties import Properties
 gis_data = [GISData(area, use_exclude_property=True) for area in Properties.areas]
 stats = [g.get_stats() for g in gis_data]
 
-plots = {'overview': True, 'n_gt': False, 'perf': False, 'err': False, 'acc': False, 'vis': False, 'n': False, 'n_all': False}
+plots = {'overview': False, 'perf': False, 'err': False, 'acc': False, 'vis': False, 'n': True, 'n_all': False}
 
 def get_gt_count(data):
     features = []
@@ -167,26 +167,33 @@ if plots['overview']:
 
     axis_max = [max(silhouettes[source][0] for source in GISData.all_sources), 100, 100, 100, 100, max(silhouettes[source][5] for source in GISData.all_sources)]
 
-    fig = spider_plot(
-            f'Area Overview',
-            labels=labels,
-            silhouettes=silhouettes,
-            axis_value_labels=False,
-            axis_value_decimals=2,
-            marker='o',
-            marker_size=3,
-            reversed_axes=[label == 'Error' for label in labels],
-            scale_type='set',
-            axis_min=[0 for _ in labels],
-            axis_max=axis_max
-        )
 
+    silhouettes = {Properties.source_labels[source]: silhouettes[source] for i, source in enumerate(silhouettes)}
+    fig = spider_plot(
+        f'Source Overview',
+        labels=labels,
+        silhouettes=silhouettes,
+        axis_value_labels=False,
+        axis_value_decimals=2,
+        marker='o',
+        marker_size=3,
+        reversed_axes=[label == 'Error' for label in labels],
+        scale_type='set',
+        axis_min=[0 for _ in labels],
+        axis_max=axis_max,
+        silhouette_line_color=[Properties.source_colors[source] for source in GISData.all_sources],
+        #legend_loc='right',
+        legend_bbox=(0.75, 0.05),
+    )
+
+    plt.savefig(f'sp_Overview.pdf')
 
 labels = ['Precision', 'Recall', 'F1']
 if plots['perf']:
     for stat, fn in zip(labels, [get_precision, get_recall, get_f1]):
         silhouettes = {source: [fn(d, source, area) for area, d in zip(Properties.areas_pretty, stats)] for source in GISData.all_sources}
 
+        silhouettes = {Properties.source_labels[source]: silhouettes[source] for i, source in enumerate(silhouettes)}
         fig = spider_plot(
             f'Area {stat}',
             labels=Properties.areas_pretty,
@@ -198,6 +205,9 @@ if plots['perf']:
             axis_min=[0 for _ in Properties.areas_pretty],
             marker='o',
             marker_size=3,
+            legend_loc=None,
+            legend_bbox=None,
+            silhouette_line_color=[Properties.source_colors[source] for source in GISData.all_sources],
         )
 
         plt.savefig(f'sp_{stat}.pdf')
@@ -205,6 +215,7 @@ if plots['perf']:
 if plots['err']:
     silhouettes = {source: [get_accuracy(d, source, area) for area, d in zip(Properties.areas_pretty, stats)] for source in GISData.all_sources}
     
+    silhouettes = {Properties.source_labels[source]: silhouettes[source] for i, source in enumerate(silhouettes)}
     fig = spider_plot(
         f'Area Error [m]',
         labels=Properties.areas_pretty,
@@ -214,6 +225,9 @@ if plots['err']:
         reversed_axes=[True for _ in Properties.areas_pretty],
         marker='o',
         marker_size=3,
+        legend_loc=None,
+        legend_bbox=None,
+        silhouette_line_color=[Properties.source_colors[source] for source in GISData.all_sources],
     )
 
     plt.savefig(f'sp_Error.pdf')
@@ -221,6 +235,7 @@ if plots['err']:
 if plots['acc']:
     silhouettes = {source: [get_accessibility(d, source, area) for area, d in zip(Properties.areas_pretty, stats)] for source in GISData.all_sources}
     
+    silhouettes = {Properties.source_labels[source]: silhouettes[source] for i, source in enumerate(silhouettes)}
     fig = spider_plot(
         f'Area Accessibility',
         labels=Properties.areas_pretty,
@@ -229,6 +244,9 @@ if plots['acc']:
         axis_value_decimals=2,
         marker='o',
         marker_size=3,
+        legend_loc=None,
+        legend_bbox=None,
+        silhouette_line_color=[Properties.source_colors[source] for source in GISData.all_sources],
     )
 
     plt.savefig(f'sp_Acc.pdf')
@@ -236,6 +254,7 @@ if plots['acc']:
 if plots['vis']:
     silhouettes = {source: [get_visibility(d, source, area) for area, d in zip(Properties.areas_pretty, stats)] for source in GISData.all_sources}
     
+    silhouettes = {Properties.source_labels[source]: silhouettes[source] for i, source in enumerate(silhouettes)}
     fig = spider_plot(
         f'Area Visibility',
         labels=Properties.areas_pretty,
@@ -244,14 +263,19 @@ if plots['vis']:
         axis_value_decimals=2,
         marker='o',
         marker_size=3,
+        legend_loc=None,
+        legend_bbox=None,
+        silhouette_line_color=[Properties.source_colors[source] for source in GISData.all_sources],
     )
 
     plt.savefig(f'sp_Vis.pdf')
 
 if plots['n']:
     silhouettes = {source: [get_count(d, source, area) for area, d in zip(Properties.areas_pretty, stats)] for source in GISData.all_sources}
-    silhouettes.update({'groundtruth': [get_gt_count(d) for d in gis_data]})
-    
+    #silhouettes.update({'groundtruth': [get_gt_count(d) for d in gis_data]})
+    sources = [source for source in silhouettes]
+
+    silhouettes = {Properties.source_labels[source]: silhouettes[source] for i, source in enumerate(silhouettes)}
     fig = spider_plot(
         f'Area Feature Count (True Positives)',
         labels=Properties.areas_pretty,
@@ -260,6 +284,9 @@ if plots['n']:
         axis_value_decimals=0,
         marker='o',
         marker_size=3,
+        legend_loc=None,
+        legend_bbox=None,
+        silhouette_line_color=[Properties.source_colors[source] for source in sources],
     )
 
     plt.savefig(f'sp_N_TP.pdf')
@@ -268,6 +295,7 @@ if plots['n_all']:
     silhouettes = {source: [get_count(d, source, area, false_positives=True) for area, d in zip(Properties.areas_pretty, stats)] for source in GISData.all_sources}
     silhouettes.update({'groundtruth': [get_gt_count(d) for d in gis_data]})
     
+    silhouettes = {Properties.source_labels[source]: silhouettes[source] for i, source in enumerate(silhouettes)}
     fig = spider_plot(
         f'Area Feature Count (True Positives and False Positives)',
         labels=Properties.areas_pretty,
@@ -276,6 +304,9 @@ if plots['n_all']:
         axis_value_decimals=0,
         marker='o',
         marker_size=3,
+        legend_loc=None,
+        legend_bbox=None,
+        silhouette_line_color=[Properties.source_colors[source] for source in GISData.all_sources],
     )
 
     plt.savefig(f'sp_N_All.pdf')
