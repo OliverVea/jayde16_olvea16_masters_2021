@@ -125,8 +125,6 @@ def plot(plottype):
 
     #plottype = pick_plottype(plottypes.keys())
 
-    colors = uniform_colors(len(silhouettes))
-
     inputs = {}
 
     #title = f'{title}'
@@ -135,15 +133,47 @@ def plot(plottype):
 
     col = [[export, back]]
 
-    i = 0
-    for silhouette in silhouettes:
-        color = colors[i]
-        label = list(Properties.feature_properties[key]['label'] for key in silhouettes.keys())[i]
+    sources = {}
 
-        col.append([sg.Checkbox(label, text_color = color, key=silhouette, enable_events=True)])
-        inputs[len(inputs)] = {'type': 'checkbox', 'typename': silhouette}
-        i += 1
-    
+    if plottype == 'plot_stats':
+        for silhouette in silhouettes:
+            source = Properties.feature_properties[silhouette]['origin']
+            if silhouette in Properties.feature_properties and source not in sources:
+                sources[source] = []
+            sources[source].append(silhouette)
+
+        for source in sources.keys():
+            col.append([sg.Text(source.capitalize(), enable_events=True)])
+
+            for i, feature in enumerate(list(sources[source])):
+                color = Properties.feature_properties[feature]['color']
+                label = Properties.feature_properties[list(sources[source])[i]]['label']
+
+                #label = list(Properties.feature_properties[key]['label'] for key in silhouettes.keys())[i]
+
+                col.append([sg.Checkbox(label, text_color = color, key=feature, enable_events=True)])
+                inputs[len(inputs)] = {'type': 'checkbox', 'source': source, 'typename': feature}
+    else:
+        i = 0
+        for silhouette in silhouettes:
+            source = Properties.feature_properties[silhouette]['origin']
+            if silhouette in Properties.feature_properties and source not in sources:
+                sources[source] = []
+                col.append([sg.Text(source.capitalize(), enable_events=True)])
+            sources[source].append(silhouette)
+
+            if plottype == 'plot_amount_gt':
+                color = Properties.area_colors[silhouette]
+            else:
+                color = '#FFFFFF'
+
+            label = list(key for key in silhouettes.keys())[i]
+
+            col.append([sg.Checkbox(label, text_color = color, key=silhouette, enable_events=True)])
+            inputs[len(inputs)] = {'type': 'checkbox', 'source': source, 'typename': silhouette}
+            i += 1
+        
+
     checkboxes = sg.Column(col, vertical_alignment='top')
 
     size = (1000,1000)
@@ -170,6 +200,23 @@ def plot(plottype):
         #Set types to all types that are checked on
         types = set([inputs[i]['typename'] for i in inputs if values[inputs[i]['typename']]])
 
+        #Check for click on a source
+        if type(event) == str and event.lower() in sources:
+            source = event.lower()
+
+            source_types = list(sources[source])
+
+            if all(typename in types for typename in source_types):
+                for typename in source_types:
+                    cb = window.find(typename)
+                    cb.update(value=False)
+                    types.remove(typename)
+            else:
+                for typename in source_types:
+                    cb = window.find(typename)
+                    cb.update(value=True)
+                    types.add(typename)
+
         #Destroy current canvas to allow for a new plot
         figure_canvas_agg.get_tk_widget().destroy()
 
@@ -182,7 +229,8 @@ def plot(plottype):
             #axis_min = [0,0,0,0,0,0]
             #axis_max = [100, 100, max(0.1, max(v[2] for v in plot_silhouettes.values())), 100, 100, max(0.1, max(v[5] for v in plot_silhouettes.values()))]
             if plottype == 'plot_amount_gt':
-                plot_colors = [colors[list(silhouettes.keys()).index(key)] for key in plot_silhouettes.keys()]
+                #plot_colors = [colors[list(silhouettes.keys()).index(key)] for key in plot_silhouettes.keys()]
+                colors = [Properties.area_colors[area] for area in plot_silhouettes]
                 fig = spider_plot(
                     title,
                     labels=labels,
@@ -193,7 +241,7 @@ def plot(plottype):
                     #axis_min=axis_min,
                     #axis_max=axis_max,
                     #reversed_axes=[False, False, True, False, False, False],
-                    silhouette_line_color=plot_colors,
+                    silhouette_line_color=colors,
                     silhouette_line_size=1.5,
                     silhouette_line_style='-.',
                     silhouette_fill_alpha=0.25,
@@ -206,7 +254,7 @@ def plot(plottype):
                 axis_min = [0,0,0,0,0,0]
                 axis_max = [100, 100, max(0.1, max(v[2] for v in plot_silhouettes.values())), 100, 100, max(0.1, max(v[5] for v in plot_silhouettes.values()))]
 
-                plot_silhouettes = {Properties.feature_properties[key]['label']: silhouettes[key] for key in silhouettes}
+                plot_silhouettes = {Properties.feature_properties[key]['label']: plot_silhouettes[key] for key in plot_silhouettes}
 
                 fig = spider_plot(
                     title,
