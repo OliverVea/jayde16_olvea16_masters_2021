@@ -91,3 +91,30 @@ class Color:
 
 def flatten(dictionary):
     return [b for a in dictionary for b in dictionary[a]]
+
+def find_in_string(s, before, after, dtype=None):
+    if before != '' and before != None:
+        if not before in s:
+            raise Exception(f'Argument before "{before}" could not be found in string "{s}".')
+        
+        s = s.split(before)[1]
+
+    if after != '' and after != None:
+        if not after in s:
+            raise Exception(f'Argument after ("{after}") could not be found in string "{s}".')
+
+        s = s.split(after)[0]
+
+    if dtype != None:
+        s = dtype(s)
+
+    return s
+
+s = "32.471 visninger•Streamede live for 7 timer siden"
+before = 'live for '
+after = ' timer siden'
+dtype = None
+
+val = find_in_string(s, before, after=None, dtype=dtype)
+
+print(val)
