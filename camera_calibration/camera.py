@@ -8,6 +8,7 @@ from enum import Enum
 class CameraModels(Enum):
     DEFAULT = 0
     FISHEYE = 1
+    OMNIDIR = 2
 
 class Camera:
     def __init__(self, camera_matrix, distortion_coefficients, camera_model: str = None):
