@@ -2,9 +2,13 @@ import cv2
 import numpy as np
 from math import tan, pi, cos, sin
 
+from camera_calibration import CameraModels
+
 img = cv2.imread('angleimages/vlcsnap-2021-02-22-22h23m07s859.png')
 
+camera_model = CameraModels.FISHEYE
 retval, cameraMatrix, distCoeffs, rvecs, tvecs, stdDeviationsIntrinsics, stdDeviationsExtrinsics, perViewErrors, obj_points, img_points, not_used = np.load('camera_calibration_14dp_final.npy', allow_pickle=True)
+
 
 DIM = (816, 616)
 camera_fov = 220

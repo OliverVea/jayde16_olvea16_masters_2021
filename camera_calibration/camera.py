@@ -11,20 +11,10 @@ class CameraModels(Enum):
     OMNIDIR = 2
 
 class Camera:
-    def __init__(self, camera_matrix, distortion_coefficients, camera_model: str = None):
+    def __init__(self, camera_matrix, distortion_coefficients, camera_model = CameraModels.DEFAULT):
         self.K = camera_matrix
         self.d = distortion_coefficients
-        self.type = camera_model
-
-        if camera_model == CameraModels.FISHEYE:
-            self.projectPoints = cv2.fisheye.projectPoints
-            self.getOptimalNewCameraMatrix = cv2.fisheye.estimateNewCameraMatrixForUndistortRectify
-            self.initUndistortRectifyMap = cv2.fisheye.initUndistortRectifyMap
-
-        else:
-            self.projectPoints = cv2.projectPoints
-            self.getOptimalNewCameraMatrix = cv2.getOptimalNewCameraMatrix
-            self.initUndistortRectifyMap = cv2.initUndistortRectifyMap
+        self.model = camera_model
     
     def transform_image(self, input, size: tuple, fov: tuple):
         input_size = (input.shape[1], input.shape[0])
@@ -41,7 +31,11 @@ class Camera:
             (0, sin(va), cos(va))])
 
         # Edge (center-)points in pixel coordinates
-        pts, _ = self.projectPoints(pts, rvec=np.zeros((3,1)), tvec=np.zeros((3,1)), cameraMatrix=self.K, distCoeffs=self.d)
+        if self.model == CameraModels.FISHEYE:
+            pts, _ = cv2.fisheye.projectPoints(pts.reshape((pts.shape[0],1,3)), rvec=np.zeros((3,1)), tvec=np.zeros((3,1)), K=self.K, D=self.d)
+
+        if self.model == CameraModels.DEFAULT:
+            pts, _ = cv2.projectPoints(pts, rvec=np.zeros((3,1)), tvec=np.zeros((3,1)), cameraMatrix=self.K, distCoeffs=self.d)
 
         # Calculating the necessary upscaling to crop the ROI to the desired image size.
         width = max(pts[:,0,0]) - min(pts[:,0,0])
@@ -51,10 +45,19 @@ class Camera:
         uncropped_size = (int(scale[0] * input_size[0]), int(scale[1] * input_size[1]))
 
         # Calculating new camera matrix (nK)
-        nK, _ = self.getOptimalNewCameraMatrix(cameraMatrix=self.K, distCoeffs=self.d, imageSize=input_size, newImgSize=uncropped_size, alpha=0.0)
+        if self.model == CameraModels.FISHEYE:
+            nK = cv2.fisheye.estimateNewCameraMatrixForUndistortRectify(K=self.K, D=self.d, image_size=input_size, new_size=uncropped_size, R = np.eye(3,3))
+
+        if self.model == CameraModels.DEFAULT:
+            nK, _ = cv2.estimateNewCameraMatrixForUndistortRectify(cameraMatrix=self.K, distCoeffs=self.d, imageSize=input_size, newImgSize=uncropped_size, alpha=0.0)
 
         # Undistoring image
-        map1, map2 = self.initUndistortRectifyMap(cameraMatrix=self.K, distCoeffs=self.d, R=np.eye(3,3), newCameraMatrix=nK, size=uncropped_size, m1type=cv2.CV_32FC1)
+        if self.model == CameraModels.FISHEYE:
+            map1, map2 = cv2.fisheye.initUndistortRectifyMap(K=self.K, D=self.d, R=np.eye(3,3), P=nK, size=uncropped_size, m1type=cv2.CV_32FC1)
+
+        if self.model == CameraModels.DEFAULT:
+            map1, map2 = cv2.initUndistortRectifyMap(cameraMatrix=self.K, distCoeffs=self.d, R=np.eye(3,3), newCameraMatrix=nK, size=uncropped_size, m1type=cv2.CV_32FC1)
+
         output = cv2.remap(input, map1, map2, interpolation=cv2.INTER_CUBIC)
         
         # Extracting principal point (center of camera)

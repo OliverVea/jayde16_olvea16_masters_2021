@@ -1,21 +1,25 @@
-from camera import Camera
+from camera import Camera, CameraModels
 
 import cv2
 import numpy as np
 import os
 
-retval, K, d, rvecs, tvecs, stdDeviationsIntrinsics, stdDeviationsExtrinsics, perViewErrors, obj_points, img_points, not_used = np.load('camera_calibration_14dp_final_large.npy', allow_pickle=True)
+camera_model = CameraModels.FISHEYE
+retval, K, d, rvecs, tvecs, obj_points_temp, img_points_temp, not_used = np.load('30mm_calibration_params_fixed.npy', allow_pickle=True)
+#retval, K, d, rvecs, tvecs, stdDeviationsIntrinsics, stdDeviationsExtrinsics, perViewErrors, obj_points, img_points, not_used = np.load('30mm_calibration_params_fixed.npy', allow_pickle=True)
 
-cam = Camera(camera_matrix=K, distortion_coefficients=d)
+cam = Camera(camera_matrix=K, distortion_coefficients=d, camera_model=camera_model)
 
 image_size = (640*2, 480*2)
-image_fov = (100, 120)
+image_fov = (150, 120)
 
-show_image = True
+show_image = False
 
 path = 'D:\\WindowsFolders\\Desktop\\camera_capture\\videos\\'
 
 files = os.listdir(path)
+
+files = ['2021-02-24_14-13-25.yuv']
 
 print(f'Found {len(files)} files:')
 print('\n'.join(files))
