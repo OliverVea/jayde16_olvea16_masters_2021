@@ -48,7 +48,17 @@ class GISData:
                 del row['geometry']
 
                 feature = Feature(geometry, srs=Properties.default_srs, tag=tag, attributes=row)
-                features.setdefault(row['typename'], []).append(feature)
+
+                if row['typename'] == 'L167365_421559':
+                    if row['category'] == 'Slyng- og klatreplanter':
+                        features.setdefault(row['category'], []).append(feature)
+                    elif row['sub_category'] in ['Affaldsspand','Monument','Bænk','Bord/bænk']:
+                        if row['sub_category'] == 'Bord/bænk':
+                            features.setdefault('Bænk', []).append(feature)
+                        else:
+                            features.setdefault(row['sub_category'], []).append(feature)
+                else:
+                    features.setdefault(row['typename'], []).append(feature)
             result[source] = features
             
         return result
@@ -63,7 +73,6 @@ class GISData:
         ids = [ft['id'] for ft in fts]
 
         acc = [row['Accessibility'] for n, row in data.iterrows() if str(row['Feature ID']) in ids]
-        
         ovis = [row['Obstructed Visibility'] for n, row in data.iterrows() if str(row['Feature ID']) in ids]
         vis = [100 * (a/100 + (1 - a/100) * v/100) for a, v in zip(acc, ovis)]
 
@@ -72,7 +81,8 @@ class GISData:
     # This function returns whether or not a ground truth feature should qualify as some service feature type.
     def _should_qualify(self, feature, typename):
         translation = {'heating_cover': ['Manhole Cover'], 'TL740800': ['Fuse Box'], 'TL740798': ['Light Fixture'], 
-            'L418883_421469': ['Tree'], 'TL965167': ['Downspout Grille', 'Manhole Cover'], 'L167365_421559': ['Bench', 'Trash Can', 'Statue', 'Misc', 'Rock', 'Greenery'],
+            'L418883_421469': ['Tree'], 'TL965167': ['Downspout Grille', 'Manhole Cover'], 'L167365_421559': ['Bench', 'Trash Can', 'Statue', 'Misc', 'Rock', 'Greenery'], 
+            'Bænk': ['Bench'], 'Affaldsspand': ['Trash Can'], 'Monument': ['Statue'], 'Slyng- og klatreplanter': ['Greenery'],
             'water_node': ['Manhole Cover'], 'Broenddaeksel': ['Manhole Cover'],  'Mast': ['Light Fixture'],  
             'Trae': ['Tree'], 'Nedloebsrist': ['Downspout Grille'], 'Skorsten': ['Chimney']}
 
