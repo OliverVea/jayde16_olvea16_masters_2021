@@ -1,3 +1,4 @@
+from numpy.lib.function_base import average
 from jaolma.properties import Properties
 from jaolma.plotting.spider_plot import spider_plot
 from jaolma.gui import simple_dropdown
@@ -90,7 +91,7 @@ def _get_amount_gt():
     
     title = 'Feature count across areas'
     #labels=['Precision', 'Recall', 'Error', 'Visibility', 'Accessibility', 'True Positives']
-    labels = ['Tree', 'Light Fixture', 'Downspout Grille', 'Manhole Cover', 'Bench', 'Trash Can']
+    labels = ['Tree', 'Light Fixture', 'Downspout Grille', 'Manhole Cover', 'Bench', 'Trash Can', 'Statue', 'Fuse Box', 'Greenery', 'Chimney']
 
     silhouettes = {}
     source = 'groundtruth'
@@ -125,6 +126,10 @@ def plot(plottype):
 
     #plottype = pick_plottype(plottypes.keys())
 
+    #amount_features_average = np.sum([sil for sil in silhouettes.values()], axis=0)
+
+    #print([labels, amount_features_average])
+
     inputs = {}
 
     #title = f'{title}'
@@ -156,11 +161,6 @@ def plot(plottype):
     else:
         i = 0
         for silhouette in silhouettes:
-            source = Properties.feature_properties[silhouette]['origin']
-            if silhouette in Properties.feature_properties and source not in sources:
-                sources[source] = []
-                col.append([sg.Text(source.capitalize(), enable_events=True)])
-            sources[source].append(silhouette)
 
             if plottype == 'plot_amount_gt':
                 color = Properties.area_colors[silhouette]
@@ -170,7 +170,7 @@ def plot(plottype):
             label = list(key for key in silhouettes.keys())[i]
 
             col.append([sg.Checkbox(label, text_color = color, key=silhouette, enable_events=True)])
-            inputs[len(inputs)] = {'type': 'checkbox', 'source': source, 'typename': silhouette}
+            inputs[len(inputs)] = {'type': 'checkbox', 'typename': silhouette}
             i += 1
         
 
@@ -245,6 +245,7 @@ def plot(plottype):
                     silhouette_line_size=1.5,
                     silhouette_line_style='-.',
                     silhouette_fill_alpha=0.25,
+                    axis_value_decimals=0
                     )
 
             elif plottype == 'plot_stats':
@@ -252,7 +253,7 @@ def plot(plottype):
                 fill_colors = [Properties.source_colors[Properties.feature_properties[ft]['origin']] for ft in plot_silhouettes]
 
                 axis_min = [0,0,0,0,0,0]
-                axis_max = [100, 100, max(0.1, max(v[2] for v in plot_silhouettes.values())), 100, 100, max(0.1, max(v[5] for v in plot_silhouettes.values()))]
+                axis_max = [max(0.1, max(v[0] for v in plot_silhouettes.values())), 100, 100, 100, 100, max(0.1, max(v[5] for v in plot_silhouettes.values()))]
 
                 plot_silhouettes = {Properties.feature_properties[key]['label']: plot_silhouettes[key] for key in plot_silhouettes}
 
@@ -265,12 +266,14 @@ def plot(plottype):
                     axis_value_labels=False,
                     axis_min=axis_min,
                     axis_max=axis_max,
-                    reversed_axes=[False, False, True, False, False, False],
+                    reversed_axes=[False, False, False, False, False, True],
                     silhouette_line_color=line_colors,
                     silhouette_fill_color=fill_colors,
                     silhouette_line_size=1.5,
                     silhouette_line_style='-.',
                     silhouette_fill_alpha=0.25,
+                    axis_value_decimals=2,
+                    axis_value_dec_list=[0,0,0,0,0,3],
                 )
 
             figure_canvas_agg = FigureCanvasTkAgg(fig, window["Radar"].TKCanvas)

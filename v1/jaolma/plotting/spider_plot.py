@@ -84,6 +84,7 @@ def spider_plot(title: str, labels: list, silhouettes: dict,
         axis_min: float = None, 
         axis_max: float = None, 
         axis_value_decimals: int = 3, 
+        axis_value_dec_list: list = None,
         axis_value_labels: bool = True, 
         scale_type: str = 'total_max', 
         label_origin: bool = True, 
@@ -192,7 +193,11 @@ def spider_plot(title: str, labels: list, silhouettes: dict,
 
     if axis_ticks != None:
         tick_values = [(i + 1) / axis_ticks for i in range(axis_ticks)]
-        tick_labels = [[labelize(axes[i].denormalize(v), axis_value_decimals) for v in tick_values] for i in range(n_values)]
+
+        if axis_value_dec_list != None:
+            tick_labels = [[labelize(axes[i].denormalize(v), ax_val_dec) for v in tick_values] for i, ax_val_dec in zip(range(n_values), axis_value_dec_list)]
+        else:
+            tick_labels = [[labelize(axes[i].denormalize(v), axis_value_decimals) for v in tick_values] for i in range(n_values)]
 
         ax.set_yticks(tick_values)
         ax.set_yticklabels([])

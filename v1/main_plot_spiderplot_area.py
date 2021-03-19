@@ -31,7 +31,7 @@ def _get_stats(area):
         for ft_name, ft in zip(features.keys(), features.values()):
             if ft == None or ft.get_recall() == None:
                 continue
-            label = Properties.feature_properties[ft_name]['label']
+            label = ft_name#Properties.feature_properties[ft_name]['label']
             sources[source].append(label)
             silhouettes[label] = []
             silhouettes[label].append(round(ft.get_precision()*100,1))
@@ -62,7 +62,9 @@ def plot(area):
     else:
         silhouettes, labels, sources, title = _get_stats(area)
 
-    colors = uniform_colors(len(silhouettes))
+    #colors = uniform_colors(len(silhouettes))
+
+    colors = [Properties.feature_properties[silhouette]['color'] for silhouette in silhouettes]
 
     inputs = {}
 
@@ -81,7 +83,7 @@ def plot(area):
 
         for feature in list(sources[source]):
             color = colors[i]
-            label = list(silhouettes.keys())[i]
+            label = Properties.feature_properties[list(silhouettes.keys())[i]]['label']
 
             col.append([sg.Checkbox(label, text_color = color, key=feature, enable_events=True)])
             inputs[len(inputs)] = {'type': 'checkbox', 'source': source, 'typename': feature}
@@ -141,6 +143,8 @@ def plot(area):
             #Filter colors to fit the checkboxes
             plot_colors = [colors[list(silhouettes.keys()).index(key)] for key in plot_silhouettes.keys()]
 
+            plot_silhouettes = dict((Properties.feature_properties[k]['label'], v) for k, v in zip(plot_silhouettes.keys(), plot_silhouettes.values()))
+
             #Set minimum and maximum of all axes
             axis_min = [0,0,0,0,0,0]
             axis_max = [100, 100, max(0.1, max(v[2] for v in plot_silhouettes.values())), 100, 100, max(0.1, max(v[5] for v in plot_silhouettes.values()))]
@@ -159,6 +163,7 @@ def plot(area):
             silhouette_line_size=1.5,
             silhouette_line_style='-.',
             silhouette_fill_alpha=0.25,
+            axis_value_decimals=0
             )
 
             figure_canvas_agg = FigureCanvasTkAgg(fig, window["Radar"].TKCanvas)

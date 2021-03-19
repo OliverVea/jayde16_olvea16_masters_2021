@@ -20,14 +20,14 @@ class Properties:
     radius = 100
 
     feature_properties = {
-        'TL695099': {'origin': 'kortopslag', 'label': 'Building (ki)', 'color': '#700000', 'exclude': True},
-        'TL965167': {'origin': 'kortopslag', 'label': 'Road Well (ki)', 'color': '#ff00ff', 'exclude': False},
-        'L418883_421469': {'origin': 'kortopslag', 'label': 'Park Tree (ki)', 'color': '#00851b', 'exclude': False},
-        'L167365_421559': {'origin': 'kortopslag', 'label': 'Park Point (ki)', 'color': '#6e452f', 'exclude': False},
-        'Bænk': {'origin': 'kortopslag', 'label': 'Bench (ki)', 'color': '#613a3a', 'exclude': False},
-        'Affaldsspand': {'origin': 'kortopslag', 'label': 'Trash Can (ki)', 'color': '#454343', 'exclude': False},
-        'Monument': {'origin': 'kortopslag', 'label': 'Statue (ki)', 'color': '#b5b1b1', 'exclude': False},
-        'Slyng- og klatreplanter': {'origin': 'kortopslag', 'label': 'Greenery (ki)', 'color': '#277d41', 'exclude': False},
+        'TL695099': {'origin': 'kortopslag', 'label': 'Building (ko)', 'color': '#700000', 'exclude': True},
+        'TL965167': {'origin': 'kortopslag', 'label': 'Road Well (ko)', 'color': '#ff00ff', 'exclude': False},
+        'L418883_421469': {'origin': 'kortopslag', 'label': 'Park Tree (ko)', 'color': '#00851b', 'exclude': False},
+        'L167365_421559': {'origin': 'kortopslag', 'label': 'Park Point (ko)', 'color': '#6e452f', 'exclude': False},
+        'Bænk': {'origin': 'kortopslag', 'label': 'Bench (ko)', 'color': '#613a3a', 'exclude': False},
+        'Affaldsspand': {'origin': 'kortopslag', 'label': 'Trash Can (ko)', 'color': '#454343', 'exclude': False},
+        'Monument': {'origin': 'kortopslag', 'label': 'Statue (ko)', 'color': '#b5b1b1', 'exclude': False},
+        'Slyng- og klatreplanter': {'origin': 'kortopslag', 'label': 'Greenery (ko)', 'color': '#277d41', 'exclude': False},
 
         'Bygning': {'origin': 'geodanmark', 'label': 'Building (gd)', 'color': '#ff0000', 'exclude': True},
         'Broenddaeksel': {'origin': 'geodanmark', 'label': 'Manhole Cover (gd)', 'color': '#ac0fdb', 'exclude': False},
