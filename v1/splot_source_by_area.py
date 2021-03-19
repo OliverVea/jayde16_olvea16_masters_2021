@@ -7,7 +7,6 @@ import numpy as np
 from jaolma.data_treatment.data_treatment import GISData
 from jaolma.properties import Properties
 
-
 gis_data = [GISData(area, use_exclude_property=True) for area in Properties.areas]
 stats = [g.get_stats() for g in gis_data]
 

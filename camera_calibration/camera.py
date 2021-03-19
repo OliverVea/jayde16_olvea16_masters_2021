@@ -86,12 +86,19 @@ class Camera:
 
     @staticmethod
     def load(file):
-        pass
+        camera_matrix, distortion_coefficients, camera_model, retval, rvecs, tvecs = np.load(file, allow_pickle=True)
+
+        return Camera(camera_matrix=camera_matrix, 
+            distortion_coefficients=distortion_coefficients, 
+            camera_model=camera_model,
+            retval=retval,
+            rvecs=rvecs,
+            tvecs=tvecs,)
 
     def save(self, file):
-        pass
+        np.save(file, np.array([self.camera_matrix, self.distortion_coefficients, self.camera_model, self.retval, self.rvecs, self.tvecs]), dtype='object')
 
-    def transform_image(self, input, size: tuple, fov: tuple):
+    def transform_image(self, input, size: tuple, fov: tuple, ax: float = 0, ay: float = 0, az: float = 0):
         input_size = (input.shape[1], input.shape[0])
 
         # Translating FOV from angles to radians.
@@ -100,10 +107,10 @@ class Camera:
         
         # Edge (center-)points of ROI in 3D space
         pts = np.array([
-            (sin(-ha), 0, cos(-ha)), 
-            (sin(ha), 0, cos(ha)),
-            (0, sin(-va), cos(-va)), 
-            (0, sin(va), cos(va))])
+            (sin(-ha + ay), 0, cos(-ha + ay)), 
+            (sin(ha + ay), 0, cos(ha + ay)),
+            (0, sin(-va + ax), cos(-va + ax)), 
+            (0, sin(va + ax), cos(va + ax))])
 
         # Edge (center-)points in pixel coordinates
         if self.model == CameraModels.FISHEYE:
@@ -119,19 +126,26 @@ class Camera:
         scale = (size[0] / width, size[1] / height)
         uncropped_size = (int(scale[0] * input_size[0]), int(scale[1] * input_size[1]))
 
+        # Testing rotation
+        R = np.eye(3)
+        Rx = [[1, 0, 0], [0, cos(ax), -sin(ax)], [0, sin(ax), cos(ax)]]
+        Ry = [[cos(ay), 0, sin(ay)], [0, 1, 0], [-sin(ay), 0, cos(ay)]]
+        Rz = [[cos(az), -sin(az), 0], [sin(az), cos(az), 0], [0, 0, 1]]
+        R = np.dot(np.dot(np.array(Rx), np.array(Ry)), np.array(Rz))
+
         # Calculating new camera matrix (nK)
         if self.model == CameraModels.FISHEYE:
-            nK = cv2.fisheye.estimateNewCameraMatrixForUndistortRectify(K=self.K, D=self.d, image_size=input_size, new_size=uncropped_size, R=np.eye(3,3))
+            nK = cv2.fisheye.estimateNewCameraMatrixForUndistortRectify(K=self.K, D=self.d, image_size=input_size, new_size=uncropped_size, R=np.eye(3))
 
         if self.model == CameraModels.DEFAULT:
             nK, _ = cv2.estimateNewCameraMatrixForUndistortRectify(cameraMatrix=self.K, distCoeffs=self.d, imageSize=input_size, newImgSize=uncropped_size, alpha=0.0)
 
         # Undistoring image
         if self.model == CameraModels.FISHEYE:
-            map1, map2 = cv2.fisheye.initUndistortRectifyMap(K=self.K, D=self.d, R=np.eye(3,3), P=nK, size=uncropped_size, m1type=cv2.CV_32FC1)
+            map1, map2 = cv2.fisheye.initUndistortRectifyMap(K=self.K, D=self.d, R=R, P=nK, size=uncropped_size, m1type=cv2.CV_32FC1)
 
         if self.model == CameraModels.DEFAULT:
-            map1, map2 = cv2.initUndistortRectifyMap(cameraMatrix=self.K, distCoeffs=self.d, R=np.eye(3,3), newCameraMatrix=nK, size=uncropped_size, m1type=cv2.CV_32FC1)
+            map1, map2 = cv2.initUndistortRectifyMap(cameraMatrix=self.K, distCoeffs=self.d, R=R, newCameraMatrix=nK, size=uncropped_size, m1type=cv2.CV_32FC1)
 
         output = cv2.remap(input, map1, map2, interpolation=cv2.INTER_CUBIC)
         
@@ -147,32 +161,44 @@ class Camera:
 
         return output
 
-import glob
-from tqdm import tqdm
-import shutil
+if __name__ == '__main__':
+    import glob
+    from tqdm import tqdm
+    import shutil
 
-datasetpath = "30mmhandpicked/*"
+    datasetpath = "30mmhandpicked/*"
 
-image_files = glob.glob(datasetpath)
+    image_files = glob.glob(datasetpath)
 
-print('Loading images:')
-color_images = [cv2.imread(f) for f in tqdm(image_files)]
+    print('Loading images:')
+    color_images = [cv2.imread(f) for f in tqdm(image_files)]
 
-greyscale_images = [cv2.cvtColor(c_img, cv2.COLOR_BGR2GRAY) for c_img in tqdm(color_images)]
+    greyscale_images = [cv2.cvtColor(c_img, cv2.COLOR_BGR2GRAY) for c_img in tqdm(color_images)]
 
-image_shape = color_images[0].shape[:2]
+    image_shape = color_images[0].shape[:2]
 
-exception_thrown = True
-while exception_thrown:
-    try:
-        camera = Camera.calibrate(images=greyscale_images, pattern_size=(5,8), camera_model=CameraModels.FISHEYE)
-        exception_thrown = False
-    except Exception as e:
-        if image_files is not None:
-            i = int(e.err.split(' ')[-1])
-            shutil.move(image_files[i], '30mmcalibcheckcond/' + image_files[i].split('\\')[1])
-            del greyscale_images[i]
-            del image_files[i]
-        print(e)
+    exception_thrown = True
+    while exception_thrown:
+        try:
+            camera = Camera.calibrate(images=greyscale_images, pattern_size=(5,8), camera_model=CameraModels.FISHEYE)
+            exception_thrown = False
+        except Exception as e:
+            if image_files is not None:
+                i = int(e.err.split(' ')[-1])
+                shutil.move(image_files[i], '30mmcalibcheckcond/' + image_files[i].split('\\')[1])
+                del greyscale_images[i]
+                del image_files[i]
+            print(e)
 
-print(camera)
+    print(camera)
+
+    img = cv2.imread('D:\\WindowsFolders\\Code\\Master\\jayde16_olvea16_masters_2021\\camera_calibration\\angleimages\\vlcsnap-2021-02-22-22h23m07s859.png')
+
+    cv2.imshow('original', img)
+
+    for i in range(6):
+        im = camera.transform_image(img, (816*2/3, 616*2/3), (120, 90), ay=(i * -15 * pi / 180))
+        im = cv2.line(im, (int(im.shape[1]/2), 0), (int(im.shape[1]/2), im.shape[0]), (255, 0, 0))
+        cv2.imshow(f"Rotated {i * 15} degrees.", im)
+
+    cv2.waitKey()
