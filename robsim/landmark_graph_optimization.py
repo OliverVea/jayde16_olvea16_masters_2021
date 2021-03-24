@@ -1,7 +1,7 @@
 from primitives.point import Point
 from primitives.line import Line
 
-from math import log, atan2
+from math import log, atan2, pi
 from random import choice, random
 
 def fit_line(pts, threshold: float, T: int = None, p: float = 0.99, e: float = 0.5):
@@ -28,6 +28,13 @@ def fit_line(pts, threshold: float, T: int = None, p: float = 0.99, e: float = 0
 
     return line, inliers, outliers
 
+def angle_diff(a, b):
+    return min(a - b, a - b + 2*pi)
+
+def is_between(angle, a_from, a_to, d: float = 0):
+    if a_from < a_to:
+        return a_from - d <= angle <= a_to + d
+    return a_to - d <= angle <= a_from + d
 
 def get_corners(pts, angle_threshold: float = 5, pt_threshold: int = 6, dist_threshold: float = 0.01, T: int = None, p: float = 0.99, e: float = 0.5):
     lines = []
@@ -52,15 +59,17 @@ def get_corners(pts, angle_threshold: float = 5, pt_threshold: int = 6, dist_thr
             a0, a1 = inliers_a[0], inliers_a[-1]
             b0, b1 = inliers_b[0], inliers_b[-1]
 
-            va0, va1 = atan2(a0.y, a0.x), atan2(a1.y, a1.x)
-            vb0, vb1 = atan2(b0.y, b0.x), atan2(b1.y, b1.x)
+            angles0 = [atan2(a0.y, a0.x), atan2(a1.y, a1.x)]
+            angles1 = [atan2(b0.y, b0.x), atan2(b1.y, b1.x)]
 
             p, t, u = a.get_intersection(b)
 
-            if -0.1 <= t <= 1.1 and -0.1 <= u <= 1.1:
+            angle = atan2(p.y, p.x)
+
+            if is_between(angle, *angles0) and is_between(angle, *angles1):
                 pts.append(p)
     
-    return p
+    return lines, pts
 
     print(len(lines))
 
@@ -72,18 +81,21 @@ ys = [x + random() for x in xs]
 pts = [Point(x, y) for x, y in zip(xs, ys)]
 
 xs = [100 * i / 20 for i in range(20)]
-ys = [-x + 50 + random() for x in xs]
+ys = [-x + 100 + random() for x in xs]
 
 pts = pts + [Point(x, y) for x, y in zip(xs, ys)]
 
 pts = sorted(pts, key = lambda pt: atan2(pt.y, pt.x))
 
-for i in range(len(pts) - 1):
-    plt.plot([pt.x for pt in pts[:i + 1]], [pt.y for pt in pts[:i + 1]], 'o')
-    plt.axline((0, 0), (pts[i].x, pts[i].y))
-    plt.show()
+lines, corners = get_corners(pts, pt_threshold=6, dist_threshold=1)
 
-corners = get_corners(pts, pt_threshold=6, dist_threshold=1)
+plt.plot([pt.x for pt in pts], [pt.y for pt in pts], 'x')
+
+for (line, inliers) in lines:
+    plt.axline((line.a.x, line.a.y), (line.b.x, line.b.y))
+
+plt.plot([pt.x for pt in corners], [pt.y for pt in corners], 'o')
+plt.show()
 
 if __name__ == '__main__':
     import matplotlib.pyplot as plt
