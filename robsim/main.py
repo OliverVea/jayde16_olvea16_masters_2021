@@ -336,8 +336,7 @@ if __name__ == '__main__':
         print(f'[STATUS] LiDAR data saved to \'{filename}\'.')
 
         plt.show(block=False)
-
-        #for i, origin in enumerate(route):
+        
         fig = ws.plot(figname=figname, border=0, grid_size=0.5) 
         
         lines = []

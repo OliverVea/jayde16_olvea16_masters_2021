@@ -1,11 +1,14 @@
 from primitives.point import Point
 from primitives.line import Line
+from utility import dist_l2
 
-from math import log, atan2, pi
+from math import log, atan2, pi, radians, degrees
 from random import choice, random
 
 def fit_line(pts, threshold: float, T: int = None, p: float = 0.99, e: float = 0.5):
     assert len(pts) > 1
+
+    # https://www.youtube.com/watch?v=9D5rrtCC_E0 (3:30)
     if T == None:
         T = int(log(1 - p) / log(1 - (1 - e)**2))
 
@@ -13,10 +16,21 @@ def fit_line(pts, threshold: float, T: int = None, p: float = 0.99, e: float = 0
     outliers = []
     for t in range(T):
         a = b = choice(pts)
+
+        # Samples point b to be different to a, since random.choice doesnt have replace = False for some reason.
         while b == a:
             b = choice(pts)
 
         temp_line = Line(a, b)
+
+        # temp_inliers = []
+        # for pt in pts:
+        #     if temp_line.get_distance(pt) <= threshold:
+        #         temp_inliers.append(pt)
+        #     else:
+        #         # This makes sure that there are no gaps in lines.
+        #         if len(temp_inliers) > 0:
+        #             break
 
         temp_inliers = [pt for pt in pts if temp_line.get_distance(pt) <= threshold]
         temp_outliers = [pt for pt in pts if not pt in temp_inliers]
@@ -29,14 +43,22 @@ def fit_line(pts, threshold: float, T: int = None, p: float = 0.99, e: float = 0
     return line, inliers, outliers
 
 def angle_diff(a, b):
-    return min(a - b, a - b + 2*pi)
+    return min(abs(a - b), abs(a - b + 2*pi), abs(a - b - 2*pi))
 
 def is_between(angle, a_from, a_to, d: float = 0):
     if a_from < a_to:
         return a_from - d <= angle <= a_to + d
     return a_to - d <= angle <= a_from + d
 
-def get_corners(pts, angle_threshold: float = 5, pt_threshold: int = 6, dist_threshold: float = 0.01, T: int = None, p: float = 0.99, e: float = 0.5):
+def get_angular_difference(origin: Point, a: Point, b: Point, t: str = 'radians'):
+    v = [atan2(pt.y - origin.y, pt.x - origin.x) for pt in [a, b]]
+    d = angle_diff(*v)
+
+    if t == 'degrees':
+        return degrees(d)
+    return d
+
+def get_corners(pts, angle_threshold: float = 7, pt_threshold: int = 6, dist_threshold: float = 0.01, T: int = None, p: float = 0.99, e: float = 0.5):
     lines = []
 
     while len(pts) > pt_threshold:
@@ -55,47 +77,56 @@ def get_corners(pts, angle_threshold: float = 5, pt_threshold: int = 6, dist_thr
 
     for i, (a, inliers_a) in enumerate(lines):
         for (b, inliers_b) in lines[i + 1:]:
+            dists = [get_angular_difference(Point(0,0), inlier_a, inlier_b, t='degrees') for inlier_a in inliers_a for inlier_b in inliers_b]
 
-            a0, a1 = inliers_a[0], inliers_a[-1]
-            b0, b1 = inliers_b[0], inliers_b[-1]
+            if min(dists) > angle_threshold:
+                continue
 
-            angles0 = [atan2(a0.y, a0.x), atan2(a1.y, a1.x)]
-            angles1 = [atan2(b0.y, b0.x), atan2(b1.y, b1.x)]
+            r = a.get_intersection(b)
+            if r == None:
+                continue
 
-            p, t, u = a.get_intersection(b)
-
-            angle = atan2(p.y, p.x)
-
-            if is_between(angle, *angles0) and is_between(angle, *angles1):
-                pts.append(p)
+            p, t, u = r
+            pts.append(p)
     
     return lines, pts
 
     print(len(lines))
 
 import matplotlib.pyplot as plt
+import json
 
-xs = [100 * i / 20 for i in range(20)]
-ys = [x + random() for x in xs]
+with open('lidar_data.json') as f:
+    data = json.load(f)
 
-pts = [Point(x, y) for x, y in zip(xs, ys)]
+while True:
+    pts = choice(data)['scan']
 
-xs = [100 * i / 20 for i in range(20)]
-ys = [-x + 100 + random() for x in xs]
+    max_range = 4
 
-pts = pts + [Point(x, y) for x, y in zip(xs, ys)]
+    pts = [Point(pt[0], pt[1]) for pt in pts if dist_l2(Point(0, 0), pt) < max_range]
 
-pts = sorted(pts, key = lambda pt: atan2(pt.y, pt.x))
+    dists = [dist_l2(Point(0, 0), pt) for pt in pts]
 
-lines, corners = get_corners(pts, pt_threshold=6, dist_threshold=1)
+    lines, corners = get_corners(pts, pt_threshold=3, dist_threshold=0.02)
 
-plt.plot([pt.x for pt in pts], [pt.y for pt in pts], 'x')
+    plt.plot((0,), (0,), 'o', color='r')
 
-for (line, inliers) in lines:
-    plt.axline((line.a.x, line.a.y), (line.b.x, line.b.y))
+    for pt in pts:
+        plt.plot((0, pt.x), (0, pt.y), '--', color='black')
 
-plt.plot([pt.x for pt in corners], [pt.y for pt in corners], 'o')
-plt.show()
+    plt.plot([pt.x for pt in pts], [pt.y for pt in pts], 'x')
+
+    for (line, inliers) in lines:
+        plt.axline((line.a.x, line.a.y), (line.b.x, line.b.y))
+        plt.plot([pt.x for pt in inliers], [pt.y for pt in inliers], 'o')
+
+    plt.plot([pt.x for pt in corners], [pt.y for pt in corners], 'x', color='r')
+
+    ax = plt.gca()
+    ax.set_aspect(1)
+
+    plt.show()
 
 if __name__ == '__main__':
     import matplotlib.pyplot as plt

@@ -85,7 +85,7 @@ class Workspace:
 
         return intersections
 
-    def lidar_scan(self, origin, fov: float = 270, da: float = 1.25):
+    def lidar_scan(self, origin, fov: float = 270, da: float = 1.25, max_range: float = None):
         N = ceil(fov / da)
         da = radians(da)
         fov = da * N
@@ -98,6 +98,9 @@ class Workspace:
         lines = [Line(origin, pt) for pt in pts]
         intersections = [self.get_intersections(line, backwards=False, only_first=True) for line in lines]
         intersections = [intersection[0] for intersection in intersections if len(intersection) != 0]
+
+        if max_range != None:
+            intersections = [pt for pt in intersections if dist_l2(origin, pt) <= max_range]
 
         return intersections
 

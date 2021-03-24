@@ -10,10 +10,7 @@ class Line:
         self.a = a
         self.b = b
 
-        self.d = Point(b.x - a.x, b.y - a.y)
-
     def get_intersection(self, line) -> (Point, bool):
-        
         x1, x2, x3, x4 = self.a.x, self.b.x, line.a.x, line.b.x 
         y1, y2, y3, y4 = self.a.y, self.b.y, line.a.y, line.b.y
 
