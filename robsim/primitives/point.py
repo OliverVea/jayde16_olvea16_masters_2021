@@ -17,3 +17,15 @@ class Point:
     def normalize(self):
         n = self.norm()
         return Point(self.x / n, self.y / n)
+
+    def __add__(self, pt):
+        return Point(self.x + pt.x, self.y + pt.y)
+
+    def __sub__(self, pt):
+        return Point(self.x - pt.x, self.y - pt.y)
+
+    def __mul__(self, k):
+        return Point(self.x * k, self.y * k)
+
+    def __truediv__(self, k):
+        return Point(self.x / k, self.y / k)

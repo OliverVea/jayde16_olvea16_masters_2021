@@ -6,7 +6,9 @@ from utility import dist_l2
 import json
 import matplotlib.pyplot as plt
 from random import random
-from math import pi, sin, cos, floor, ceil
+from math import pi, sin, cos, floor, ceil, radians
+
+import numpy as np
 
 class Workspace:
     def __init__(self, filename: str):
@@ -29,9 +31,18 @@ class Workspace:
                 return False
         return True
 
-    def plot(self, border: int = 1, border_color = 'black', show = False):
-        plt.figure()
+    def plot(self, border: int = 1, border_color = 'black', show = False, figname: str = None, grid_size: float = None):
+        fig = plt.figure(figname)
         ax = plt.gca()
+        ax.set_aspect(1)
+
+        if grid_size != None:
+            ax.set_xticks(np.arange(0, self.dimensions[0] + 1, 5 * grid_size))
+            ax.set_xticks(np.arange(0, self.dimensions[0] + 1, grid_size), minor=True)
+            ax.set_yticks(np.arange(0, self.dimensions[1] + 1, 5 * grid_size))
+            ax.set_yticks(np.arange(0, self.dimensions[1] + 1, grid_size), minor=True)
+
+            plt.grid(True, which='both', color='black', linestyle='-', linewidth=1, alpha=0.2)
 
         x_min = 0
         x_max = self.dimensions[0]
@@ -50,6 +61,8 @@ class Workspace:
 
         if show:
             plt.show()
+
+        return fig
 
     def get_intersections(self, line: Line, backwards: bool = False, only_first: bool = True):
         intersections = []
@@ -72,14 +85,14 @@ class Workspace:
 
         return intersections
 
-    def lidar_scan(self, origin: Point, angle: float, fov: float = 270, da: float = 1.25):
-
+    def lidar_scan(self, origin, fov: float = 270, da: float = 1.25):
         N = ceil(fov / da)
+        da = radians(da)
         fov = da * N
 
-        a0 = angle - fov/2
+        a0 = origin.theta - fov/2
 
-        rads = [pi/180 * (a0 + da*i) for i in range(N + 1)]
+        rads = [a0 + da*i for i in range(N + 1)]
 
         pts = [Point(cos(rad) + origin.x, sin(rad) + origin.y) for rad in rads]
         lines = [Line(origin, pt) for pt in pts]

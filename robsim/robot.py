@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from random import normalvariate, choice
 import time
+import numpy as np
 
 class SimpleRobot:
     def __init__(self, dt: float, v_min: float = None, v_max: float = None, omega_min: float = None, omega_max: float = None, logistic_max: bool = False, a_mean: float = 0, a_std: float = None, alpha_mean: float = 0, alpha_std: float = None):
@@ -73,6 +74,25 @@ if __name__ == '__main__':
     steps = 10
     N = step_length * steps
 
+    def update_vlines(h, x, ymin=None, ymax=None):
+        seg_old = h.get_segments()
+        if ymin is None:
+            ymin = seg_old[0][0, 1]
+        if ymax is None:
+            ymax = seg_old[0][1, 1]
+
+        seg_new = [np.array([[x, ymin], [x, ymax]])]
+
+        h.set_segments(seg_new)
+
+    def update_point(i, hist, pt, lns):
+        pt[0].set_data(hist[i][0], hist[i][1])
+
+        for ln in lns:
+            update_vlines(ln, i * dt)
+
+        return pt
+
     while True:
         x = (0, 0, 0, 0, 0)
 
@@ -90,16 +110,15 @@ if __name__ == '__main__':
         titles = ['x', 'y', 'θ', 'v', 'ω', 'a', 'α']
         fig, axs = plt.subplots(nrows=2, ncols=4, constrained_layout=True)
 
-        def update_point(i, hist, pt):
-            pt[0].set_data(hist[i][0], hist[i][1])
-            return pt
-
         ax = axs[0, 0]
         ax.set_title('route')
         ax.plot([x[0] for x in hist], [x[1] for x in hist], '-')
         pt = ax.plot(hist[0][0], hist[0][1], 'x', color='black')
-        ani = animation.FuncAnimation(fig, update_point, N, fargs=(hist, pt), interval=dt * 1000, blit=True)
 
+        lns = [ax.vlines(0, 0, 1) for ax in axs[0, 1:]]
+
+        ani = animation.FuncAnimation(fig, update_point, N, fargs=(hist, pt, lns), interval=dt * 1000, blit=True)
+        
         swaps = [(s + 1) * step_length for s in range(steps - 1)]
 
         for n in range(7):

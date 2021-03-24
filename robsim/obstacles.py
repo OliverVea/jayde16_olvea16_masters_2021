@@ -9,17 +9,18 @@ class Obstacle:
     pass
 
 class RectangleObstacle(Obstacle):
-    def __init__(self, origin: Point, dimensions: tuple, angle: float = 0.0):
+    def __init__(self, origin: Point, dimensions: tuple, angle: float = 0.0, color=None):
         self.origin = origin
         self.dimensions = dimensions
         self.angle = angle
+        self.color = None
 
     def check(self, point: Point) -> bool:
         return self.origin.x <= point.x <= self.origin.x + self.dimensions[0] and \
             self.origin.y <= point.y <= self.origin.y + self.dimensions[1]
         
     def get_patch(self) -> Rectangle:
-        return Rectangle((self.origin.x, self.origin.y), self.dimensions[0], self.dimensions[1], self.angle)
+        return Rectangle((self.origin.x, self.origin.y), self.dimensions[0], self.dimensions[1], self.angle, color=self.color)
 
     def get_corners(self, repeat_first: bool = True) -> list:
         corners = [self.origin,
@@ -113,7 +114,7 @@ def obstacle_from_dict(d: dict) -> Obstacle:
     obstacle_type = d['type']
 
     if obstacle_type == 'rectangle':
-        return RectangleObstacle(Point(d['origin'][0], d['origin'][1]), tuple(d['dimensions']), d['angle'])
+        return RectangleObstacle(Point(d['origin'][0], d['origin'][1]), tuple(d['dimensions']), d['angle'], d['color'])
     
     if obstacle_type == 'circle':
         return CircleObstacle(Point(d['origin'][0], d['origin'][1]), d['radius'])

@@ -1,6 +1,7 @@
 from primitives.point import Point
 
 from math import pi, atan2, tan
+from utility import dist_l2
 
 class Line:
     def __init__(self, a: Point, b: Point):
@@ -28,6 +29,23 @@ class Line:
         p = self.eval_at(t)
 
         return p, t, u
+
+    def get_distance(self, point) -> float:
+        a = atan2(self.b.y - self.a.y, self.b.x - self.a.x) + pi/2
+
+        if 1/4 * pi <= a <= 3/4 * pi or 5/4 * pi <= a <= 7/4 * pi:
+            y = point.y + 1
+            x = point.x - tan(a) * (point.y - y)
+        else:
+            x = point.x + 1
+            y = point.y - tan(a) * (point.x - x)
+
+        line = Line(point, Point(x, y))
+
+        p, t, u = self.get_intersection(line)
+
+        return dist_l2(point, p)
+
 
     def eval_at(self, t):
         return Point(self.a.x + t * (self.b.x - self.a.x), self.a.y + t * (self.b.y - self.a.y))
