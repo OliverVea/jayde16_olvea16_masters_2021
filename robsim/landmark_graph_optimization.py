@@ -48,12 +48,12 @@ def fit_line(pts, angle_threshold: float, dist_threshold: float, T: int = None, 
 
         temp_outliers = [pt for pt in pts if not pt in temp_inliers]
 
-        if len(temp_inliers) > len(inliers):
+        if len(temp_inliers) > 1 and len(temp_inliers) > len(inliers):
             line = temp_line
             inliers = temp_inliers
             outliers = temp_outliers
 
-    return line, inliers, outliers
+    return Line.from_points(inliers), inliers, outliers
 
 def angle_diff(a, b):
     return min(abs(a - b), abs(a - b + 2*pi), abs(a - b - 2*pi))
@@ -71,7 +71,7 @@ def get_angular_difference(origin: Point, a: Point, b: Point, t: str = 'radians'
         return degrees(d)
     return d
 
-def get_corners(pts, angle_threshold: float = 7, pt_threshold: int = 6, dist_threshold: float = 0.01, T: int = None, p: float = 0.995, e: float = 0.5):
+def get_corners(pts, angle_threshold: float, pt_threshold: int, dist_threshold: float, T: int = None, p: float = 0.995, e: float = 0.5):
     lines = []
 
     while len(pts) >= pt_threshold:
@@ -91,11 +91,6 @@ def get_corners(pts, angle_threshold: float = 7, pt_threshold: int = 6, dist_thr
 
     for i, (a, inliers_a) in enumerate(lines):
         for (b, inliers_b) in lines[i + 1:]:
-            #dists = [get_angular_difference(Point(0,0), inlier_a, inlier_b, t='degrees') for inlier_a in inliers_a for inlier_b in inliers_b]
-
-            #if min(dists) > angle_threshold:
-            #    continue
-
             r = a.get_intersection(b)
             if r == None:
                 continue
@@ -105,7 +100,7 @@ def get_corners(pts, angle_threshold: float = 7, pt_threshold: int = 6, dist_thr
             dists_a = [get_angular_difference(Point(0,0), p, inlier, t='degrees') for inlier in inliers_a]
             dists_b = [get_angular_difference(Point(0,0), p, inlier, t='degrees') for inlier in inliers_b]
 
-            if max(min(dists_a), min(dists_b)) > angle_threshold:
+            if max(min(dists_a), min(dists_b)) > angle_threshold * 2:
                 continue
 
             pts.append(p)
@@ -129,7 +124,7 @@ while True:
 
     dists = [dist_l2(Point(0, 0), pt) for pt in pts]
 
-    lines, corners = get_corners(pts, pt_threshold=3, dist_threshold=0.02)
+    lines, corners = get_corners(pts, angle_threshold=2, pt_threshold=4, dist_threshold=0.02)
 
     plt.plot((0,), (0,), 'o', color='r')
 

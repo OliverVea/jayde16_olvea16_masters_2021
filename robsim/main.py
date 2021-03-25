@@ -305,14 +305,16 @@ if __name__ == '__main__':
         plt.show()
 
         print('[STATUS] Extracting LiDAR data.')
-        fov = 270   
+        fov = 360
         da = 1.25
 
-        reduction = 0.20
+        reduction = 0.1
         reduced_route = []
         for i, state in enumerate(route):
             if len(reduced_route) < i * reduction:
                 reduced_route.append(state)
+
+        route = reduced_route
         
         n = 8
         pool = mp.Pool(n)
@@ -336,7 +338,7 @@ if __name__ == '__main__':
         print(f'[STATUS] LiDAR data saved to \'{filename}\'.')
 
         plt.show(block=False)
-        
+
         fig = ws.plot(figname=figname, border=0, grid_size=0.5) 
         
         lines = []

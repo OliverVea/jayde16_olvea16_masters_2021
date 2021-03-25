@@ -3,7 +3,24 @@ from primitives.point import Point
 from math import pi, atan2, tan
 from utility import dist_l2
 
+import numpy as np
+
 class Line:
+    @staticmethod
+    def from_points(pts):
+        pts = np.array([[pt.x, pt.y] for pt in pts]).transpose()
+
+        covariance_matrix = np.cov(pts)
+        weights, axes = np.linalg.eig(covariance_matrix)
+
+        axis = axes[np.argmax(weights)]
+
+        mean = np.average(pts, axis=1)
+
+        line = Line(Point(mean[0], mean[1]), Point(mean[0] + axis[0], mean[1] + axis[1]))
+
+        return line
+
     def __init__(self, a: Point, b: Point):
         assert (a != b), 'Points cannot be the same.'
         
