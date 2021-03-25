@@ -5,7 +5,7 @@ from utility import dist_l2
 from math import log, atan2, pi, radians, degrees
 from random import choice, random
 
-def fit_line(pts, threshold: float, T: int = None, p: float = 0.99, e: float = 0.5):
+def fit_line(pts, angle_threshold: float, dist_threshold: float, T: int = None, p: float = 0.99, e: float = 0.5):
     assert len(pts) > 1
 
     # https://www.youtube.com/watch?v=9D5rrtCC_E0 (3:30)
@@ -15,24 +15,37 @@ def fit_line(pts, threshold: float, T: int = None, p: float = 0.99, e: float = 0
     inliers = []
     outliers = []
     for t in range(T):
-        a = b = choice(pts)
-
-        # Samples point b to be different to a, since random.choice doesnt have replace = False for some reason.
-        while b == a:
-            b = choice(pts)
+        a = choice(pts)
+        b = choice([pt for pt in pts if pt != a])
 
         temp_line = Line(a, b)
 
-        # temp_inliers = []
-        # for pt in pts:
-        #     if temp_line.get_distance(pt) <= threshold:
-        #         temp_inliers.append(pt)
-        #     else:
-        #         # This makes sure that there are no gaps in lines.
-        #         if len(temp_inliers) > 0:
-        #             break
+        temp_inliers = [pt for pt in pts if temp_line.get_distance(pt) <= dist_threshold]
 
-        temp_inliers = [pt for pt in pts if temp_line.get_distance(pt) <= threshold]
+        inlier_groups = []
+        current_group = [temp_inliers[0]]
+        temp_inliers = temp_inliers[1:]
+
+        while len(temp_inliers) > 0:
+            points = [(a, b) for a in temp_inliers for b in current_group]
+            dists = [get_angular_difference(Point(0, 0), a, b) for a in temp_inliers for b in current_group]
+
+            if degrees(min(dists)) < angle_threshold:
+                a, b = points[dists.index(min(dists))]
+
+                temp_inliers.remove(a)
+                current_group.append(a)
+
+            else:
+                inlier_groups.append(current_group)
+                current_group = [temp_inliers[0]]
+                temp_inliers = temp_inliers[1:]
+
+        inlier_groups.append(current_group)
+
+        lengths = [len(group) for group in inlier_groups]
+        temp_inliers = inlier_groups[lengths.index(max(lengths))]  
+
         temp_outliers = [pt for pt in pts if not pt in temp_inliers]
 
         if len(temp_inliers) > len(inliers):
@@ -58,12 +71,13 @@ def get_angular_difference(origin: Point, a: Point, b: Point, t: str = 'radians'
         return degrees(d)
     return d
 
-def get_corners(pts, angle_threshold: float = 7, pt_threshold: int = 6, dist_threshold: float = 0.01, T: int = None, p: float = 0.99, e: float = 0.5):
+def get_corners(pts, angle_threshold: float = 7, pt_threshold: int = 6, dist_threshold: float = 0.01, T: int = None, p: float = 0.995, e: float = 0.5):
     lines = []
 
-    while len(pts) > pt_threshold:
+    while len(pts) >= pt_threshold:
         line, inliers, pts = fit_line(pts, 
-            threshold=dist_threshold, 
+            angle_threshold=angle_threshold,
+            dist_threshold=dist_threshold, 
             T=T, 
             p=p, 
             e=e)
@@ -77,16 +91,23 @@ def get_corners(pts, angle_threshold: float = 7, pt_threshold: int = 6, dist_thr
 
     for i, (a, inliers_a) in enumerate(lines):
         for (b, inliers_b) in lines[i + 1:]:
-            dists = [get_angular_difference(Point(0,0), inlier_a, inlier_b, t='degrees') for inlier_a in inliers_a for inlier_b in inliers_b]
+            #dists = [get_angular_difference(Point(0,0), inlier_a, inlier_b, t='degrees') for inlier_a in inliers_a for inlier_b in inliers_b]
 
-            if min(dists) > angle_threshold:
-                continue
+            #if min(dists) > angle_threshold:
+            #    continue
 
             r = a.get_intersection(b)
             if r == None:
                 continue
 
             p, t, u = r
+
+            dists_a = [get_angular_difference(Point(0,0), p, inlier, t='degrees') for inlier in inliers_a]
+            dists_b = [get_angular_difference(Point(0,0), p, inlier, t='degrees') for inlier in inliers_b]
+
+            if max(min(dists_a), min(dists_b)) > angle_threshold:
+                continue
+
             pts.append(p)
     
     return lines, pts
