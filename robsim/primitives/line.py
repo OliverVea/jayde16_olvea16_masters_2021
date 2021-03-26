@@ -8,6 +8,7 @@ import numpy as np
 class Line:
     @staticmethod
     def from_points(pts):
+        assert len(pts) > 1
         pts = np.array([[pt.x, pt.y] for pt in pts]).transpose()
 
         covariance_matrix = np.cov(pts)

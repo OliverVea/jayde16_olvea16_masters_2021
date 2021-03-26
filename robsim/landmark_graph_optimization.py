@@ -2,7 +2,7 @@ from primitives.point import Point
 from primitives.line import Line
 from utility import dist_l2
 
-from math import log, atan2, pi, radians, degrees
+from math import log, atan2, pi, radians, degrees, sqrt, cos, sin
 from random import choice, random
 
 def fit_line(pts, angle_threshold: float, dist_threshold: float, T: int = None, p: float = 0.99, e: float = 0.5):
@@ -74,8 +74,9 @@ def get_angular_difference(origin: Point, a: Point, b: Point, t: str = 'radians'
 def get_corners(pts, angle_threshold: float, pt_threshold: int, dist_threshold: float, T: int = None, p: float = 0.995, e: float = 0.5):
     lines = []
 
-    while len(pts) >= pt_threshold:
-        line, inliers, pts = fit_line(pts, 
+    outliers = [pt for pt in pts]
+    while len(outliers) >= pt_threshold:
+        line, inliers, outliers = fit_line(outliers, 
             angle_threshold=angle_threshold,
             dist_threshold=dist_threshold, 
             T=T, 
@@ -87,7 +88,7 @@ def get_corners(pts, angle_threshold: float, pt_threshold: int, dist_threshold: 
 
         lines.append((line, inliers))
 
-    pts = []
+    corners = []
 
     for i, (a, inliers_a) in enumerate(lines):
         for (b, inliers_b) in lines[i + 1:]:
@@ -103,11 +104,33 @@ def get_corners(pts, angle_threshold: float, pt_threshold: int, dist_threshold: 
             if max(min(dists_a), min(dists_b)) > angle_threshold * 2:
                 continue
 
-            pts.append(p)
-    
-    return lines, pts
+            corners.append(p)
 
-    print(len(lines))
+    line_pts = [pt for line, pts in lines for pt in pts]
+
+    for pt_a, pt_b, pt_c in zip(pts[:-2], pts[1:-1], pts[2:]):
+        angle_a, angle_b, angle_c = atan2(pt_a.y, pt_a.x), atan2(pt_b.y, pt_b.x), atan2(pt_c.y, pt_c.x)
+        dist_a, dist_b, dist_c = dist_l2(Point(0,0), pt_a), dist_l2(Point(0,0), pt_b), dist_l2(Point(0,0), pt_c)
+
+        if abs(angle_a - angle_b) < radians(1.25 / 0.95) and abs(angle_c - angle_b) < radians(2 * 1.25 / 0.95) and pt_a in line_pts:
+            line_a = Line(Point(0, 0), Point(cos(angle_c), sin(angle_c)))
+            pred_a = Line(pt_a, pt_b).get_intersection(line_a)[0]
+            d_pred_a = dist_l2(Point(0,0), pred_a)
+
+            if dist_c > d_pred_a / 0.9:
+                corners.append(pt_b)
+                continue
+              
+        if abs(angle_c - angle_b) < radians(1.25 / 0.95) and abs(angle_a - angle_b) < radians(2 * 1.25 / 0.95) and pt_c in line_pts:  
+            line_c = Line(Point(0, 0), Point(cos(angle_a), sin(angle_a)))
+            pred_c = Line(pt_c, pt_b).get_intersection(line_c)[0]
+            d_pred_c = dist_l2(Point(0,0), pred_c)
+
+            if dist_a > d_pred_c / 0.9:
+                corners.append(pt_b)
+                continue
+    
+    return lines, corners
 
 import matplotlib.pyplot as plt
 import json
