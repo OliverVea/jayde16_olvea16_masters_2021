@@ -1,6 +1,6 @@
 from primitives.point import Point
 
-from math import pi, atan2, tan
+from math import pi, atan2, tan, sin, cos
 from utility import dist_l2
 
 import numpy as np
@@ -50,14 +50,20 @@ class Line:
         return p, t, u
 
     def get_distance(self, point) -> float:
+        if point in [self.a, self.b]:
+            return 0
+
         a = atan2(self.b.y - self.a.y, self.b.x - self.a.x) + pi/2
 
-        if 1/4 * pi <= a <= 3/4 * pi or 5/4 * pi <= a <= 7/4 * pi:
-            y = point.y + 1
-            x = point.x - tan(a) * (point.y - y)
-        else:
-            x = point.x + 1
-            y = point.y - tan(a) * (point.x - x)
+        x = point.x + cos(a)
+        y = point.y + sin(a)
+
+        # if 1/4 * pi <= a <= 3/4 * pi or 5/4 * pi <= a <= 7/4 * pi:
+        #     y = point.y + 1
+        #     x = point.x - tan(a) * (point.y - y)
+        # else:
+        #     x = point.x + 1
+        #     y = point.y - tan(a) * (point.x - x)
 
         line = Line(point, Point(x, y))
 

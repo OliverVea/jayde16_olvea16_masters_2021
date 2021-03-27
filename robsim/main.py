@@ -23,8 +23,8 @@ import multiprocessing as mp
 
 def get_lidar(i, ws, fov, da, pts):
     if i == 0:
-        return [[lidar_point - pt for lidar_point in ws.lidar_scan(pt, fov=fov, da=da)] for pt in tqdm(pts)]
-    return [[lidar_point - pt for lidar_point in ws.lidar_scan(pt, fov=fov, da=da)] for pt in pts]
+        return [[lidar_point.relative(pt) for lidar_point in ws.lidar_scan(pt, fov=fov, da=da)] for pt in tqdm(pts)]
+    return [[lidar_point.relative(pt) for lidar_point in ws.lidar_scan(pt, fov=fov, da=da)] for pt in pts]
 
 if __name__ == '__main__':
     test = 8
@@ -284,6 +284,20 @@ if __name__ == '__main__':
 
         angles = [atan2((y2 - y1), (x2 - x1)) for (x1, y1), (x2, y2) in zip(clicks[:-1], clicks[1:])]
         angles = [angles[0]] + angles
+        
+        angles = [angle % (2 * pi) for angle in angles]
+
+        def minimize_angular_difference(a, b):
+            while (b - a) > pi:
+                b -= 2 * pi
+
+            while (b - a) < -pi:
+                b += 2 * pi 
+
+            return b
+
+        for i in range(len(angles) - 1):
+            angles[i + 1] = minimize_angular_difference(angles[i], angles[i + 1])
 
         pts = [Coordinate(click[0], click[1], v) for v, click in zip(angles, clicks)]
 
@@ -292,9 +306,6 @@ if __name__ == '__main__':
         paths = [rom_spline(pts[i:i+4], d=d) for i in range(len(pts) - 3)]
 
         route = [state for path in paths for state in path]
- 
-        with open('angles.csv', 'w') as f:
-            f.write('\n'.join([str(pt.theta) for pt in route]))
 
         plt.plot([node.x for node in route], [node.y for node in route], '-', color='r')
         for pt in clicks[1:-1]:
@@ -316,7 +327,7 @@ if __name__ == '__main__':
 
         route = reduced_route
         
-        n = 8
+        n = 6
         pool = mp.Pool(n)
 
         N = len(route)
@@ -332,7 +343,7 @@ if __name__ == '__main__':
         filename = 'lidar_data.json'
 
         with open(filename, 'w') as f:
-            obj = [{'origin': [pt.x, pt.y], 'scan': [[p.x, p.y] for p in scan]} for pt, scan in zip(route, lidar_scan)]
+            obj = [{'origin': [pt.x, pt.y, pt.theta], 'scan': [[p.x, p.y] for p in scan]} for pt, scan in zip(route, lidar_scan)]
             json.dump(obj, f, indent=4)
 
         print(f'[STATUS] LiDAR data saved to \'{filename}\'.')

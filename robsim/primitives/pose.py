@@ -4,7 +4,7 @@ from json import JSONEncoder, JSONDecoder, dumps, loads
 
 degree_sign= u'\N{DEGREE SIGN}'
 
-class Coordinate:
+class Pose:
     def __init__(self, x: float, y: float, theta: float):
         self.x = x
         self.y = y
@@ -16,7 +16,7 @@ class Coordinate:
     def __iter__(self):
         return iter([self.x, self.y, self.theta])
 
-    # Returns a relative coordinate in respect to another coordinate.
+    # Returns a relative coordinate in respect to another coordinate. (basically self - other including rotation)
     def relative(self, other):
         x = self.x - other.x
         y = self.y - other.y
@@ -25,9 +25,9 @@ class Coordinate:
         x, y = x * cos(-other.theta) - y * sin(-other.theta), \
                x * sin(-other.theta) + y * cos(-other.theta)
 
-        return Coordinate(x, y, theta)
+        return Pose(x, y, theta)
 
-    # Returns the global coordinate in respect to another coordinate.
+    # Returns the global coordinate in respect to another coordinate. (basically self + other including rotation)
     def absolute(self, other):
         theta = other.theta + self.theta
 
@@ -37,19 +37,19 @@ class Coordinate:
         x = x + other.x
         y = y + other.y
 
-        return Coordinate(x, y, theta)
+        return Pose(x, y, theta)
 
     def __add__(self, other):
-        return Coordinate(self.x + other.x, self.y + other.y, self.theta + other.theta)
+        return Pose(self.x + other.x, self.y + other.y, self.theta + other.theta)
 
     def __sub__(self, other):
-        return Coordinate(self.x - other.x, self.y - other.y, self.theta - other.theta)
+        return Pose(self.x - other.x, self.y - other.y, self.theta - other.theta)
 
     def __mul__(self, k):
-        return Coordinate(self.x * k, self.y * k, self.theta * k)
+        return Pose(self.x * k, self.y * k, self.theta * k)
 
     def __truediv__(self, k):
-        return Coordinate(self.x / k, self.y / k, self.theta / k)
+        return Pose(self.x / k, self.y / k, self.theta / k)
 
     def set_x(self, val):
         self.x = val
@@ -68,11 +68,11 @@ class Coordinate:
 
     @staticmethod
     def from_json(obj):   
-        return Coordinate(x=obj[0], y=obj[1], theta=(obj[2:] + [0])[0])
+        return Pose(x=obj[0], y=obj[1], theta=(obj[2:] + [0])[0])
         
 if __name__ == '__main__':
-    a = Coordinate(5, 3, radians(90))
-    b = Coordinate(8, 1, radians(0))
+    a = Pose(5, 3, radians(90))
+    b = Pose(8, 1, radians(0))
 
     print(f'{a} - {b} = {a - b}')
     print(f'{b} - {a} = {b - a}')
@@ -82,10 +82,10 @@ if __name__ == '__main__':
 
     s = dumps(a.to_json())
     print(f'{a} as JSON: {s}')
-    print(f'{s} as Coordinate: {Coordinate.from_json(loads(s))}')
+    print(f'{s} as Coordinate: {Pose.from_json(loads(s))}')
     
     s = dumps(b.to_json())
     print(f'{b} as JSON: {s}')
-    print(f'{s} as Coordinate: {Coordinate.from_json(loads(s))}')
+    print(f'{s} as Coordinate: {Pose.from_json(loads(s))}')
 
     
