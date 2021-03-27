@@ -22,6 +22,10 @@ class Line:
 
         return line
 
+    def from_points_fast(pts):
+        assert len(pts) > 1
+        return Line(pts[0], pts[-1])
+
     def __init__(self, a: Point, b: Point):
         assert (a != b), 'Points cannot be the same.'
         
