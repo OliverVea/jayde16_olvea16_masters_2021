@@ -1,0 +1,15 @@
+{
+    "width": 10,
+    "height": 10,
+    "solid_edge": 1,
+    "obstacles": [
+        {"type": "rectangle", "origin": [0.5, 1], "dimensions": [3,3], "angle": 0, "color": null},
+        {"type": "rectangle", "origin": [0.5, 8], "dimensions": [5,1.5], "angle": 0, "color": null},
+        {"type": "rectangle", "origin": [4, 3.5], "dimensions": [0.75,4], "angle": 0, "color": null},
+        {"type": "rectangle", "origin": [6, 1.5], "dimensions": [3.5,2], "angle": 0, "color": null},
+        {"type": "rectangle", "origin": [8, 7], "dimensions": [2,2], "angle": 0, "color": null},
+        {"type": "circle", "origin": [1.75, 6], "radius": 0.8, "color": null},
+        {"type": "circle", "origin": [7.2, 5.4], "radius": 0.75, "color": null},
+        {"type": "circle", "origin": [4.7, 2], "radius": 0.6, "color": null}
+        ]
+}

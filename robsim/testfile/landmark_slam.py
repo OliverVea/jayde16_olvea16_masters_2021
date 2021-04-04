@@ -7,8 +7,8 @@ from math import atan2, pi
 
 import matplotlib.pyplot as plt
 
-#cwd = os.path.abspath(os.path.join('.'))
-cwd = 'D:\\WindowsFolders\\Code\\Master\\jayde16_olvea16_masters_2021\\robsim\\'
+cwd = os.path.abspath(os.path.join('..')) + '\\'
+#cwd = 'D:\\WindowsFolders\\Code\\Master\\jayde16_olvea16_masters_2021\\robsim\\'
 if cwd not in sys.path:
     sys.path.append(cwd)
 
@@ -211,7 +211,7 @@ for i in tqdm(range(len(ws.landmarks))):
         for k, point in measurements:
             if i == k:
                 pts.append(point.absolute(route[j]))
-    #print(i, len(pts))
+
     plt.plot([pt.x for pt in pts], [pt.y for pt in pts], 'x', color=cmap(i))
 
 plt.show()
