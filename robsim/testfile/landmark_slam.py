@@ -7,8 +7,8 @@ from math import atan2, pi
 
 import matplotlib.pyplot as plt
 
-cwd = os.path.abspath(os.path.join('..')) + '\\'
-#cwd = 'D:\\WindowsFolders\\Code\\Master\\jayde16_olvea16_masters_2021\\robsim\\'
+cwd = os.path.abspath(os.path.join('..'))
+
 if cwd not in sys.path:
     sys.path.append(cwd)
 
@@ -20,8 +20,8 @@ print(f'robsim module version: {rs.__version__}')
 
 # %% Load workspace
 
-config_file = f'{cwd}\\workspaces\\office_workspace_1.json'
-map_file = f'{cwd}\\workspaces\\office_workspace_1.png'
+config_file = os.path.join(cwd, 'workspaces/office_workspace_1.json')
+map_file = os.path.join(cwd, 'workspaces/office_workspace_1.png')
 
 ws = rs.Workspace(
     config_file=config_file, 
@@ -41,7 +41,8 @@ if i == 'y':
     landmarks = plt.ginput(n=-1)
 
 else:
-    with open(f'{cwd}data\\office_workspace_1_default_landmarks.json', 'r') as f:
+    path = os.path.join(cwd, 'data/office_workspace_1_default_landmarks.json')
+    with open(path, 'r') as f:
         landmarks = json.load(f)
 
 default_landmarks = (i != 'y')
@@ -60,7 +61,8 @@ if i == 'y':
     nodes = plt.ginput(n=-1)
 
 else:
-    with open(f'{cwd}data\\office_workspace_1_default_route.json', 'r') as f:
+    path = os.path.join(cwd, 'data/office_workspace_1_default_route.json')
+    with open(path, 'r') as f:
         nodes = json.load(f)
 
 default_route = (i != 'y')
@@ -109,7 +111,7 @@ if rs.check_ipython() or rs.timed_input('Enter manual path? (y/n): ', 'Timed out
 # %% Get landmark measurements
 from tqdm import tqdm
 
-print(f'Default landmarks - {default_landmarks} and default route . {default_route}: ', end='')
+print(f'Default landmarks - {default_landmarks} and default route - {default_route}: ', end='')
 
 default_measurements = (default_landmarks and default_route)
 
@@ -134,13 +136,15 @@ if not default_measurements:
         landmarks.append(measurements)
 else:
     print('Using pre-computed measurements.')
-    with open(f'{cwd}data\\office_workspace_1_default_landmark_measurements.json', 'r') as f:
+    path = os.path.join(cwd, 'data/office_workspace_1_default_landmark_measurements.json')
+    with open(path, 'r') as f:
         landmarks = json.load(f)
     
     landmarks = [[(pt[0], rs.Point(*pt[1:])) for pt in measurements] for measurements in landmarks]
     
 # %% Save landmark measurements
-with open(f'{cwd}data\\office_workspace_1_landmark_measurements.json', 'w') as f:
+path = os.path.join(cwd, 'data/office_workspace_1_default_landmark_measurements.json')
+with open(path, 'w') as f:
     json.dump([[[i, pt.x, pt.y] for i, pt in measurements] for measurements in landmarks], f)
 
 print(f'Landmarks saved.')
@@ -230,11 +234,10 @@ import numpy as np
 n = 100000
 
 v1 = np.random.normal(0, 1, (n,))
-v2 = np.random.normal(0, 1, (n,)) * np.random.normal(0, 1, (n,))
-v3 = np.random.normal(0, 1, (n,)) * np.random.normal(0, 1, (n,)) \
-    * np.random.normal(0, 1, (n,)) * np.random.normal(0, 1, (n,)) \
-    * np.random.normal(0, 1, (n,)) * np.random.normal(0, 1, (n,))
-v4 = np.random.normal(0, 2, (n,))
+v2 = 0.5 * np.random.normal(0, 1, (n,)) + 0.5 * np.random.normal(0, 1, (n,))
+v3 = 0.25 * np.random.normal(0, 1, (n,)) + 0.25 * np.random.normal(0, 1, (n,)) \
+    + 0.25 * np.random.normal(0, 1, (n,)) + 0.25 * np.random.normal(0, 1, (n,))
+v4 = np.random.normal(0, 1/np.sqrt(2), (n,))
 
 figs, axs = plt.subplots(2, 2)
 
@@ -256,11 +259,14 @@ for ax in [axs[0,0], axs[0,1], axs[1,0], axs[1,1]]:
 
 plt.show()
 
-plt.figure(dpi=200)
+plt.figure(dpi=200,  figsize=(3,3))
 
-im = plt.imread(f'{cwd}output\\noise_hypothesis.png')
+path = os.path.join(cwd, 'output/noise_hypothesis.png')
+im = plt.imread(path)
 plt.imshow(im)
 
 print(f'This is kind of what happens when the error is applied with a normal on every odometry step with a really high sample frequency. It technically works but the expected variation of the error is tiny and extremes become more common.')
 
 # %% Do SLAM
+
+# %%
