@@ -1,9 +1,11 @@
-from primitives.point import Point
+from robsim.primitives.point import Point
+from robsim.utility import dist_l2
 
 from math import pi, atan2, tan, sin, cos
-from utility import dist_l2
 
 import numpy as np
+
+import matplotlib.pyplot as plt
 
 class Line:
     @staticmethod
@@ -22,6 +24,7 @@ class Line:
 
         return line
 
+    @staticmethod
     def from_points_fast(pts):
         assert len(pts) > 1
         return Line(pts[0], pts[-1])
@@ -32,7 +35,7 @@ class Line:
         self.a = a
         self.b = b
 
-    def get_intersection(self, line) -> (Point, bool):
+    def get_intersection(self, line) -> (Point, float, float):
         x1, x2, x3, x4 = self.a.x, self.b.x, line.a.x, line.b.x 
         y1, y2, y3, y4 = self.a.y, self.b.y, line.a.y, line.b.y
 
@@ -49,33 +52,59 @@ class Line:
 
         return p, t, u
 
-    def get_distance(self, point) -> float:
+    def get_distance(self, point) -> (float, Point):
         if point in [self.a, self.b]:
-            return 0
+            return 0, point
 
         a = atan2(self.b.y - self.a.y, self.b.x - self.a.x) + pi/2
 
         x = point.x + cos(a)
         y = point.y + sin(a)
 
-        # if 1/4 * pi <= a <= 3/4 * pi or 5/4 * pi <= a <= 7/4 * pi:
-        #     y = point.y + 1
-        #     x = point.x - tan(a) * (point.y - y)
-        # else:
-        #     x = point.x + 1
-        #     y = point.y - tan(a) * (point.x - x)
-
         line = Line(point, Point(x, y))
 
         p, t, u = self.get_intersection(line)
 
-        return dist_l2(point, p)
+        return dist_l2(point, p), p
 
+    def get_x(self, y):
+        if self.a.y == self.b.y:
+            raise Exception('')
 
-    def eval_at(self, t):
+        if self.a.x == self.b.x:
+            return self.a.x
+
+        dx = self.b.x - self.a.x
+        dy = self.b.y - self.a.y
+
+        return (y - self.a.y) * dx / dy + self.a.x
+
+    def get_y(self, x):
+        if self.a.x == self.b.x:
+            raise Exception('')
+
+        if self.a.y == self.b.y:
+            return self.a.y
+
+        dx = self.b.x - self.a.x
+        dy = self.b.y - self.a.y
+
+        return (x - self.a.x) * dy / dx + self.a.y
+
+    def eval_at(self, t) -> Point:
         return Point(self.a.x + t * (self.b.x - self.a.x), self.a.y + t * (self.b.y - self.a.y))
 
-    def get_scale(self, x: float = None, y: float = None):
+    def get_scale(self, x: float = None, y: float = None) -> float:
         if y != None:
             return (y - self.a.y) / (self.b.y - self.a.y)
         return (x - self.a.x) / (self.b.x - self.a.x)
+
+    def plot(self, label_line: str = None, label_points: str = None, color_line: tuple = None, color_points: tuple = None):
+        if color_line == None:
+            color_line = color_points
+
+        if color_points == None:
+            color_points = color_line
+
+        plt.plot([self.a.x, self.b.x], [self.a.y, self.b.y], 'o', color=color_points, label=label_points)
+        plt.axline([self.a.x, self.a.y], [self.b.x, self.b.y], color=color_line, label=label_line)

@@ -5,7 +5,7 @@ from utility import dist_l2
 from math import pi, log, atan2, degrees, radians, cos, sin
 from random import choice
 
-def fit_line(pts, angle_threshold: float, dist_threshold: float, T: int = None, p: float = 0.9, e: float = 0.5):
+def fit_line(pts, angle_threshold: float, dist_threshold: float, T: int = None, p: float = 0.99, e: float = 0.5):
     assert len(pts) > 1
 
     # https://www.youtube.com/watch?v=9D5rrtCC_E0 (3:30)
@@ -21,7 +21,7 @@ def fit_line(pts, angle_threshold: float, dist_threshold: float, T: int = None, 
 
         temp_line = Line(a, b)
 
-        temp_inliers = [pt for pt in pts if temp_line.get_distance(pt) <= dist_threshold]
+        temp_inliers = [pt for pt in pts if temp_line.get_distance(pt)[0] <= dist_threshold]
 
         inlier_groups = []
         current_group = [temp_inliers[0]]
@@ -55,7 +55,6 @@ def fit_line(pts, angle_threshold: float, dist_threshold: float, T: int = None, 
             outliers = temp_outliers
 
     return line, inliers, outliers
-    #return Line.from_points(inliers), inliers, outliers
 
 def angle_diff(a, b):
     return min(abs(a - b), abs(a - b + 2*pi), abs(a - b - 2*pi))
@@ -87,6 +86,8 @@ def get_corners(pts, angle_threshold: float, pt_threshold: int, dist_threshold: 
 
         if len(inliers) < pt_threshold:
             break
+
+        #line = Line.from_points(inliers)
 
         lines.append((line, inliers))
 

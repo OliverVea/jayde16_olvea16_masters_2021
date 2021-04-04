@@ -1,6 +1,6 @@
-from primitives.point import Point
-from primitives.line import Line
-from utility import dist_l2
+from robsim.primitives.point import Point
+from robsim.primitives.line import Line
+from robsim.utility import dist_l2
 
 from matplotlib.patches import Rectangle, Circle
 from math import sqrt, pi, sin, cos, ceil

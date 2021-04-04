@@ -1,4 +1,4 @@
-from math import sqrt, cos, sin
+from math import sqrt, cos, sin, atan2
 
 class Point:
     def __init__(self, x: float, y: float):
@@ -12,7 +12,7 @@ class Point:
         return (self.x == pt.x) and (self.y == pt.y)
 
     def __ne__(self, pt):
-        return (self.x != pt.x) or (self.y != pt.y)
+        return (not isinstance(pt, Point)) or (self.x != pt.x) or (self.y != pt.y)
 
     def __iter__(self):
         return iter([self.x, self.y])
@@ -35,6 +35,19 @@ class Point:
 
     def __truediv__(self, k):
         return Point(self.x / k, self.y / k)
+
+    def as_polar(self):
+        d = sqrt(self.x**2 + self.y**2)
+        a = atan2(self.y, self.x)
+
+        return a, d
+
+    @staticmethod
+    def from_polar(a, d):
+        x = cos(a) * d
+        y = sin(a) * d
+
+        return Point(x, y)
 
     # Returns a relative point in respect to another pose.
     def relative(self, pose):
