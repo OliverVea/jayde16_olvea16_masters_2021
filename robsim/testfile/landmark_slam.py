@@ -6,7 +6,6 @@ import json
 from math import atan2, pi
 
 import matplotlib.pyplot as plt
-from numpy.random import standard_cauchy
 
 cwd = os.path.abspath(os.path.join('..')) + '\\'
 #cwd = 'D:\\WindowsFolders\\Code\\Master\\jayde16_olvea16_masters_2021\\robsim\\'
@@ -235,16 +234,25 @@ v2 = np.random.normal(0, 1, (n,)) * np.random.normal(0, 1, (n,))
 v3 = np.random.normal(0, 1, (n,)) * np.random.normal(0, 1, (n,)) \
     * np.random.normal(0, 1, (n,)) * np.random.normal(0, 1, (n,)) \
     * np.random.normal(0, 1, (n,)) * np.random.normal(0, 1, (n,))
+v4 = np.random.normal(0, 2, (n,))
 
-plt.hist(v1, 100, label='Baseline', density=True)
-plt.hist(v2, 200, label='Multiplied with itself', density=True)
-plt.hist(v3, 600, label='Multiplied with itself six times', density=True)
+figs, axs = plt.subplots(2, 2)
 
-plt.legend()
+axs[0,0].hist(v1, 100, density=True)
+axs[0,0].set_title('Baseline')
 
-ax = plt.gca()
-ax.set_xlim((-10, 10))
-ax.set_ylim((0, 0.65))
+axs[0,1].hist(v2, 200, density=True)
+axs[0,1].set_title('Multiplied with itself')
+
+axs[1,0].hist(v4, 200, density=True)
+axs[1,0].set_title('Double sigma')
+
+axs[1,1].hist(v3, 600, density=True)
+axs[1,1].set_title('Multiplied with itself six times')
+
+for ax in [axs[0,0], axs[0,1], axs[1,0], axs[1,1]]:
+    ax.set_xlim((-5, 5))
+    ax.set_ylim((0, 0.5))
 
 plt.show()
 
