@@ -6,6 +6,7 @@ import json
 from math import atan2, pi
 
 import matplotlib.pyplot as plt
+from numpy.random import standard_cauchy
 
 cwd = os.path.abspath(os.path.join('..')) + '\\'
 #cwd = 'D:\\WindowsFolders\\Code\\Master\\jayde16_olvea16_masters_2021\\robsim\\'
@@ -185,21 +186,28 @@ else:
 # %% Add noise to route
 from robsim.utility import add_radial_noise_pose as noise
 
+std_d = 0.55
+std_a1 = 0.5
+std_a2 = 0.5
+
+print(f'Adding noise with standard deviations:\ndistance - {std_d}\nangle 1 - {std_a1}\nangle 2 - {std_a2}')
+
 relative_route = [b.relative(a) for a, b in zip(route[:-1], route[1:])]
-noisy_relative_route = [noise(pose) for pose in relative_route]
+noisy_relative_route = [noise(pose, std_d=std_d, std_a1=std_a1, std_a2=std_a2) for pose in relative_route]
 noisy_route = [route[0]]
 for pose in noisy_relative_route: noisy_route.append(pose.absolute(noisy_route[-1]))
 
 fig = ws.plot(figname='Workspace', figsize=(8, 8))
-plt.plot([p.x for p in route], [p.y for p in route], '--', color='green')
-plt.plot([p.x for p in noisy_route], [p.y for p in noisy_route], '-', color='red')
+plt.plot([p.x for p in route], [p.y for p in route], '--', color='green', label='true route')
+plt.plot([p.x for p in noisy_route], [p.y for p in noisy_route], '-', color='red', label='noisy route')
+plt.legend()
 plt.show()
 
 # %% Add noise to landmarks
 from robsim.utility import add_radial_noise_point as noise
 
 print('Adding noise to points...')
-noisy_landmarks = [[[i, noise(point)] for i, point in measurements] for measurements in tqdm(landmarks)]
+noisy_landmarks = [[[i, noise(point, std_d=0.01, std_a=0.005)] for i, point in measurements] for measurements in tqdm(landmarks)]
 
 cmap = plt.cm.get_cmap('hsv', len(ws.landmarks))
 
@@ -216,5 +224,35 @@ for i in tqdm(range(len(ws.landmarks))):
     plt.plot([pt.x for pt in pts], [pt.y for pt in pts], 'x', color=cmap(i))
 
 plt.show()
+
+# %% Normal distribution power demo
+import numpy as np
+
+n = 100000
+
+v1 = np.random.normal(0, 1, (n,))
+v2 = np.random.normal(0, 1, (n,)) * np.random.normal(0, 1, (n,))
+v3 = np.random.normal(0, 1, (n,)) * np.random.normal(0, 1, (n,)) \
+    * np.random.normal(0, 1, (n,)) * np.random.normal(0, 1, (n,)) \
+    * np.random.normal(0, 1, (n,)) * np.random.normal(0, 1, (n,))
+
+plt.hist(v1, 100, label='Baseline', density=True)
+plt.hist(v2, 200, label='Multiplied with itself', density=True)
+plt.hist(v3, 600, label='Multiplied with itself six times', density=True)
+
+plt.legend()
+
+ax = plt.gca()
+ax.set_xlim((-10, 10))
+ax.set_ylim((0, 0.65))
+
+plt.show()
+
+plt.figure(dpi=200)
+
+im = plt.imread(f'{cwd}output\\noise_hypothesis.png')
+plt.imshow(im)
+
+print(f'This is kind of what happens when the error is applied with a normal on every odometry step with a really high sample frequency. It technically works but the expected variation of the error is tiny and extremes become more common.')
 
 # %% Do SLAM
