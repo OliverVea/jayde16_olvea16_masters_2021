@@ -146,7 +146,8 @@ with open(f'{cwd}data\\office_workspace_1_landmark_measurements.json', 'w') as f
 print(f'Landmarks saved.')
 # %% Show the route
 
-if not rs.check_ipython():
+if not rs.check_ipython() and False:
+    # Doesnt actually work lmfao
     from matplotlib import animation
     from IPython.display import HTML
 
