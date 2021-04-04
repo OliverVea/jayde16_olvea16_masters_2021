@@ -102,6 +102,7 @@ class PlotImage:
                 features = [feature - self.c for feature in features]
 
                 for feature in features:
+                    temp_x = feature.x()
                     feature['plot_x'] = feature.x() * self.dpm + self.size[0] / 2
                     feature['plot_y'] = -feature.y() * self.dpm + self.size[1] / 2
                     pass
@@ -115,7 +116,7 @@ class PlotImage:
 
                 self.layers[typename] = self.Layer(features, typename, self.background.size, self.cache)
 
-    def get_image(self, types: list, show_circle: bool = True, selected: str = None, show_annotations: bool = True, r: float = 3):
+    def get_image(self, types: list, show_circle: bool = True, selected: str = None, show_annotations: bool = True, r: float = 3, route=None):
         with Image.open(self.backgound_path) as im:
             draw = ImageDraw.Draw(im)
 
@@ -143,6 +144,17 @@ class PlotImage:
                 x1 = (self.size[0] / 2 + Properties.radius * self.dpm, self.size[1] / 2 + Properties.radius * self.dpm)
 
                 draw.ellipse([x0, x1], outline='#ff0000')
+
+
+            if route is not None:
+                route = [(point[0] - self.c.points['EPSG:25832'][0], point[1] - self.c.points['EPSG:25832'][1]) for point in route]
+                for i, point in enumerate(route):
+                    x = point[0] * self.dpm + self.size[0] / 2
+                    y = -point[1] * self.dpm + self.size[1] / 2
+                    xy = [(x - r, y - r), (x + r, y + r)]
+                    draw.ellipse(xy=xy, fill='#0000FF')
+                    draw.text(xy=[x + r, y + r], text=f'{i}', fill='red')
+
 
             im.save(self.image_path)
 
@@ -180,7 +192,7 @@ def get_area_data(area: str):
 
     return result
 
-def plot(area):
+def plot(area, route=None):
     tile_matrix = simple_dropdown('Select tile_matrix', [14, 13, 12, 11, 10])
 
     inputs = {}
@@ -232,7 +244,7 @@ def plot(area):
     window = sg.Window(title, layout)
     window.finalize()
 
-    graph.DrawImage(image_object.get_image([]), location=(0, size[1]))
+    graph.DrawImage(image_object.get_image([], route=route), location=(0, size[1]))
 
     selected = None
 
@@ -251,12 +263,12 @@ def plot(area):
 
             if all(typename in types for typename in source_types):
                 for typename in source_types:
-                    cb = window.find(typename)
+                    cb = window.Find(typename)
                     cb.update(value=False)
                     types.remove(typename)
             else:
                 for typename in source_types:
-                    cb = window.find(typename)
+                    cb = window.Find(typename)
                     cb.update(value=True)
                     types.add(typename)
 
@@ -298,7 +310,7 @@ def plot(area):
 
                 properties.set_attributes(window, attributes)
 
-        graph.DrawImage(image_object.get_image(types=types, selected=selected), location=(0, size[1]))
+        graph.DrawImage(image_object.get_image(types=types, selected=selected, route=route), location=(0, size[1]))
 
         if event == 'Run':
             if eval(values['textbox']): print('yay!')
