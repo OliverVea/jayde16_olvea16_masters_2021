@@ -8,6 +8,7 @@ from math import atan2, pi
 import matplotlib.pyplot as plt
 
 cwd = os.path.abspath(os.path.join('..'))
+cwd = 'd:\\WindowsFolders\\Code\\Master\\jayde16_olvea16_masters_2021\\robsim'
 
 if cwd not in sys.path:
     sys.path.append(cwd)
@@ -54,7 +55,7 @@ i = rs.timed_input('Enter manual path? (y/n): ', 'Timed out, using default path.
 
 if i == 'y':
     ws.plot(figname='Workspace', grid_size=1)
-    plt.show(block=False)
+    plt.show()
 
     print(f'Click to make a path for the robot to follow.')
 
@@ -85,15 +86,17 @@ poses = [poses[0]] + poses + [poses[-1]]
 
 paths = [rs.rom_spline(poses[i:i+4], d=d) for i in range(len(poses) - 3)]
 
-route = [pose for path in paths for pose in path]
+full_route = [pose for path in paths for pose in path]
+
+# This breaks noise application
+#route = [rs.Pose(pose.x, pose.y, pose.theta % (2 * pi)) for pose in route]
 
 # %% Plot the route
-
 if rs.check_ipython() or rs.timed_input('Enter manual path? (y/n): ', 'Timed out, using default path.', timeout=2) == 'y':
     ws.plot(figname='Workspace', grid_size=1)
 
-    route_x = [pose.x for pose in route]
-    route_y = [pose.y for pose in route]
+    route_x = [pose.x for pose in full_route]
+    route_y = [pose.y for pose in full_route]
 
     plt.plot(route_x, route_y, '--', color='green')
 
@@ -104,9 +107,16 @@ if rs.check_ipython() or rs.timed_input('Enter manual path? (y/n): ', 'Timed out
     ax.set_xlabel('Time')
     ax.set_xticks([])
 
-    plt.plot([pose.theta for pose in route], '-')
+    plt.plot([pose.theta for pose in full_route], '.', markersize=1)
 
-    plt.show()
+    plt.show(block=False)
+
+# %% Reduce poses in the route
+route = rs.reduce_list(full_route, 0.05)
+
+default_route = False
+
+print(f'Reduced route from {len(full_route)} nodes to {len(route)} nodes.')
 
 # %% Get landmark measurements
 from tqdm import tqdm
@@ -147,53 +157,30 @@ path = os.path.join(cwd, 'data/office_workspace_1_default_landmark_measurements.
 with open(path, 'w') as f:
     json.dump([[[i, pt.x, pt.y] for i, pt in measurements] for measurements in landmarks], f)
 
-print(f'Landmarks saved.')
-# %% Show the route
+# %% Get LIDAR measurements
+if not default_route:
+    lidar_scans = [ws.lidar_scan(pose, fov=360, da=1.25) for pose in route]
+    lidar_scans = [[pt.relative(pose) for pt in scan] for pose, scan in zip(route, lidar_scans)]
+ 
+    path = os.path.join(cwd, 'data/office_workspace_1_default_lidar_scans.json')
+    with open(path, 'w') as f:
+        obj = [[[pt.x, pt.y] for pt in scan] for scan in lidar_scans]
+        json.dump(obj, f)
 
-if not rs.check_ipython() and False:
-    # Doesnt actually work lmfao
-    from matplotlib import animation
-    from IPython.display import HTML
-
-    fig = ws.plot(figname='Workspace', figsize=(8, 8))
-
-    pose = route[0]
-    landmarks = [pt.absolute(pose) for pt in landmarks[0]]
-
-    plt_pose = plt.plot(pose.x, pose.y, 'o', color='red')[0]
-    plt_landmarks = plt.plot([pt.x for pt in landmarks], [pt.y for pt in landmarks], 's', color='green')[0]
-    plt_landmark_lines = plt.plot()
-
-    reduced_route = route
-    reduced_landmarks = landmarks
-
-    def update(i):
-        pose = reduced_route[i]
-        landmarks = [pt.absolute(pose) for pt in reduced_landmarks[i]]
-
-        plt_pose.set_data(pose.x, pose.y)
-        plt_landmarks.set_data([pt.x for pt in landmarks], [pt.y for pt in landmarks])
-
-        return (plt_pose, plt_landmarks)
-
-    reduced_route = rs.reduce_list(route, 0.1)
-    reduced_landmarks = rs.reduce_list(landmarks, 0.1)
-
-    anim = animation.FuncAnimation(fig, update, frames=len(reduced_route), interval=25, blit=True)
-
-    plt.show()
-
-else:
-    print('I\'m too lazy to get the animation working in IPython.')
-
+else: 
+    path = os.path.join(cwd, 'data/office_workspace_1_default_lidar_scans.json')
+    with open(path, 'r') as f:
+        lidar_scans = json.load(f)
+        lidar_scans = [[rs.Point(*pt) for pt in scan] for scan in lidar_scans]
+        
 # %% Add noise to route
 from robsim.utility import add_radial_noise_pose as noise
 
-std_d = 0.55
-std_a1 = 0.5
-std_a2 = 0.5
+std_d = 0.5
+std_a1 = 0.25
+std_a2 = 0.25
 
-print(f'Adding noise with standard deviations:\ndistance - {std_d}\nangle 1 - {std_a1}\nangle 2 - {std_a2}')
+print(f'Adding odometry noise with standard deviations:\ndistance - {std_d}\nangle 1 - {std_a1}\nangle 2 - {std_a2}')
 
 relative_route = [b.relative(a) for a, b in zip(route[:-1], route[1:])]
 noisy_relative_route = [noise(pose, std_d=std_d, std_a1=std_a1, std_a2=std_a2) for pose in relative_route]
@@ -201,6 +188,7 @@ noisy_route = [route[0]]
 for pose in noisy_relative_route: noisy_route.append(pose.absolute(noisy_route[-1]))
 
 fig = ws.plot(figname='Workspace', figsize=(8, 8))
+plt.title('Odometry noise')
 plt.plot([p.x for p in route], [p.y for p in route], '--', color='green', label='true route')
 plt.plot([p.x for p in noisy_route], [p.y for p in noisy_route], '-', color='red', label='noisy route')
 plt.legend()
@@ -208,13 +196,17 @@ plt.show()
 
 # %% Add noise to landmarks
 from robsim.utility import add_radial_noise_point as noise
+std_d = 0.01
+std_a = 0.005
 
-print('Adding noise to points...')
-noisy_landmarks = [[[i, noise(point, std_d=0.01, std_a=0.005)] for i, point in measurements] for measurements in tqdm(landmarks)]
+print(f'Adding landmark noise with standard deviations:\ndistance - {std_d}\nangle 1 - {std_a1}\nangle 2 - {std_a2}')
+
+noisy_landmarks = [[[i, noise(point, std_d=std_d, std_a=std_a)] for i, point in measurements] for measurements in tqdm(landmarks)]
 
 cmap = plt.cm.get_cmap('hsv', len(ws.landmarks))
 
 fig = ws.plot(figname='Workspace', figsize=(8, 8))
+plt.title('Noisy landmark measurements')
 
 print('Plotting points...')
 for i in tqdm(range(len(ws.landmarks))):
@@ -225,48 +217,94 @@ for i in tqdm(range(len(ws.landmarks))):
                 pts.append(point.absolute(route[j]))
 
     plt.plot([pt.x for pt in pts], [pt.y for pt in pts], 'x', color=cmap(i))
-
 plt.show()
 
-# %% Normal distribution power demo
-import numpy as np
+# %% Plot LIDAR with original route
+lidar_absolute = [[pt.absolute(pose) for pt in scan] for pose, scan in zip(route, lidar_scans)]
 
-n = 100000
-
-v1 = np.random.normal(0, 1, (n,))
-v2 = 0.5 * np.random.normal(0, 1, (n,)) + 0.5 * np.random.normal(0, 1, (n,))
-v3 = 0.25 * np.random.normal(0, 1, (n,)) + 0.25 * np.random.normal(0, 1, (n,)) \
-    + 0.25 * np.random.normal(0, 1, (n,)) + 0.25 * np.random.normal(0, 1, (n,))
-v4 = np.random.normal(0, 1/np.sqrt(2), (n,))
-
-figs, axs = plt.subplots(2, 2)
-
-axs[0,0].hist(v1, 100, density=True)
-axs[0,0].set_title('Baseline')
-
-axs[0,1].hist(v2, 200, density=True)
-axs[0,1].set_title('Multiplied with itself')
-
-axs[1,0].hist(v4, 200, density=True)
-axs[1,0].set_title('Double sigma')
-
-axs[1,1].hist(v3, 600, density=True)
-axs[1,1].set_title('Multiplied with itself six times')
-
-for ax in [axs[0,0], axs[0,1], axs[1,0], axs[1,1]]:
-    ax.set_xlim((-5, 5))
-    ax.set_ylim((0, 0.5))
-
+ws.plot(figsize=(8, 8), dpi=200)
+plt.title('Lidar data without odometry noise')
+x = [pt.x for scan in lidar_absolute for pt in scan]
+y = [pt.y for scan in lidar_absolute for pt in scan]
+plt.plot(x, y, '.', color='black', markersize=1)
 plt.show()
 
-plt.figure(dpi=200,  figsize=(3,3))
+# %% Plot LIDAR with noisy route
+noisy_lidar_absolute = [[pt.absolute(pose) for pt in scan] for pose, scan in zip(noisy_route, lidar_scans)]
 
-path = os.path.join(cwd, 'output/noise_hypothesis.png')
-im = plt.imread(path)
-plt.imshow(im)
-
-print(f'This is kind of what happens when the error is applied with a normal on every odometry step with a really high sample frequency. It technically works but the expected variation of the error is tiny and extremes become more common.')
+plt.figure(figsize=(8, 8), dpi=200)
+plt.title('Lidar data with odometry noise')
+x = [pt.x for scan in noisy_lidar_absolute for pt in scan]
+y = [pt.y for scan in noisy_lidar_absolute for pt in scan]
+plt.plot(x, y, '.', color='black', markersize=1)
+ax = plt.gca()
+ax.invert_yaxis()
+ax.set_aspect(1)
+plt.plot()
+plt.show()
+# %%
+print(f'{len(route)}, {len(noisy_route)}, {len(relative_route)}, {len(noisy_relative_route)}')
 
 # %% Do SLAM
+slam = rs.Slam(route[0], n_landmarks=len(ws.landmarks), cov_odometry=None, cov_landmarks=None)
 
+for i, (odometry_constraint, landmark_constraints) in tqdm(enumerate(zip(noisy_relative_route, noisy_landmarks[1:])), total=len(noisy_relative_route)):
+    slam.add_constraints(odometry_constraint, landmark_constraints)
+    slam.optimize()
+
+# %% Plot sparsity
+sparsity = slam.get_sparsity()
+
+print(f'route: {len(slam.route)}')
+print(f'landmarks: {len(slam.landmarks)}')
+
+n = len(slam.route)*3+len(slam.landmarks)*2
+m = len(slam.odometry_constraints) + sum(len(constraints) for constraints in slam.landmark_constraints)
+
+print(f'm = {m}, n = {n}')
+print(f'Sparsity matrix shape: {sparsity.shape}')
+
+fig = plt.figure(figsize=(8,12), dpi=300)
+plt.spy(sparsity)
+
+# %% Plot SLAM
+ws.plot(figsize=(8, 8), dpi=200)
+
+x = [pt.x for pt in noisy_route]
+y = [pt.y for pt in noisy_route]
+plt.plot(x, y, '-', color='red', label='noisy route')
+
+
+x = [pt.x for pt in route]
+y = [pt.y for pt in route]
+plt.plot(x, y, '--', color='green', label='original route')
+
+x = [pt.x for pt in slam.route]
+y = [pt.y for pt in slam.route]
+plt.plot(x, y, '--', label='SLAM route')
+
+x = [pt.x for pt in slam.landmarks if pt != None]
+y = [pt.y for pt in slam.landmarks if pt != None]
+plt.plot(x, y, 'x', color='green')
+
+plt.legend()
+plt.show(block=False)
+
+fig = slam.plot(plot_landmark_measurements=True)
+ax = plt.gca()
+ax.invert_yaxis()
+plt.show()
+# %% Plot LIDAR with SLAM route
+slam_lidar_absolute = [[pt.absolute(pose) for pt in scan] for pose, scan in zip(slam.route, lidar_scans)]
+
+plt.figure(figsize=(8, 8), dpi=200)
+plt.title('Lidar data with odometry noise')
+x = [pt.x for scan in slam_lidar_absolute for pt in scan]
+y = [pt.y for scan in slam_lidar_absolute for pt in scan]
+plt.plot(x, y, '.', color='black', markersize=1)
+ax = plt.gca()
+ax.invert_yaxis()
+ax.set_aspect(1)
+plt.plot()
+plt.show()
 # %%

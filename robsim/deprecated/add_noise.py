@@ -39,8 +39,6 @@ def odometry_noise(odometry, last_pose, odometry_dist_std, odometry_angle_std, t
 
     return [x, y, theta]
 
-
-
 def add_noise(this_measurement, last_noisy_measurement, odometry_dist_std: float = 0, odometry_angle_std: float = 0, theta_std: float = 0, angle_std: float = 0, distance_std: float = 0):
     noisy_measurements = {}
 

@@ -106,11 +106,11 @@ class Workspace:
         intersections = []
 
         # Static map intersections
-        ys = list(range(self.dimensions[1] - 2))
+        ys = list(range(self.dimensions[1]))
         map_intersections = [(line.get_x(y), y) for y in ys]
 
         for i in map_intersections:
-           if 0 <= i[0] <= self.dimensions[0] - 1:
+           if 0 <= i[0] <= self.dimensions[0]:
                x = int(i[0])
                y = int(i[1])
                cell_values = self.background[y, x] \
@@ -119,11 +119,11 @@ class Workspace:
                    intersections.append(Point(*i))
                    #plt.plot((x + 0.5, x + 0.5), (y + 0.5, y - 1 + 0.5), 'o', color='green')
 
-        xs = list(range(self.dimensions[0] - 2))
+        xs = list(range(self.dimensions[0]))
         map_intersections = [(x, line.get_y(x)) for x in xs]
 
         for i in map_intersections:
-           if 0 <= i[1] <= self.dimensions[1] - 1:
+           if 0 <= i[1] <= self.dimensions[1]:
                x = int(i[0])
                y = int(i[1])
                cell_values = self.background[y, x] \

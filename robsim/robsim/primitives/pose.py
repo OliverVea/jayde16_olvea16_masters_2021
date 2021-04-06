@@ -39,6 +39,15 @@ class Pose:
 
         return Pose(x, y, theta)
 
+    def __eq__(self, other):
+        if other == None:
+            return False
+
+        return (self.x == other.x) and (self.y == other.y) and (self.theta == other.theta)
+
+    def __ne__(self, other):
+        return not (self == other)
+
     def __add__(self, other):
         return Pose(self.x + other.x, self.y + other.y, self.theta + other.theta)
 

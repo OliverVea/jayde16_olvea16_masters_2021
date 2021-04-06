@@ -9,9 +9,11 @@ class Point:
         return f'({self.x}, {self.y})'
 
     def __eq__(self, pt):
+        if pt == None: return False
         return (self.x == pt.x) and (self.y == pt.y)
 
     def __ne__(self, pt):
+        if pt == None: return True
         return (not isinstance(pt, Point)) or (self.x != pt.x) or (self.y != pt.y)
 
     def __iter__(self):
