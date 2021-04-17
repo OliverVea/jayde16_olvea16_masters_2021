@@ -144,7 +144,7 @@ class Workspace:
             intersections.extend(edge_intersections)
 
         if not backwards:
-            intersections = [i for i in intersections if line.get_scale(x=i.x) >= 0]
+            intersections = [i for i in intersections if not np.isnan(i.y) and line.get_scale(x=i.x) >= 0]
 
         if only_first and len(intersections) > 1:
             intersections = [min(intersections, key= lambda i: dist_l2(line.a, i))]

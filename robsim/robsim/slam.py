@@ -8,20 +8,23 @@ import scipy.sparse as sparse
 
 import numpy as np
 
-from math import pi
+from math import pi, sin, cos, atan2
 
 class Slam:
 
-    def __init__(self, origin, n_landmarks, cov_odometry, cov_landmarks):
+    def __init__(self, origin, n_landmarks, var_odometry_d, var_odometry_theta1, var_odometry_theta2, var_landmarks_d, var_landmarks_theta):
         self.origin = origin
         self.n_landmarks = n_landmarks
         self.landmarks = [Point(0, 0) for _ in range(n_landmarks)]
         self.landmark_initialized = [False for _ in range(n_landmarks)]
         self.route = [origin]
 
-        self.cov_odometry = cov_odometry
-        self.cov_landmarks = cov_landmarks
+        self.var_odometry_d = var_odometry_d
+        self.var_odometry_theta1 = var_odometry_theta1
+        self.var_odometry_theta2 = var_odometry_theta2
 
+        self.var_landmarks_d = var_landmarks_d
+        self.var_landmarks_theta = var_landmarks_theta
                                        #    v Transformation from origin to first position in graph.
         self.odometry_constraints = [] # [(T_A, O_A), (T_AB, O_AB), (T_BC, O_BC)] <- O_ij is the information matrix of contstaint (i,j).
         self.landmark_constraints = [] # [{0: (T_A1, O_A1), 1: (T_A2, O_A2)}, {1: (T_B2, O_B2)}, {1: (T_C2, O_C2), 2: (T_C3, O_C3)}]
@@ -54,7 +57,7 @@ class Slam:
         return route, landmarks
 
     @staticmethod
-    def _error(state, origin, n_landmarks, odometry_constraints, landmark_constraints, var_odometry, var_landmarks):
+    def _error(state, origin, n_landmarks, odometry_constraints, landmark_constraints):
         state[:3] = np.array([origin.x, origin.y, origin.theta])
         
         route, landmarks = Slam._from_state(state, n_landmarks)
@@ -62,26 +65,29 @@ class Slam:
         n_route = len(route)
 
         odometry_errors = []
-        for a, b, constraint in zip(route[:-1], route[1:], odometry_constraints):
+        for a, b, (constraint, information_matrix) in zip(route[:-1], route[1:], odometry_constraints):
             b_ = constraint.absolute(a)
-            #error = dist_l2(b, b_) * var_odometry
+            
             error = b - b_
 
-            odometry_errors.append(error.x * var_odometry)
-            odometry_errors.append(error.y * var_odometry)
-            odometry_errors.append(error.theta * var_odometry / (2 * pi))
+            error = np.array([error.x, error.y, error.theta])
+            error = np.dot(error.T, np.dot(information_matrix, error))
+
+            odometry_errors.append(error)
 
         landmark_errors = []
         for origin, constraints in zip(route[1:], landmark_constraints):
             for landmark in constraints:
                 point = landmarks[landmark]
-                point_ = constraints[landmark].absolute(origin)
+                point_, information_matrix = constraints[landmark]
+                point_ = point_.absolute(origin)
 
-                #error = dist_l2(point, point_) * var_landmarks
                 error = point - point_
 
-                landmark_errors.append(error.x * var_landmarks)
-                landmark_errors.append(error.y * var_landmarks)
+                error = np.array([error.x, error.y])
+                error = np.dot(error.T, np.dot(information_matrix, error))
+
+                landmark_errors.append(error)
 
         errors = odometry_errors + landmark_errors
 
@@ -94,11 +100,10 @@ class Slam:
         
         for i in range(len(self.route) - 1):
             row = np.zeros((n,))
-
+            
             row[i*3:(i*3+6)] = [1, 1, 1, 1, 1, 1]
 
-            for _ in range(3):
-                sparsity.append(row)
+            sparsity.append(row)
 
         for i, constraints in enumerate(self.landmark_constraints):
             for landmark in constraints:
@@ -111,44 +116,75 @@ class Slam:
                 
                 row[j:j+2] = [1, 1]
 
-                for _ in range(2):
-                    sparsity.append(row)
+                sparsity.append(row)
 
         sparsity = np.array(sparsity)
 
         return sparsity
 
-    def optimize(self):
+    def optimize(self, verbose: int = 0, ftol: float = 1e-5, xtol: float = 1e-5, gtol: float = 1e-5, use_sparsity: bool = True, jac: str = '3-point', loss: str = 'huber', tr_solver: str = None):
         fun = Slam._error
         state = self._get_state(self.route, [pt for pt in self.landmarks])
 
+        sparsity = None
+        if use_sparsity: 
+            sparsity = self.get_sparsity()
+
         result = least_squares(fun, state, 
-            args=(self.origin, self.n_landmarks, self.odometry_constraints, \
-                self.landmark_constraints, 1, 100),
-            verbose=0,
-            ftol=1e-5,
-            xtol=1e-5,
-            gtol=1e-5,
-            jac='3-point',
-            loss='huber',
-            #jac_sparsity=self.get_sparsity()
+            args=(self.origin, self.n_landmarks, self.odometry_constraints, self.landmark_constraints),
+            verbose=verbose,
+            ftol=ftol,
+            xtol=xtol,
+            gtol=gtol,
+            jac=jac,
+            loss=loss,
+            jac_sparsity=sparsity,
+            tr_solver=tr_solver
         )
 
         self.route, self.landmarks = Slam._from_state(result.x, self.n_landmarks)
 
     def add_constraints(self, odometry_constraint, landmark_contraints):
-        self.odometry_constraints.append(odometry_constraint)
-
-        landmark_contraints_dict = {}
-        for landmark, measurement in landmark_contraints:
-            landmark_contraints_dict[landmark] = measurement
-
-        self.landmark_constraints.append(landmark_contraints_dict)
-
         # Add pose just from odometry
         new_pose = self.route[-1]
         new_pose = odometry_constraint.absolute(new_pose)
         self.route.append(new_pose)
+
+        d = dist_l2(Point(0, 0), odometry_constraint)
+        a = new_pose.theta
+        
+        variance = [[self.var_odometry_d * d, 0], [0, sin(self.var_odometry_theta1) * d]]
+        variance = np.array(variance)
+
+        R = [[cos(a), -sin(a)], [sin(a), cos(a)]]
+        R = np.array(R)
+
+        information_matrix = np.zeros((3, 3))
+
+        information_matrix[:2,:2] = np.dot(variance, R)
+        information_matrix[2, 2] = self.var_odometry_theta1 + self.var_odometry_theta2
+
+        information_matrix = np.linalg.inv(information_matrix)
+
+        self.odometry_constraints.append((odometry_constraint, information_matrix))
+
+        landmark_contraints_dict = {}
+        for landmark, measurement in landmark_contraints:
+            d = dist_l2(Point(0, 0), measurement)
+
+            variance = [[self.var_landmarks_d * d, 0], [0, sin(self.var_landmarks_theta) * d]]
+            variance = np.array(variance)
+
+            a = atan2(measurement.y, measurement.x) + new_pose.theta
+
+            R = [[cos(a), -sin(a)], [sin(a), cos(a)]]
+            R = np.array(R)
+
+            information_matrix = np.linalg.inv(np.dot(variance, R))
+
+            landmark_contraints_dict[landmark] = (measurement, information_matrix)
+
+        self.landmark_constraints.append(landmark_contraints_dict)
 
         # Add landmark position if first measurement
         for landmark, measurement in landmark_contraints:

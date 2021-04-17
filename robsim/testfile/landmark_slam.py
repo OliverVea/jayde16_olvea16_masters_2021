@@ -19,8 +19,14 @@ import robsim as rs
 
 print(f'robsim module version: {rs.__version__}')
 
-# %% Load workspace
+import numpy as np
+import random
 
+seed = 0
+
+np.random.seed(seed)
+random.seed(seed)
+# %% Load workspace
 config_file = os.path.join(cwd, 'workspaces/office_workspace_1.json')
 map_file = os.path.join(cwd, 'workspaces/office_workspace_1.png')
 
@@ -30,8 +36,7 @@ ws = rs.Workspace(
 )
 
 # %% Getting landmarks
-
-i = rs.timed_input('Enter manual landmarks? (y/n): ', 'Timed out, using default landmarks.', timeout=2)
+i = rs.timed_input('Enter manual landmarks? (y/n): ', 'Timed out, using default landmarks.', timeout=5)
 
 if i == 'y':
     ws.plot(figname='Workspace', grid_size=1)
@@ -40,6 +45,10 @@ if i == 'y':
     print(f'Click to place landmarks.')
 
     landmarks = plt.ginput(n=-1)
+
+    path = os.path.join(cwd, 'data/office_workspace_1_default_landmarks.json')
+    with open(path, 'w') as f:
+        json.dump(landmarks, f)
 
 else:
     path = os.path.join(cwd, 'data/office_workspace_1_default_landmarks.json')
@@ -50,16 +59,19 @@ default_landmarks = (i != 'y')
 
 ws.set_landmarks(landmarks)
 # %% Getting route nodes
-
-i = rs.timed_input('Enter manual path? (y/n): ', 'Timed out, using default path.', timeout=2)
+i = rs.timed_input('Enter manual path? (y/n): ', 'Timed out, using default path.', timeout=5)
 
 if i == 'y':
     ws.plot(figname='Workspace', grid_size=1)
-    plt.show()
+    plt.show(block=False)
 
     print(f'Click to make a path for the robot to follow.')
 
     nodes = plt.ginput(n=-1)
+
+    path = os.path.join(cwd, 'data/office_workspace_1_default_route.json')
+    with open(path, 'w') as f:
+        json.dump(nodes, f)
 
 else:
     path = os.path.join(cwd, 'data/office_workspace_1_default_route.json')
@@ -69,7 +81,6 @@ else:
 default_route = (i != 'y')
 
 # %% Interpolating route
-
 d = 0.01 # Approximate step size for the interpolation.
 
 angles = [atan2((y2 - y1), (x2 - x1)) for (x1, y1), (x2, y2) in zip(nodes[:-1], nodes[1:])]
@@ -92,7 +103,7 @@ full_route = [pose for path in paths for pose in path]
 #route = [rs.Pose(pose.x, pose.y, pose.theta % (2 * pi)) for pose in route]
 
 # %% Plot the route
-if rs.check_ipython() or rs.timed_input('Enter manual path? (y/n): ', 'Timed out, using default path.', timeout=2) == 'y':
+if rs.check_ipython():
     ws.plot(figname='Workspace', grid_size=1)
 
     route_x = [pose.x for pose in full_route]
@@ -112,9 +123,9 @@ if rs.check_ipython() or rs.timed_input('Enter manual path? (y/n): ', 'Timed out
     plt.show(block=False)
 
 # %% Reduce poses in the route
-route = rs.reduce_list(full_route, 0.05)
+route = rs.reduce_list(full_route, 0.01)
 
-default_route = False
+#default_route = False
 
 print(f'Reduced route from {len(full_route)} nodes to {len(route)} nodes.')
 
@@ -159,7 +170,7 @@ with open(path, 'w') as f:
 
 # %% Get LIDAR measurements
 if not default_route:
-    lidar_scans = [ws.lidar_scan(pose, fov=360, da=1.25) for pose in route]
+    lidar_scans = [ws.lidar_scan(pose, fov=360, da=1.25) for pose in tqdm(route)]
     lidar_scans = [[pt.relative(pose) for pt in scan] for pose, scan in zip(route, lidar_scans)]
  
     path = os.path.join(cwd, 'data/office_workspace_1_default_lidar_scans.json')
@@ -176,14 +187,14 @@ else:
 # %% Add noise to route
 from robsim.utility import add_radial_noise_pose as noise
 
-std_d = 0.5
-std_a1 = 0.25
-std_a2 = 0.25
+odometry_std_d = 0.08
+odometry_std_a1 = 0.035
+odometry_std_a2 = 0.035
 
-print(f'Adding odometry noise with standard deviations:\ndistance - {std_d}\nangle 1 - {std_a1}\nangle 2 - {std_a2}')
+print(f'Adding odometry noise with standard deviations:\ndistance - {odometry_std_d}\nangle 1 - {odometry_std_a1}\nangle 2 - {odometry_std_a2}')
 
 relative_route = [b.relative(a) for a, b in zip(route[:-1], route[1:])]
-noisy_relative_route = [noise(pose, std_d=std_d, std_a1=std_a1, std_a2=std_a2) for pose in relative_route]
+noisy_relative_route = [noise(pose, std_d=odometry_std_d, std_a1=odometry_std_a1, std_a2=odometry_std_a2) for pose in relative_route]
 noisy_route = [route[0]]
 for pose in noisy_relative_route: noisy_route.append(pose.absolute(noisy_route[-1]))
 
@@ -196,12 +207,12 @@ plt.show()
 
 # %% Add noise to landmarks
 from robsim.utility import add_radial_noise_point as noise
-std_d = 0.01
-std_a = 0.005
+landmark_std_d = 0.01
+landmark_std_a = 0.005
 
-print(f'Adding landmark noise with standard deviations:\ndistance - {std_d}\nangle 1 - {std_a1}\nangle 2 - {std_a2}')
+print(f'Adding landmark noise with standard deviations:\ndistance - {landmark_std_d}\nangle - {landmark_std_a}')
 
-noisy_landmarks = [[[i, noise(point, std_d=std_d, std_a=std_a)] for i, point in measurements] for measurements in tqdm(landmarks)]
+noisy_landmarks = [[[i, noise(point, std_d=landmark_std_d, std_a=landmark_std_a)] for i, point in measurements] for measurements in tqdm(landmarks)]
 
 cmap = plt.cm.get_cmap('hsv', len(ws.landmarks))
 
@@ -246,11 +257,87 @@ plt.show()
 print(f'{len(route)}, {len(noisy_route)}, {len(relative_route)}, {len(noisy_relative_route)}')
 
 # %% Do SLAM
-slam = rs.Slam(route[0], n_landmarks=len(ws.landmarks), cov_odometry=None, cov_landmarks=None)
+loss = 'soft_l1'
+sparsity = True
+tr_solver = 'lsmr'
 
-for i, (odometry_constraint, landmark_constraints) in tqdm(enumerate(zip(noisy_relative_route, noisy_landmarks[1:])), total=len(noisy_relative_route)):
+ftol = xtol = gtol = 1e-6
+
+use_tqdm = True
+
+plot = 'animate'
+
+n_slam_steps = len(noisy_relative_route)
+#n_slam_steps = 80
+
+to_print = [
+    f'Doing slam with options: ({plot})',
+    f'Loss function - {loss}',
+    f'Using sparsity matrix - {sparsity}',
+    f'Trust-region Solver - {tr_solver}',
+    f'gtol - {gtol}',
+    f'xtol - {xtol}',
+    f'ftol - {ftol}',
+    #f'',
+]
+
+print('\n'.join(to_print))
+
+slam = rs.Slam(route[0], n_landmarks=len(ws.landmarks), var_odometry_d=odometry_std_d, var_odometry_theta1=odometry_std_a1, var_odometry_theta2=odometry_std_a2, var_landmarks_d=landmark_std_d, var_landmarks_theta=landmark_std_a)
+
+fig = ws.plot(figsize=(8, 8), dpi=200)
+
+lr = plt.plot(route[0].x, route[0].y, '-', color='green', label='true route')[0]
+lnr = plt.plot(noisy_route[0].x, noisy_route[0].y, '-', color='red', label='noisy route')[0]
+lsr = plt.plot(slam.route[0].x, slam.route[0].y, '--', color='blue', label='slam route')[0]
+pl = plt.plot([0], [0], 'x', color='orange', label='slam landmark')[0]
+
+plt.legend()
+
+path = os.path.join(cwd, 'images/')
+
+if use_tqdm:
+    pbar = tqdm(total=n_slam_steps)
+
+else:
+    class Null:
+        def update():
+            pass
+
+    pbar = Null
+
+def update():
+    lr.set_data([pt.x for pt in route[:len(slam.route)]], 
+                [pt.y for pt in route[:len(slam.route)]])
+
+    lnr.set_data([pt.x for pt in noisy_route[:len(slam.route)]], 
+                [pt.y for pt in noisy_route[:len(slam.route)]])
+
+    lsr.set_data([pt.x for pt in slam.route], 
+                [pt.y for pt in slam.route])
+
+    pl.set_data([p.x for p, initialized in zip(slam.landmarks, slam.landmark_initialized) if initialized],
+                [p.y for p, initialized in zip(slam.landmarks, slam.landmark_initialized) if initialized])
+
+    return lr, lnr, lsr, pl
+
+for i in range(n_slam_steps):   
+    pbar.update()
+
+    odometry_constraint, landmark_constraints = noisy_relative_route[i], noisy_landmarks[i + 1]    
+
     slam.add_constraints(odometry_constraint, landmark_constraints)
-    slam.optimize()
+    slam.optimize(use_sparsity=sparsity, loss=loss, tr_solver=tr_solver, ftol=ftol, gtol=gtol, xtol=xtol)
+
+    if plot == 'animate':
+        update()
+        plt.draw()
+        path = os.path.join(cwd, 'images/', f'{i:04d}.png')
+        plt.savefig(path)
+
+if plot == 'final_still':
+    update()
+    plt.show()
 
 # %% Plot sparsity
 sparsity = slam.get_sparsity()
@@ -274,10 +361,9 @@ x = [pt.x for pt in noisy_route]
 y = [pt.y for pt in noisy_route]
 plt.plot(x, y, '-', color='red', label='noisy route')
 
-
 x = [pt.x for pt in route]
 y = [pt.y for pt in route]
-plt.plot(x, y, '--', color='green', label='original route')
+plt.plot(x, y, '-', color='green', label='original route')
 
 x = [pt.x for pt in slam.route]
 y = [pt.y for pt in slam.route]
@@ -298,7 +384,7 @@ plt.show()
 slam_lidar_absolute = [[pt.absolute(pose) for pt in scan] for pose, scan in zip(slam.route, lidar_scans)]
 
 plt.figure(figsize=(8, 8), dpi=200)
-plt.title('Lidar data with odometry noise')
+plt.title('Lidar data from SLAM route')
 x = [pt.x for scan in slam_lidar_absolute for pt in scan]
 y = [pt.y for scan in slam_lidar_absolute for pt in scan]
 plt.plot(x, y, '.', color='black', markersize=1)
@@ -307,4 +393,42 @@ ax.invert_yaxis()
 ax.set_aspect(1)
 plt.plot()
 plt.show()
+# %% Plot differences in route
+
+figs, axs = plt.subplots(2, 2, figsize=(8,8), dpi=200)
+
+axs[0,0].set_title('X')
+axs[0,0].plot([pose.x for pose in slam.route], '-', color='blue', label='SLAM')
+axs[0,0].plot([pose.x for pose in route], '-', color='green', label='original')
+axs[0,0].plot([pose.x for pose in noisy_route], '-', color='red', label='odometry')
+axs[0,0].plot([b.x - a.x for a, b in zip(route, slam.route)], '--', color='blue', label='slam error')
+axs[0,0].plot([b.x - a.x for a, b in zip(route, noisy_route)], '--', color='red', label='odometry error')
+axs[0,0].legend()
+
+axs[0,1].set_title('Y')
+axs[0,1].plot([pose.y for pose in slam.route], '-', color='blue', label='SLAM')
+axs[0,1].plot([pose.y for pose in route], '-', color='green', label='original')
+axs[0,1].plot([pose.y for pose in noisy_route], '-', color='red', label='odometry')
+axs[0,1].plot([b.y - a.y for a, b in zip(route, slam.route)], '--', color='blue', label='slam error')
+axs[0,1].plot([b.y - a.y for a, b in zip(route, noisy_route)], '--', color='red', label='odometry error')
+axs[0,1].legend()
+
+axs[1,0].set_title('Angle')
+axs[1,0].plot([pose.theta for pose in slam.route], '-', color='blue', label='SLAM')
+axs[1,0].plot([pose.theta for pose in route], '-', color='green', label='original')
+axs[1,0].plot([pose.theta for pose in noisy_route], '-', color='red', label='odometry')
+axs[1,0].plot([b.theta - a.theta for a, b in zip(route, slam.route)], '--', color='blue', label='slam error')
+axs[1,0].plot([b.theta - a.theta for a, b in zip(route, noisy_route)], '--', color='red', label='odometry error')
+axs[1,0].legend()
+
+landmark_locations = [rs.Point(*pt) for pt in ws.landmarks]
+
+error_landmarks = [b - a for a, b, i in zip(slam.landmarks, landmark_locations, slam.landmark_initialized) if i]
+
+axs[1,1].set_title('Landmark error')
+axs[1,1].plot([pt.x for pt in error_landmarks], [pt.y for pt in error_landmarks], 'x', color='red')
+axs[1,1].grid(True)
+
+plt.show()
+
 # %%

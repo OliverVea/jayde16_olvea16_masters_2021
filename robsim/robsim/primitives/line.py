@@ -35,7 +35,7 @@ class Line:
         self.a = a
         self.b = b
 
-    def get_intersection(self, line) -> (Point, float, float):
+    def get_intersection(self, line):
         x1, x2, x3, x4 = self.a.x, self.b.x, line.a.x, line.b.x 
         y1, y2, y3, y4 = self.a.y, self.b.y, line.a.y, line.b.y
 
@@ -52,7 +52,7 @@ class Line:
 
         return p, t, u
 
-    def get_distance(self, point) -> (float, Point):
+    def get_distance(self, point):
         if point in [self.a, self.b]:
             return 0, point
 
@@ -69,6 +69,7 @@ class Line:
 
     def get_x(self, y):
         if self.a.y == self.b.y:
+            return np.nan
             raise Exception('')
 
         if self.a.x == self.b.x:
@@ -81,6 +82,7 @@ class Line:
 
     def get_y(self, x):
         if self.a.x == self.b.x:
+            return np.nan
             raise Exception('')
 
         if self.a.y == self.b.y:
@@ -96,7 +98,14 @@ class Line:
 
     def get_scale(self, x: float = None, y: float = None) -> float:
         if y != None:
+            if y == self.a.y:
+                return 0
+
             return (y - self.a.y) / (self.b.y - self.a.y)
+
+        if x == self.a.x:
+            return 0
+
         return (x - self.a.x) / (self.b.x - self.a.x)
 
     def plot(self, label_line: str = None, label_points: str = None, color_line: tuple = None, color_points: tuple = None):

@@ -9,7 +9,7 @@ retval, K, d, rvecs, tvecs, obj_points_temp, img_points_temp, not_used = np.load
 
 cam = Camera(camera_matrix=K, distortion_coefficients=d, camera_model=camera_model)
 
-image_size = (640*2, 480*2)
+image_size = (640, 480)
 image_fov = (150, 120)
 
 show_image = False
@@ -30,7 +30,7 @@ for i, file in enumerate(files):
 
     vc = cv2.VideoCapture(f'{path}/{file}')
 
-    vw.open(f'{path}/undistorted/{file[1:-4]}.avi', fourcc, 21, image_size)
+    vw.open(f'{path}/undistorted_downscaled/{file[1:-4]}.avi', fourcc, 21, image_size)
 
     while True:
         success, img = vc.read()
