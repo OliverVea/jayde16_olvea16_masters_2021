@@ -147,13 +147,15 @@ class PlotImage:
 
 
             if route is not None:
-                route = [(point[0] - self.c.points['EPSG:25832'][0], point[1] - self.c.points['EPSG:25832'][1]) for point in route]
+                colors = {2: '#FF0000', 4: '#00FF00', 5: '#FFFF00'}
+                route = [(point[0] - self.c.points['EPSG:25832'][0], point[1] - self.c.points['EPSG:25832'][1], point[2]) for point in route]
                 for i, point in enumerate(route):
                     x = point[0] * self.dpm + self.size[0] / 2
                     y = -point[1] * self.dpm + self.size[1] / 2
-                    xy = [(x - r, y - r), (x + r, y + r)]
-                    draw.ellipse(xy=xy, fill='#0000FF')
-                    draw.text(xy=[x + r, y + r], text=f'{i}', fill='red')
+                    radius =  r - 2
+                    xy = [(x - radius, y - radius), (x + radius, y + radius)]
+                    draw.ellipse(xy=xy, fill=colors[point[2]])
+                    #draw.text(xy=[x + r, y + r], text=f'{i}', fill='red')
 
 
             im.save(self.image_path)

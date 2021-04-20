@@ -19,15 +19,18 @@ class Properties:
     outer_radius = 120
     radius = 100
 
+    bbox_width = 100
+    bbox_height = 100
+
     feature_properties = {
         'TL695099': {'origin': 'kortopslag', 'label': 'Building (ko)', 'color': '#700000', 'exclude': True},
         'TL965167': {'origin': 'kortopslag', 'label': 'Road Well (ko)', 'color': '#ff00ff', 'exclude': False},
         'L418883_421469': {'origin': 'kortopslag', 'label': 'Park Tree (ko)', 'color': '#00851b', 'exclude': False},
         'L167365_421559': {'origin': 'kortopslag', 'label': 'Park Point (ko)', 'color': '#6e452f', 'exclude': False},
-        'Bænk': {'origin': 'kortopslag', 'label': 'Bench (ko)', 'color': '#613a3a', 'exclude': False},
-        'Affaldsspand': {'origin': 'kortopslag', 'label': 'Trash Can (ko)', 'color': '#454343', 'exclude': False},
-        'Monument': {'origin': 'kortopslag', 'label': 'Statue (ko)', 'color': '#b5b1b1', 'exclude': False},
-        'Slyng- og klatreplanter': {'origin': 'kortopslag', 'label': 'Greenery (ko)', 'color': '#277d41', 'exclude': False},
+        'Bænk': {'origin': 'kortopslag', 'label': 'Bench (ko)', 'color': '#613a3a', 'exclude': True},
+        'Affaldsspand': {'origin': 'kortopslag', 'label': 'Trash Can (ko)', 'color': '#454343', 'exclude': True},
+        'Monument': {'origin': 'kortopslag', 'label': 'Statue (ko)', 'color': '#b5b1b1', 'exclude': True},
+        'Slyng- og klatreplanter': {'origin': 'kortopslag', 'label': 'Greenery (ko)', 'color': '#277d41', 'exclude': True},
 
         'Bygning': {'origin': 'geodanmark', 'label': 'Building (gd)', 'color': '#ff0000', 'exclude': True},
         'Broenddaeksel': {'origin': 'geodanmark', 'label': 'Manhole Cover (gd)', 'color': '#ac0fdb', 'exclude': False},
@@ -95,11 +98,15 @@ class Properties:
 
             'energifyn': {
                 'url': 'https://services.drift.kortinfo.net/kortinfo/services/Wfs.ashx?Site=Odense&Page=Lyssignalanlaeg', 
-                'version': '1.0.0'},
+                'version': '1.0.0',
+                'username': None, 
+                'password': None},
 
             'kortopslag': {
                 'url': 'https://services.drift.kortinfo.net/kortinfo/services/Wfs.ashx?Site=Odense&Page=Kortopslag', 
-                'version': '1.0.0'},
+                'version': '1.0.0',
+                'username': None, 
+                'password': None},
         }
     }
 

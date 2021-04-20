@@ -5,9 +5,34 @@ _utility_verbose_options_tag_whitelist=[]
 _utility_verbose_options_tag_blacklist=[]
 
 import datetime
+import pynmea2
+import os
+import jaolma.gis.wfs as wfs
 from colorsys import hsv_to_rgb
 
 from colormap import hex2rgb, rgb2hls, hls2rgb, rgb2hex
+
+def load_route(filename):
+    if not os.path.exists(filename):
+        return None
+    with open(filename, 'r') as f:
+        nmea_file = f.readlines()
+
+    fts = []
+    fixes = []
+    for line in nmea_file[1:]:
+        line = ','.join(line.strip().split(',')[2:])
+        nmea_msg = pynmea2.parse(line)
+        if nmea_msg.sentence_type != 'GGA':
+            continue
+        ft = wfs.Feature((nmea_msg.latitude, nmea_msg.longitude), 'EPSG:4326')
+        fts.append(ft)
+        fixes.append(nmea_msg.gps_qual)
+
+    collection = wfs.Collection('','',fts,'EPSG:4326')
+    collection.to_srs('EPSG:25832')
+    route = [[ft.x(), ft.y(), fix] for ft, fix in zip(collection.features, fixes)]
+    return route
 
 # status, error, tag_whitelist, tag_blacklist, timestamp
 def set_verbose(**args):

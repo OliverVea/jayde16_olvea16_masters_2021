@@ -17,7 +17,7 @@ def pick_plottype(plottypes) -> str:
 def _get_stats(area):
     
     title = 'Feature Stats'
-    axis_labels=['Precision', 'Recall', 'Error', 'Visibility', 'Accessibility', 'True Positives']
+    axis_labels=['True Positives', 'Precision', 'Recall', 'Visibility', 'Accessibility', 'Error']
 
     silhouettes = {}
     sources = {}
@@ -34,12 +34,12 @@ def _get_stats(area):
             label = ft_name#Properties.feature_properties[ft_name]['label']
             sources[source].append(label)
             silhouettes[label] = []
+            silhouettes[label].append(len(ft.true_positives))
             silhouettes[label].append(round(ft.get_precision()*100,1))
             silhouettes[label].append(round(ft.get_recall()*100,1))
-            silhouettes[label].append(round(ft.get_accuracy(),2))
             silhouettes[label].append(round(ft.get_visibility(),1))
             silhouettes[label].append(round(ft.get_accessibility(),1))
-            silhouettes[label].append(len(ft.true_positives))
+            silhouettes[label].append(round(ft.get_accuracy(),2))
         
     return silhouettes, axis_labels, sources, title
 
@@ -147,7 +147,7 @@ def plot(area):
 
             #Set minimum and maximum of all axes
             axis_min = [0,0,0,0,0,0]
-            axis_max = [100, 100, max(0.1, max(v[2] for v in plot_silhouettes.values())), 100, 100, max(0.1, max(v[5] for v in plot_silhouettes.values()))]
+            axis_max = [max(0.1, max(v[0] for v in plot_silhouettes.values())), 100, 100, 100, 100, max(0.1, max(v[5] for v in plot_silhouettes.values()))]
 
             fig = spider_plot(
             title,
@@ -158,12 +158,13 @@ def plot(area):
             axis_value_labels=False,
             axis_min=axis_min,
             axis_max=axis_max,
-            reversed_axes=[False, False, True, False, False, False],
+            reversed_axes=[False, False, False, False, False, True],
             silhouette_line_color=plot_colors,
             silhouette_line_size=1.5,
             silhouette_line_style='-.',
             silhouette_fill_alpha=0.25,
-            axis_value_decimals=0
+            axis_value_decimals=2,
+            axis_value_dec_list=[0,0,0,0,0,3],
             )
 
             figure_canvas_agg = FigureCanvasTkAgg(fig, window["Radar"].TKCanvas)
