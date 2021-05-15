@@ -3,7 +3,7 @@ from jaolma.properties import Properties
 from jaolma.plotting.spider_plot import spider_plot
 from jaolma.gui import simple_dropdown
 from jaolma.data_treatment.data_treatment import GISData
-from jaolma.utility.utility import uniform_colors
+from jaolma.utility.utility import Color
 
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib import use
@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 
 import PySimpleGUI as sg
 import numpy as np
+import time
 
 def pick_plottype(plottypes) -> str:
     return simple_dropdown('Select Plot', list(plottypes))
@@ -113,7 +114,7 @@ def plot(plottype):
         return plottype
 
     if plottype == 'plot_stats':
-        print('Plotting Radar Chart with stats for each source across areas.')
+        print('Plotting Spiderplot with stats for each source across areas.')
         silhouettes, labels, title = _get_stats()
     elif plottype == 'plot_amount_gt':
         silhouettes, labels, title = _get_amount_gt()
@@ -178,7 +179,7 @@ def plot(plottype):
 
     size = (1000,1000)
 
-    graph = sg.Graph(canvas_size=size, graph_bottom_left=(0,0), graph_top_right=size, key='Radar', enable_events=True)
+    graph = sg.Graph(canvas_size=size, graph_bottom_left=(0,0), graph_top_right=size, key='spider', enable_events=True)
 
     layout = [
         [checkboxes, graph]
@@ -188,7 +189,7 @@ def plot(plottype):
 
     #Instantiate figure_canvas_agg to allow for destruction in infinite loop.
     fig = spider_plot('', labels=labels, silhouettes=silhouettes)
-    figure_canvas_agg = FigureCanvasTkAgg(fig, window["Radar"].TKCanvas)
+    figure_canvas_agg = FigureCanvasTkAgg(fig, window["spider"].TKCanvas)
 
     while True:
         event, values = window.read()
@@ -196,6 +197,11 @@ def plot(plottype):
         #Check for close or back event
         if event == sg.WIN_CLOSED or event == 'Back':
             break
+
+        if event == 'Export':
+            t = time.localtime()
+            timestamp = time.strftime('%b-%d-%Y_%H%M%S', t)
+            fig.savefig(f'files/exported_figures/spiderplot_{timestamp}.pdf', bbox_inches='tight')
 
         #Set types to all types that are checked on
         types = set([inputs[i]['typename'] for i in inputs if values[inputs[i]['typename']]])
@@ -224,23 +230,14 @@ def plot(plottype):
         plot_silhouettes = dict((k, v) for k, v in zip(silhouettes.keys(), silhouettes.values()) if k in types)
         
         if len(plot_silhouettes) > 0:
-
-            #Set minimum and maximum of all axes
-            #axis_min = [0,0,0,0,0,0]
-            #axis_max = [100, 100, max(0.1, max(v[2] for v in plot_silhouettes.values())), 100, 100, max(0.1, max(v[5] for v in plot_silhouettes.values()))]
             if plottype == 'plot_amount_gt':
-                #plot_colors = [colors[list(silhouettes.keys()).index(key)] for key in plot_silhouettes.keys()]
                 colors = [Properties.area_colors[area] for area in plot_silhouettes]
                 fig = spider_plot(
                     title,
                     labels=labels,
                     silhouettes=plot_silhouettes,
-                    #scale_type='total_max',
                     axis_ticks=5,
                     axis_value_labels=False,
-                    #axis_min=axis_min,
-                    #axis_max=axis_max,
-                    #reversed_axes=[False, False, True, False, False, False],
                     silhouette_line_color=colors,
                     silhouette_line_size=1.5,
                     silhouette_line_style='-.',
@@ -250,7 +247,9 @@ def plot(plottype):
 
             elif plottype == 'plot_stats':
                 line_colors = [Properties.feature_properties[ft]['color'] for ft in plot_silhouettes]
-                fill_colors = [Properties.source_colors[Properties.feature_properties[ft]['origin']] for ft in plot_silhouettes]
+                fill_colors = [Color(color) * 1.25 for color in line_colors]
+                line_styles = [Properties.source_styles[Properties.feature_properties[ft]['origin']] for ft in plot_silhouettes]
+                # fill_colors = [Properties.source_colors[Properties.feature_properties[ft]['origin']] for ft in plot_silhouettes]
 
                 axis_min = [0,0,0,0,0,0]
                 axis_max = [max(0.1, max(v[0] for v in plot_silhouettes.values())), 100, 100, 100, 100, max(0.1, max(v[5] for v in plot_silhouettes.values()))]
@@ -272,11 +271,12 @@ def plot(plottype):
                     silhouette_line_size=1.5,
                     silhouette_line_style='-.',
                     silhouette_fill_alpha=0.25,
+                    silhouette_line_styles=line_styles,
                     axis_value_decimals=2,
                     axis_value_dec_list=[0,0,0,0,0,3],
                 )
 
-            figure_canvas_agg = FigureCanvasTkAgg(fig, window["Radar"].TKCanvas)
+            figure_canvas_agg = FigureCanvasTkAgg(fig, window["spider"].TKCanvas)
             figure_canvas_agg.draw()
             figure_canvas_agg.get_tk_widget().pack(side="top", fill="both", expand=1)
 

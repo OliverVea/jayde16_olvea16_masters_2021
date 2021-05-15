@@ -9,7 +9,7 @@ from PIL import Image, ImageDraw
 
 import PySimpleGUI as sg
 import pandas as pd
-
+import time
 import os
 
 class PlotImage:
@@ -147,7 +147,7 @@ class PlotImage:
 
 
             if route is not None:
-                colors = {2: '#FF0000', 4: '#00FF00', 5: '#FFFF00'}
+                colors = {1: '#FF00FF', 2: '#FF0000', 4: '#00FF00', 5: '#FFFF00'}
                 route = [(point[0] - self.c.points['EPSG:25832'][0], point[1] - self.c.points['EPSG:25832'][1], point[2]) for point in route]
                 for i, point in enumerate(route):
                     x = point[0] * self.dpm + self.size[0] / 2
@@ -228,6 +228,8 @@ def plot(area, route=None):
     checkboxes = sg.Column(col, vertical_alignment='top')
 
     size = (Properties.outer_radius*2,Properties.outer_radius*2)
+    if area == 'downtown' and route is not None:
+        size = (1000,1000)
 
     image_object = PlotImage(size=size, area=area, data=data, tile_matrix=tile_matrix)
 
@@ -255,6 +257,9 @@ def plot(area, route=None):
 
         if event == sg.WIN_CLOSED or event == 'Back':
             break
+
+        if event == 'Export':
+            print('Functionality not yet implemented - Image can be found in files/gui/ folder')
 
         types = set([inputs[i]['typename'] for i in inputs if values[inputs[i]['typename']]])
 

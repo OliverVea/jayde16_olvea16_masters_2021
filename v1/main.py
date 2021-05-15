@@ -3,19 +3,44 @@ import main_plot_spiderplot_area
 import main_plot_spiderplot
 
 from jaolma.properties import Properties
-from jaolma.utility.utility import printe, prints, load_route
+from jaolma.utility.utility import printe, prints
 
 from jaolma.gui import simple_dropdown
 
 import PySimpleGUI as sg
+import jaolma.gis.wfs as wfs
+import os, pynmea2
+
+def load_route(filename):
+    if not os.path.exists(filename):
+        return None
+    with open(filename, 'r') as f:
+        nmea_file = f.readlines()
+
+    fts = []
+    fixes = []
+    for line in nmea_file[1:]:
+        line = ','.join(line.strip().split(',')[2:])
+        nmea_msg = pynmea2.parse(line)
+        if nmea_msg.sentence_type != 'GGA':
+            continue
+        ft = wfs.Feature((nmea_msg.latitude, nmea_msg.longitude), 'EPSG:4326')
+        fts.append(ft)
+        fixes.append(nmea_msg.gps_qual)
+
+    collection = wfs.Collection('','',fts,'EPSG:4326')
+    collection.to_srs('EPSG:25832')
+    route = [[ft.x(), ft.y(), fix] for ft, fix in zip(collection.features, fixes)]
+    return route
+
 
 sg.theme('DarkGrey2')
 
-def pick_area() -> str:
-    return simple_dropdown('Select Area', list(Properties.areas))
+def pick_action1() -> str:
+    return simple_dropdown('Select Area', list(Properties.areas) + ['Plot Stats', 'Plot Amount of Features (groundtruth)'])
 
 actions = {}
-def pick_action() -> str:
+def pick_action2() -> str:
     return simple_dropdown('Select Action', list(actions))
 
 def get_data(area):
@@ -37,25 +62,31 @@ actions['Get Data for Area'] = get_data
 actions['Analyse an area'] = analyse_area
 actions['Analyse a feature type'] = analyse_feature
 
-
-route = load_route(filename='files/data.csv')
+route = load_route(filename='files/gps_routes/2021-04-23_11-01-38.csv')
 
 
 while True:
-    area = pick_area()
+    action1 = pick_action1()
 
-    if area == None:
+    if action1 == None:
         break
 
-    action = pick_action()
+    if action1 == 'Plot Stats':
+        event = main_plot_spiderplot.plot('plot_stats')
 
-    if action in (None, ''):
-        break
+    elif action1 == 'Plot Amount of Features (groundtruth)':
+        event = main_plot_spiderplot.plot('plot_amount_gt')
 
-    if action == 'Plot Area':
-        event = actions[action](area, route=route)
     else:
-        event = actions[action](area)
+        action2 = pick_action2()
 
-    if event != 'Back':
-        break
+        if action2 in (None, ''):
+            break
+
+        if action2 == 'Plot Area':
+            event = actions[action2](action1, route=route)
+        else:
+            event = actions[action2](action1)
+
+        if event != 'Back':
+            break

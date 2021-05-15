@@ -183,9 +183,10 @@ if plots['overview']:
         silhouette_line_color=[Properties.source_colors[source] for source in GISData.all_sources],
         #legend_loc='right',
         legend_bbox=(0.75, 0.05),
+        axis_value_dec_list=[0,0,0,0,0,3]
     )
 
-    plt.savefig(f'sp_Overview.pdf')
+    plt.savefig(f'sp_Overview.pdf', bbox_inches='tight')
 
 labels = ['Precision', 'Recall', 'F1']
 if plots['perf']:
@@ -209,7 +210,7 @@ if plots['perf']:
             silhouette_line_color=[Properties.source_colors[source] for source in GISData.all_sources],
         )
 
-        plt.savefig(f'sp_{stat}.pdf')
+        plt.savefig(f'sp_{stat}.pdf', bbox_inches='tight')
 
 if plots['err']:
     silhouettes = {source: [get_accuracy(d, source, area) for area, d in zip(Properties.areas_pretty, stats)] for source in GISData.all_sources}

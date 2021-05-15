@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 
 import PySimpleGUI as sg
 import numpy as np
+import time
 
 def pick_plottype(plottypes) -> str:
     return simple_dropdown('Select Plot', list(plottypes))
@@ -45,7 +46,7 @@ def _get_stats(area):
 
 
 def plot(area):
-    print(f'Plotting Radar Charts for Area: {area}.')
+    print(f'Plotting Spiderplot for Area: {area}.')
 
     use("TkAgg")
 
@@ -93,7 +94,7 @@ def plot(area):
 
     size = (1000,1000)
 
-    graph = sg.Graph(canvas_size=size, graph_bottom_left=(0,0), graph_top_right=size, key='Radar', enable_events=True)
+    graph = sg.Graph(canvas_size=size, graph_bottom_left=(0,0), graph_top_right=size, key='spider', enable_events=True)
 
     layout = [
         [checkboxes, graph]
@@ -103,7 +104,7 @@ def plot(area):
 
     #Instantiate figure_canvas_agg to allow for destruction in infinite loop.
     fig = spider_plot('', labels=labels, silhouettes=silhouettes)
-    figure_canvas_agg = FigureCanvasTkAgg(fig, window["Radar"].TKCanvas)
+    figure_canvas_agg = FigureCanvasTkAgg(fig, window["spider"].TKCanvas)
 
     while True:
         event, values = window.read()
@@ -111,6 +112,11 @@ def plot(area):
         #Check for close or back event
         if event == sg.WIN_CLOSED or event == 'Back':
             break
+
+        if event == 'Export':
+            t = time.localtime()
+            timestamp = time.strftime('%b-%d-%Y_%H%M%S', t)
+            fig.savefig(f'files/exported_figures/spiderplot_{area}_{timestamp}.pdf', bbox_inches='tight')
 
         #Set types to all types that are checked on
         types = set([inputs[i]['typename'] for i in inputs if values[inputs[i]['typename']]])
@@ -167,7 +173,7 @@ def plot(area):
             axis_value_dec_list=[0,0,0,0,0,3],
             )
 
-            figure_canvas_agg = FigureCanvasTkAgg(fig, window["Radar"].TKCanvas)
+            figure_canvas_agg = FigureCanvasTkAgg(fig, window["spider"].TKCanvas)
             figure_canvas_agg.draw()
             figure_canvas_agg.get_tk_widget().pack(side="top", fill="both", expand=1)
 

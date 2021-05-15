@@ -90,6 +90,7 @@ def spider_plot(title: str, labels: list, silhouettes: dict,
         label_origin: bool = True, 
         silhouette_line_color: str = None, 
         silhouette_line_style: str = 'solid', 
+        silhouette_line_styles: list = None,
         silhouette_line_size: float = 1, 
         silhouette_fill_color: str = None, 
         silhouette_fill_alpha: float = 0.1, 
@@ -101,6 +102,8 @@ def spider_plot(title: str, labels: list, silhouettes: dict,
         fill_nan: bool = True,
         legend_loc: str = 'lower left',
         legend_bbox: tuple = (0,0)):
+
+    assert silhouette_line_styles == None or len(silhouette_line_styles) == len(silhouettes), 'silhouette_line_styles should be the same length as silhouettes'
 
     fig = plt.figure(figsize=size, dpi=dpi)
 
@@ -263,6 +266,9 @@ def spider_plot(title: str, labels: list, silhouettes: dict,
             line_color = silhouette_line_color[i]
         else:
             line_color = silhouette_line_color
+            
+        if silhouette_line_styles != None:
+            silhouette_line_style = silhouette_line_styles[i]
             
         line = ax.plot(curved_angles, curved_values, color=line_color, linewidth=silhouette_line_size, linestyle=silhouette_line_style, label=list(silhouettes.keys())[i])[0]
 
